@@ -1,4 +1,5 @@
 import { useState } from "react";
+import atcpLogo from "@/assets/atcp-logo.svg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -74,6 +75,9 @@ const DonatePage = () => {
       <section className="section-light">
         <div className="container py-16 md:py-20 max-w-2xl animate-fade-in">
           <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 md:p-10 border border-[#1A1A1A]/10 rounded">
+            <div className="flex items-center gap-3 mb-2">
+              <img src={atcpLogo} alt="A-T Children's Project logo" className="h-10 w-auto" />
+            </div>
             <p className="text-sm text-[#1A1A1A]/50 text-left">
               Hope 4 Holden raises funds for the ATCP, a registered charity. Tax receipts are issued by the ATCP.
             </p>
