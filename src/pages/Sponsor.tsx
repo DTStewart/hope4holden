@@ -3,15 +3,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/hooks/use-toast";
-import { CheckCircle, Star, Award, Medal, Flag } from "lucide-react";
+import { CheckCircle, Star, Award, Medal, Flag, ShoppingCart, Utensils, CreditCard, Droplets, Gift, Heart, Trophy, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import sponsorHero from "@/assets/sponsor-hero.jpeg";
 
-const tierIcons: Record<string, any> = { Title: Star, Gold: Award, Silver: Medal, Hole: Flag };
+const tierIcons: Record<string, any> = {
+  "Presenting Sponsor": Star,
+  "Merchandise Sponsor": Package,
+  "Flag Sponsor": Flag,
+  "Dinner Sponsor": Utensils,
+  "Scorecard Sponsor": CreditCard,
+  "Golf Cart Sponsor": ShoppingCart,
+  "Hydration Hero": Droplets,
+  "Hole Sponsor": Flag,
+  "Bunker Buddy": Heart,
+  "50/50 Sponsor": Trophy,
+  "Caddie": Gift,
+  "Fairway Friend": Heart,
+  "Prize Patrol": Award,
+};
 
-interface Tier { id: string; name: string; price: number; benefits: string[]; sort_order: number; }
+interface Tier { id: string; name: string; price: number; benefits: string[]; sort_order: number; max_slots: number | null; }
 interface Sponsor { id: string; business_name: string; tier_name: string; logo_url: string | null; }
 
 const SponsorPage = () => {
@@ -28,7 +43,7 @@ const SponsorPage = () => {
         supabase.from("sponsorship_tiers").select("*").eq("active", true).order("sort_order"),
         supabase.from("sponsors_public" as any).select("id, business_name, tier_name, logo_url"),
       ]);
-      if (tiersRes.data) setTiers(tiersRes.data.map((t: any) => ({ ...t, benefits: t.benefits as string[] })));
+      if (tiersRes.data) setTiers(tiersRes.data.map((t: any) => ({ ...t, benefits: t.benefits as string[], max_slots: t.max_slots })));
       if (sponsorsRes.data) setSponsors(sponsorsRes.data as any);
     };
     fetchData();
@@ -38,18 +53,43 @@ const SponsorPage = () => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const isSoldOut = (tier: Tier) => tier.max_slots === 0;
+  const isInKind = (tier: Tier) => tier.price === 0 && !isSoldOut(tier);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTier) return;
     addItem({
       type: "sponsorship",
-      description: `${selectedTier.name} Sponsor: ${form.businessName}`,
+      description: `${selectedTier.name}: ${form.businessName}`,
       amount: selectedTier.price,
       formData: { ...form, tier: selectedTier.name, tierId: selectedTier.id },
     });
     setSubmitted(true);
     setSelectedTier(null);
     toast({ title: "Sponsorship added to cart!" });
+  };
+
+  const handleInKindSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTier) return;
+    // For in-kind / $0 tiers, add to cart with $0 amount
+    addItem({
+      type: "sponsorship",
+      description: `${selectedTier.name}: ${form.businessName}`,
+      amount: 0,
+      formData: { ...form, tier: selectedTier.name, tierId: selectedTier.id },
+    });
+    setSubmitted(true);
+    setSelectedTier(null);
+    toast({ title: "Sponsorship request submitted!" });
+  };
+
+  const getPriceLabel = (tier: Tier) => {
+    if (isSoldOut(tier)) return "SOLD OUT";
+    if (isInKind(tier)) return "In-Kind";
+    if (tier.name === "Fairway Friend") return `$${tier.price.toLocaleString()}+`;
+    return `$${tier.price.toLocaleString()}`;
   };
 
   if (submitted) {
@@ -70,6 +110,10 @@ const SponsorPage = () => {
     );
   }
 
+  // Split tiers into premium (top row) and standard
+  const premiumTiers = tiers.filter(t => t.sort_order <= 7);
+  const standardTiers = tiers.filter(t => t.sort_order > 7);
+
   return (
     <div>
       <section className="section-dark relative overflow-hidden">
@@ -85,22 +129,36 @@ const SponsorPage = () => {
         </div>
       </section>
 
-      {/* Tier cards */}
+      {/* Premium tier cards */}
       <section className="section-light">
         <div className="container py-20 md:py-28 animate-fade-in">
-          <p className="section-label">Sponsorship Tiers</p>
-          <h2 className="font-heading font-extrabold text-3xl md:text-4xl text-[#1A1A1A] mb-12">
+          <p className="section-label">Sponsorship Packages</p>
+          <h2 className="font-heading font-extrabold text-3xl md:text-4xl text-[#1A1A1A] mb-4">
             Choose your level.
           </h2>
+          <p className="text-[#1A1A1A]/50 mb-12 max-w-2xl">
+            Number in brackets indicates available spots. All sponsorships include recognition and meaningful engagement opportunities.
+          </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[#1A1A1A]/10">
-            {tiers.map((tier) => {
+          {/* Premium tiers */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-px bg-[#1A1A1A]/10 mb-8">
+            {premiumTiers.map((tier) => {
               const Icon = tierIcons[tier.name] || Flag;
+              const soldOut = isSoldOut(tier);
+              const inKind = isInKind(tier);
               return (
-                <div key={tier.name} className="bg-white p-8 flex flex-col">
-                  <Icon className="h-8 w-8 text-primary mb-4" />
+                <div key={tier.id} className={`bg-white p-8 flex flex-col ${soldOut ? "opacity-60" : ""}`}>
+                  <div className="flex items-start justify-between mb-4">
+                    <Icon className="h-8 w-8 text-primary" />
+                    {soldOut && <Badge variant="destructive" className="text-xs">Sold Out</Badge>}
+                    {tier.max_slots != null && tier.max_slots > 0 && (
+                      <Badge variant="secondary" className="text-xs">{tier.max_slots} available</Badge>
+                    )}
+                  </div>
                   <h3 className="font-heading font-bold text-lg text-[#1A1A1A] mb-1">{tier.name}</h3>
-                  <p className="font-heading font-extrabold text-2xl text-primary mb-6">${tier.price.toLocaleString()}</p>
+                  <p className={`font-heading font-extrabold text-2xl mb-6 ${soldOut ? "text-[#1A1A1A]/40 line-through" : inKind ? "text-primary" : "text-primary"}`}>
+                    {getPriceLabel(tier)}
+                  </p>
                   <ul className="space-y-2 flex-1 mb-6">
                     {tier.benefits.map((b) => (
                       <li key={b} className="text-sm text-[#1A1A1A]/60 flex items-start gap-2 text-left">
@@ -109,8 +167,54 @@ const SponsorPage = () => {
                       </li>
                     ))}
                   </ul>
-                  <Button className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-sm" onClick={() => setSelectedTier(tier)}>
-                    Select
+                  <Button
+                    className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-sm"
+                    onClick={() => !soldOut && setSelectedTier(tier)}
+                    disabled={soldOut}
+                  >
+                    {soldOut ? "Sold Out" : "Select"}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Standard tiers */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-[#1A1A1A]/10">
+            {standardTiers.map((tier) => {
+              const Icon = tierIcons[tier.name] || Flag;
+              const soldOut = isSoldOut(tier);
+              const inKind = isInKind(tier);
+              return (
+                <div key={tier.id} className={`bg-white p-8 flex flex-col ${soldOut ? "opacity-60" : ""}`}>
+                  <div className="flex items-start justify-between mb-4">
+                    <Icon className="h-7 w-7 text-primary" />
+                    {soldOut && <Badge variant="destructive" className="text-xs">Sold Out</Badge>}
+                    {tier.max_slots != null && tier.max_slots > 0 && (
+                      <Badge variant="secondary" className="text-xs">{tier.max_slots} available</Badge>
+                    )}
+                    {tier.max_slots == null && !soldOut && (
+                      <Badge variant="secondary" className="text-xs">Unlimited</Badge>
+                    )}
+                  </div>
+                  <h3 className="font-heading font-bold text-lg text-[#1A1A1A] mb-1">{tier.name}</h3>
+                  <p className={`font-heading font-extrabold text-xl mb-4 ${soldOut ? "text-[#1A1A1A]/40 line-through" : "text-primary"}`}>
+                    {getPriceLabel(tier)}
+                  </p>
+                  <ul className="space-y-2 flex-1 mb-6">
+                    {tier.benefits.map((b) => (
+                      <li key={b} className="text-sm text-[#1A1A1A]/60 flex items-start gap-2 text-left">
+                        <span className="text-primary mt-1">·</span>
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-sm"
+                    onClick={() => !soldOut && setSelectedTier(tier)}
+                    disabled={soldOut}
+                  >
+                    {soldOut ? "Sold Out" : inKind ? "Inquire" : "Select"}
                   </Button>
                 </div>
               );
@@ -152,10 +256,18 @@ const SponsorPage = () => {
       <Dialog open={!!selectedTier} onOpenChange={(open) => !open && setSelectedTier(null)}>
         <DialogContent className="rounded">
           <DialogHeader>
-            <DialogTitle className="font-heading font-bold">{selectedTier?.name} — ${selectedTier?.price.toLocaleString()}</DialogTitle>
-            <DialogDescription>Fill in your details to add this sponsorship to your cart.</DialogDescription>
+            <DialogTitle className="font-heading font-bold">
+              {selectedTier?.name}
+              {selectedTier && !isInKind(selectedTier) && ` — $${selectedTier.price.toLocaleString()}`}
+              {selectedTier && selectedTier.name === "Fairway Friend" && "+"}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedTier && isInKind(selectedTier)
+                ? "Fill in your details and we'll be in touch to coordinate."
+                : "Fill in your details to add this sponsorship to your cart."}
+            </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={selectedTier && isInKind(selectedTier) ? handleInKindSubmit : handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="businessName">Business Name</Label>
               <Input id="businessName" name="businessName" value={form.businessName} onChange={handleChange} required className="rounded" />
@@ -173,7 +285,9 @@ const SponsorPage = () => {
               <Input id="contactPhone" name="contactPhone" type="tel" value={form.contactPhone} onChange={handleChange} required className="rounded" />
             </div>
             <Button type="submit" className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold">
-              Add to Cart — ${selectedTier?.price.toLocaleString()}
+              {selectedTier && isInKind(selectedTier)
+                ? "Submit Request"
+                : `Add to Cart — $${selectedTier?.price.toLocaleString()}`}
             </Button>
           </form>
         </DialogContent>
