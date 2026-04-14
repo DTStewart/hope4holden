@@ -59,11 +59,7 @@ export default function SponsorUpload() {
         resolve("File size exceeds 10MB. Please use a smaller file.");
         return;
       }
-      if (f.type === "image/svg+xml") { resolve(null); return; }
-      // No minimum resolution requirement — accept any dimensions
       resolve(null);
-      img.onerror = () => resolve("Could not read image dimensions.");
-      img.src = URL.createObjectURL(f);
     });
   }, []);
 
