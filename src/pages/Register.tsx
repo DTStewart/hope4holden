@@ -2,16 +2,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
 import { CheckCircle, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const RegisterPage = () => {
   const { addItem, setDrawerOpen } = useCart();
-  const navigate = useNavigate();
   const [submitted, setSubmitted] = useState(false);
   const [spotsAvailable, setSpotsAvailable] = useState<number | null>(null);
   const [registrationOpen, setRegistrationOpen] = useState(true);
@@ -33,14 +30,8 @@ const RegisterPage = () => {
   }, []);
 
   const [form, setForm] = useState({
-    teamName: "",
-    captainName: "",
-    captainEmail: "",
-    captainPhone: "",
-    street: "",
-    city: "",
-    province: "",
-    postalCode: "",
+    teamName: "", captainName: "", captainEmail: "", captainPhone: "",
+    street: "", city: "", province: "", postalCode: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,106 +52,110 @@ const RegisterPage = () => {
 
   if (!registrationOpen) {
     return (
-      <div className="container py-20 text-center space-y-6 animate-fade-in">
-        <h1 className="font-heading font-bold text-4xl">Tournament Sold Out</h1>
-        <p className="text-muted-foreground text-lg">All spots have been filled. Join the waitlist to be notified if a spot opens up.</p>
-        {/* Waitlist form - simplified */}
-        <Card className="max-w-md mx-auto">
-          <CardContent className="pt-6 space-y-4">
-            <Input placeholder="Your name" />
-            <Input placeholder="Your email" type="email" />
-            <Button className="w-full">Join Waitlist</Button>
-          </CardContent>
-        </Card>
+      <div>
+        <section className="section-dark">
+          <div className="container py-20 md:py-28 text-center animate-fade-in">
+            <h1 className="font-heading font-extrabold text-4xl md:text-6xl text-white mb-4">Sold Out</h1>
+            <p className="text-white/60 text-lg">All spots have been filled. Contact us to join the waitlist.</p>
+          </div>
+        </section>
       </div>
     );
   }
 
   if (submitted) {
     return (
-      <div className="container py-20 text-center space-y-6 animate-fade-in">
-        <CheckCircle className="h-16 w-16 text-primary mx-auto" />
-        <h2 className="font-heading font-bold text-3xl">Team Registration Added!</h2>
-        <p className="text-muted-foreground">"{form.teamName}" has been added to your cart.</p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button variant="outline" onClick={() => { setSubmitted(false); setForm({ teamName: "", captainName: "", captainEmail: "", captainPhone: "", street: "", city: "", province: "", postalCode: "" }); }}>
-            Continue Shopping
-          </Button>
-          <Button onClick={() => setDrawerOpen(true)}>Go to Cart</Button>
+      <div className="section-light">
+        <div className="container py-20 text-center space-y-6 animate-fade-in">
+          <CheckCircle className="h-16 w-16 text-primary mx-auto" />
+          <h2 className="font-heading font-extrabold text-3xl text-[#1A1A1A]">Registration Added!</h2>
+          <p className="text-[#1A1A1A]/60">"{form.teamName}" has been added to your cart.</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button variant="outline" className="rounded border-[#1A1A1A]/20 text-[#1A1A1A] hover:bg-[#1A1A1A]/5" onClick={() => { setSubmitted(false); setForm({ teamName: "", captainName: "", captainEmail: "", captainPhone: "", street: "", city: "", province: "", postalCode: "" }); }}>
+              Continue Shopping
+            </Button>
+            <Button className="rounded bg-primary text-white hover:bg-[#4A7C09]" onClick={() => setDrawerOpen(true)}>Go to Cart</Button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container py-12 md:py-20 max-w-2xl mx-auto space-y-8 animate-fade-in">
-      <div className="text-center space-y-4">
-        <h1 className="font-heading font-bold text-4xl md:text-5xl">Register Your Team</h1>
-        <p className="text-lg text-muted-foreground">$600 per team of 4 golfers</p>
-        {spotsAvailable !== null && (
-          <div className="flex items-center justify-center gap-2 text-primary font-medium">
-            <Users className="h-5 w-5" />
-            <span>{spotsAvailable} spots remaining</span>
-          </div>
-        )}
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-heading">Team Information</CardTitle>
-          <CardDescription>
-            Registration fee of $600 includes dinner on Thursday evening and golf on Friday for your team of 4.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="teamName">Business / Team Name</Label>
-              <Input id="teamName" name="teamName" value={form.teamName} onChange={handleChange} required />
+    <div>
+      <section className="section-dark">
+        <div className="container py-20 md:py-28 animate-fade-in">
+          <p className="section-label">Team Registration</p>
+          <h1 className="font-heading font-extrabold text-4xl md:text-6xl text-white leading-[0.95] mb-4">
+            Register Your Team
+          </h1>
+          <p className="text-white/60 text-lg">$600 per team of 4 golfers</p>
+          {spotsAvailable !== null && (
+            <div className="flex items-center gap-2 text-primary font-heading font-bold mt-4">
+              <Users className="h-5 w-5" />
+              <span>{spotsAvailable} spots remaining</span>
             </div>
+          )}
+        </div>
+      </section>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="captainName">Team Captain Full Name</Label>
-                <Input id="captainName" name="captainName" value={form.captainName} onChange={handleChange} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="captainEmail">Email</Label>
-                <Input id="captainEmail" name="captainEmail" type="email" value={form.captainEmail} onChange={handleChange} required />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="captainPhone">Phone</Label>
-              <Input id="captainPhone" name="captainPhone" type="tel" value={form.captainPhone} onChange={handleChange} required />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="street">Street Address</Label>
-              <Input id="street" name="street" value={form.street} onChange={handleChange} required />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Input id="city" name="city" value={form.city} onChange={handleChange} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="province">Province / State</Label>
-                <Input id="province" name="province" value={form.province} onChange={handleChange} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="postalCode">Postal Code</Label>
-                <Input id="postalCode" name="postalCode" value={form.postalCode} onChange={handleChange} required />
+      <section className="section-light">
+        <div className="container py-16 md:py-20 max-w-2xl animate-fade-in">
+          <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 md:p-10 border border-[#1A1A1A]/10 rounded">
+            <div>
+              <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40 mb-4">Team Details</p>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="teamName" className="text-[#1A1A1A] font-medium">Business / Team Name</Label>
+                  <Input id="teamName" name="teamName" value={form.teamName} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="captainName" className="text-[#1A1A1A] font-medium">Captain Full Name</Label>
+                    <Input id="captainName" name="captainName" value={form.captainName} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="captainEmail" className="text-[#1A1A1A] font-medium">Email</Label>
+                    <Input id="captainEmail" name="captainEmail" type="email" value={form.captainEmail} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="captainPhone" className="text-[#1A1A1A] font-medium">Phone</Label>
+                  <Input id="captainPhone" name="captainPhone" type="tel" value={form.captainPhone} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
+                </div>
               </div>
             </div>
 
-            <Button type="submit" className="w-full" size="lg">
+            <div>
+              <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40 mb-4">Mailing Address</p>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="street" className="text-[#1A1A1A] font-medium">Street Address</Label>
+                  <Input id="street" name="street" value={form.street} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="city" className="text-[#1A1A1A] font-medium">City</Label>
+                    <Input id="city" name="city" value={form.city} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="province" className="text-[#1A1A1A] font-medium">Province</Label>
+                    <Input id="province" name="province" value={form.province} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="postalCode" className="text-[#1A1A1A] font-medium">Postal Code</Label>
+                    <Input id="postalCode" name="postalCode" value={form.postalCode} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Button type="submit" className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider" size="lg">
               Add to Cart — $600
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
     </div>
   );
 };

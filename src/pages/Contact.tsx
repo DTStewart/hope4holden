@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { Mail, Phone, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,67 +30,77 @@ const ContactPage = () => {
   };
 
   return (
-    <div className="container py-12 md:py-20 max-w-4xl mx-auto space-y-12 animate-fade-in">
-      <div className="text-center space-y-4">
-        <h1 className="font-heading font-bold text-4xl md:text-5xl">Contact Us</h1>
-        <p className="text-lg text-muted-foreground">We'd love to hear from you</p>
-      </div>
+    <div>
+      <section className="section-dark">
+        <div className="container py-20 md:py-28 animate-fade-in">
+          <p className="section-label">Reach Out</p>
+          <h1 className="font-heading font-extrabold text-4xl md:text-6xl text-white leading-[0.95]">
+            Contact Us
+          </h1>
+          <p className="text-white/60 text-lg mt-6">We'd love to hear from you.</p>
+        </div>
+      </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Contact info */}
-        <div className="space-y-6">
-          <h2 className="font-heading font-bold text-2xl">Get in Touch</h2>
-          <div className="space-y-4">
-            <a href="mailto:hello@hope4holden.com" className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors">
-              <Mail className="h-5 w-5 text-primary" />
-              hello@hope4holden.com
-            </a>
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <Phone className="h-5 w-5 text-primary" />
+      <section className="section-light">
+        <div className="container py-16 md:py-24 animate-fade-in">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 max-w-5xl">
+            {/* Contact info */}
+            <div className="space-y-8">
               <div>
-                <p>Jill Stewart: 204-761-3880</p>
-                <p>Derrick Stewart: 204-761-6955</p>
+                <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40 mb-4">Email</p>
+                <a href="mailto:hello@hope4holden.com" className="text-[#1A1A1A] hover:text-primary transition-colors flex items-center gap-3">
+                  <Mail className="h-5 w-5 text-primary" />
+                  hello@hope4holden.com
+                </a>
               </div>
+              <div>
+                <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40 mb-4">Phone</p>
+                <div className="space-y-2 text-[#1A1A1A]/70">
+                  <div className="flex items-center gap-3">
+                    <Phone className="h-5 w-5 text-primary" />
+                    <span>Jill Stewart: 204-761-3880</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Phone className="h-5 w-5 text-primary" />
+                    <span>Derrick Stewart: 204-761-6955</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Form */}
+            <div className="bg-white p-8 md:p-10 border border-[#1A1A1A]/10 rounded">
+              {submitted ? (
+                <div className="text-center space-y-4 py-8">
+                  <CheckCircle className="h-12 w-12 text-primary mx-auto" />
+                  <p className="font-heading font-bold text-[#1A1A1A]">Thank you for your message!</p>
+                  <Button variant="outline" className="rounded border-[#1A1A1A]/20" onClick={() => { setSubmitted(false); setForm({ name: "", email: "", message: "" }); }}>
+                    Send Another
+                  </Button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-[#1A1A1A] font-medium">Name</Label>
+                    <Input id="name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required className="rounded border-[#1A1A1A]/15" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-[#1A1A1A] font-medium">Email</Label>
+                    <Input id="email" type="email" value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} required className="rounded border-[#1A1A1A]/15" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="message" className="text-[#1A1A1A] font-medium">Message</Label>
+                    <Textarea id="message" rows={5} value={form.message} onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))} required className="rounded border-[#1A1A1A]/15" />
+                  </div>
+                  <Button type="submit" className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider" disabled={loading}>
+                    {loading ? "Sending..." : "Send Message"}
+                  </Button>
+                </form>
+              )}
             </div>
           </div>
         </div>
-
-        {/* Contact form */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-heading">Send a Message</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {submitted ? (
-              <div className="text-center space-y-4 py-8">
-                <CheckCircle className="h-12 w-12 text-primary mx-auto" />
-                <p className="font-medium">Thank you for your message!</p>
-                <Button variant="outline" onClick={() => { setSubmitted(false); setForm({ name: "", email: "", message: "" }); }}>
-                  Send Another Message
-                </Button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input id="name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="message">Message</Label>
-                  <Textarea id="message" rows={5} value={form.message} onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))} required />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Sending..." : "Send Message"}
-                </Button>
-              </form>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      </section>
     </div>
   );
 };
