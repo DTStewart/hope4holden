@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, Save } from "lucide-react";
+import { Check, X, Save, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/exportCsv";
 
 function TiersCard() {
   const queryClient = useQueryClient();
@@ -164,7 +165,27 @@ export default function SponsorsTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Sponsors ({sponsors?.length ?? 0})</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Sponsors ({sponsors?.length ?? 0})</span>
+            {sponsors && sponsors.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  exportToCsv("sponsors.csv",
+                    ["Business", "Contact", "Email", "Phone", "Tier", "Amount", "Paid", "Approved", "Date"],
+                    sponsors.map((s) => [
+                      s.business_name, s.contact_name, s.contact_email, s.contact_phone || "",
+                      s.tier_name, String(s.amount), s.paid ? "Yes" : "No", s.approved ? "Yes" : "No",
+                      new Date(s.created_at).toLocaleDateString(),
+                    ])
+                  )
+                }
+              >
+                <Download className="h-4 w-4 mr-1" /> Export CSV
+              </Button>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {sponsors?.length === 0 ? (

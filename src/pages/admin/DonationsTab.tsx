@@ -2,7 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Download } from "lucide-react";
+import { exportToCsv } from "@/lib/exportCsv";
 
 export default function DonationsTab() {
   const { data: donations, isLoading } = useQuery({
@@ -25,8 +28,25 @@ export default function DonationsTab() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>Donations ({donations?.length ?? 0})</span>
-          <span className="text-primary text-lg">${total} total</span>
+          <span>Donations ({donations?.length ?? 0}) — ${total} total</span>
+          {donations && donations.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                exportToCsv("donations.csv",
+                  ["Donor", "Email", "Amount", "Recurring", "Paid", "Date"],
+                  donations.map((d) => [
+                    d.donor_name, d.donor_email, String(d.amount),
+                    d.wants_recurring ? "Yes" : "No", d.paid ? "Yes" : "No",
+                    new Date(d.created_at).toLocaleDateString(),
+                  ])
+                )
+              }
+            >
+              <Download className="h-4 w-4 mr-1" /> Export CSV
+            </Button>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent>
