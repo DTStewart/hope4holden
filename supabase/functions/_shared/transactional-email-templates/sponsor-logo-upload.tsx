@@ -28,7 +28,6 @@ const SponsorLogoUploadEmail = ({ businessName, tierName, uploadUrl }: Props) =>
         <Text style={tips}>
           <strong>Upload tips:</strong><br />
           • PNG or SVG with transparent background recommended<br />
-          • Minimum resolution: 500×500 pixels<br />
           • Maximum file size: 10 MB<br />
           • You can upload multiple files (logo variations, banners, etc.)
         </Text>
