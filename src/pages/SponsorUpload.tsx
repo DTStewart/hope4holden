@@ -7,7 +7,7 @@ import { CheckCircle, Upload, Loader2, AlertCircle, ImageIcon, X, Plus } from "l
 
 const MAX_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/svg+xml"];
-const MIN_RES = 500;
+
 
 interface SponsorInfo {
   id: string;
@@ -59,15 +59,7 @@ export default function SponsorUpload() {
         resolve("File size exceeds 10MB. Please use a smaller file.");
         return;
       }
-      if (f.type === "image/svg+xml") { resolve(null); return; }
-      const img = new Image();
-      img.onload = () => {
-        if (img.width < MIN_RES || img.height < MIN_RES) {
-          resolve(`Image must be at least ${MIN_RES}×${MIN_RES} pixels. Yours is ${img.width}×${img.height}.`);
-        } else { resolve(null); }
-      };
-      img.onerror = () => resolve("Could not read image dimensions.");
-      img.src = URL.createObjectURL(f);
+      resolve(null);
     });
   }, []);
 
