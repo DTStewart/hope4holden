@@ -40,9 +40,7 @@ const SponsorPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log("Fetching tiers...");
         const tiersRes = await supabase.from("sponsorship_tiers").select("*").eq("active", true).order("sort_order");
-        console.log("Tiers result:", tiersRes.data?.length, tiersRes.error);
         if (tiersRes.data) setTiers(tiersRes.data.map((t: any) => ({ ...t, benefits: t.benefits as string[], max_slots: t.max_slots })));
       } catch (e) {
         console.error("Failed to load tiers", e);
