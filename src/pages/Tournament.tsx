@@ -1,124 +1,137 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Clock, Calendar, Users, Utensils, Trophy } from "lucide-react";
 
 const TournamentPage = () => {
   return (
-    <div className="container py-12 md:py-20 max-w-5xl mx-auto space-y-16 animate-fade-in">
-      <div className="text-center space-y-4">
-        <h1 className="font-heading font-bold text-4xl md:text-5xl">Tournament Info</h1>
-        <p className="text-lg text-muted-foreground">
-          Two days of fun, food, and fundraising — June 18-19, 2026
-        </p>
-      </div>
+    <div>
+      {/* Hero */}
+      <section className="section-dark">
+        <div className="container py-20 md:py-28 animate-fade-in">
+          <p className="section-label">June 18–19, 2026</p>
+          <h1 className="font-heading font-extrabold text-4xl md:text-6xl lg:text-7xl text-white leading-[0.95] max-w-2xl">
+            Tournament Info
+          </h1>
+          <p className="text-white/60 text-lg mt-6 max-w-xl">
+            Two days of fun, food, and fundraising in Brandon, Manitoba.
+          </p>
+        </div>
+      </section>
 
-      {/* Event Schedule */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Thursday */}
-        <Card className="border-2 border-primary/20">
-          <CardHeader className="bg-primary/5">
-            <div className="flex items-center gap-3">
-              <Calendar className="h-6 w-6 text-primary" />
-              <div>
-                <CardTitle className="font-heading text-xl">Thursday, June 18</CardTitle>
-                <p className="text-sm text-muted-foreground">Dinner at the Victoria Inn</p>
+      {/* Schedule */}
+      <section className="section-light">
+        <div className="container py-20 md:py-28 animate-fade-in">
+          <p className="section-label">Schedule</p>
+          <h2 className="font-heading font-extrabold text-3xl md:text-4xl text-[#1A1A1A] mb-12">
+            Two days, one mission.
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[#1A1A1A]/10">
+            {/* Thursday */}
+            <div className="bg-white p-8 md:p-10">
+              <div className="flex items-center gap-3 mb-6">
+                <Calendar className="h-5 w-5 text-primary" />
+                <div>
+                  <h3 className="font-heading font-bold text-lg text-[#1A1A1A]">Thursday, June 18</h3>
+                  <p className="text-sm text-[#1A1A1A]/50">Victoria Inn, Brandon</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                {[
+                  { time: "5:30 PM", event: "Happy Hour" },
+                  { time: "6:30 PM", event: "Dinner" },
+                  { time: "7:30 PM", event: "Speeches" },
+                  { time: "8:00 PM", event: "Party" },
+                ].map((item) => (
+                  <div key={item.event} className="flex items-center gap-4">
+                    <span className="text-sm font-heading font-semibold text-[#1A1A1A]/40 w-20 shrink-0">{item.time}</span>
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                    <span className="text-[#1A1A1A] font-medium">{item.event}</span>
+                  </div>
+                ))}
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="pt-6 space-y-4">
-            {[
-              { time: "5:30 PM", event: "Happy Hour", icon: Utensils },
-              { time: "6:30 PM", event: "Dinner", icon: Utensils },
-              { time: "7:30 PM", event: "Speeches", icon: Users },
-              { time: "8:00 PM", event: "Party", icon: Trophy },
-            ].map((item) => (
-              <div key={item.event} className="flex items-center gap-4">
-                <div className="flex items-center gap-2 w-24 shrink-0">
-                  <Clock className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">{item.time}</span>
-                </div>
-                <div className="h-2 w-2 rounded-full bg-primary shrink-0" />
-                <span className="font-medium">{item.event}</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
 
-        {/* Friday */}
-        <Card className="border-2 border-primary/20">
-          <CardHeader className="bg-primary/5">
-            <div className="flex items-center gap-3">
-              <Calendar className="h-6 w-6 text-primary" />
-              <div>
-                <CardTitle className="font-heading text-xl">Friday, June 19</CardTitle>
-                <p className="text-sm text-muted-foreground">Golf at Glendale Golf Course</p>
+            {/* Friday */}
+            <div className="bg-white p-8 md:p-10">
+              <div className="flex items-center gap-3 mb-6">
+                <Calendar className="h-5 w-5 text-primary" />
+                <div>
+                  <h3 className="font-heading font-bold text-lg text-[#1A1A1A]">Friday, June 19</h3>
+                  <p className="text-sm text-[#1A1A1A]/50">Glendale Golf Course</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                {[
+                  { time: "10:00 AM", event: "Registration" },
+                  { time: "10:45 AM", event: "Group Photo & Toast" },
+                  { time: "11:00 AM", event: "Shotgun Start" },
+                  { time: "5:00 PM", event: "Champions Award & Happy Hour" },
+                ].map((item) => (
+                  <div key={item.event} className="flex items-center gap-4">
+                    <span className="text-sm font-heading font-semibold text-[#1A1A1A]/40 w-20 shrink-0">{item.time}</span>
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                    <span className="text-[#1A1A1A] font-medium">{item.event}</span>
+                  </div>
+                ))}
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="pt-6 space-y-4">
-            {[
-              { time: "10:00 AM", event: "Registration", icon: Users },
-              { time: "10:45 AM", event: "Group Photo & Toast", icon: Users },
-              { time: "11:00 AM", event: "Shotgun Start", icon: Trophy },
-              { time: "5:00 PM", event: "Champions Award & Happy Hour", icon: Trophy },
-            ].map((item) => (
-              <div key={item.event} className="flex items-center gap-4">
-                <div className="flex items-center gap-2 w-24 shrink-0">
-                  <Clock className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">{item.time}</span>
-                </div>
-                <div className="h-2 w-2 rounded-full bg-primary shrink-0" />
-                <span className="font-medium">{item.event}</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </div>
+      </section>
 
-      {/* Event details */}
-      <div className="bg-secondary rounded-xl p-8 space-y-4">
-        <h2 className="font-heading font-bold text-2xl">Event Details</h2>
-        <ul className="space-y-3 text-muted-foreground">
-          <li className="flex items-start gap-3">
-            <Users className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-            <span><strong>Format:</strong> 4-person team scramble</span>
-          </li>
-          <li className="flex items-start gap-3">
-            <Utensils className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-            <span><strong>Includes:</strong> Dinner on Thursday evening and golf on Friday for your team of 4</span>
-          </li>
-          <li className="flex items-start gap-3">
-            <Trophy className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-            <span><strong>Registration Fee:</strong> $600 per team</span>
-          </li>
-        </ul>
-      </div>
+      {/* Details — dark */}
+      <section className="section-dark">
+        <div className="container py-20 md:py-28 animate-fade-in">
+          <p className="section-label">Details</p>
+          <h2 className="font-heading font-extrabold text-3xl md:text-4xl text-white mb-10">
+            What's included.
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl">
+            <div className="space-y-2">
+              <Users className="h-6 w-6 text-primary" />
+              <h3 className="font-heading font-bold text-white">Format</h3>
+              <p className="text-white/50 text-sm text-left">4-person team scramble. Fun for all skill levels.</p>
+            </div>
+            <div className="space-y-2">
+              <Utensils className="h-6 w-6 text-primary" />
+              <h3 className="font-heading font-bold text-white">Includes</h3>
+              <p className="text-white/50 text-sm text-left">Dinner Thursday + golf Friday for your team of 4.</p>
+            </div>
+            <div className="space-y-2">
+              <Trophy className="h-6 w-6 text-primary" />
+              <h3 className="font-heading font-bold text-white">Cost</h3>
+              <p className="text-white/50 text-sm text-left">$600 per team registration.</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Venues */}
-      <div className="space-y-6">
-        <h2 className="font-heading font-bold text-2xl text-center">Venues</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardContent className="pt-6 space-y-3">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-primary" />
-                <h3 className="font-heading font-semibold text-lg">Victoria Inn, Brandon</h3>
+      <section className="section-light">
+        <div className="container py-20 md:py-28 animate-fade-in">
+          <p className="section-label">Locations</p>
+          <h2 className="font-heading font-extrabold text-3xl md:text-4xl text-[#1A1A1A] mb-12">
+            Venues
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[#1A1A1A]/10">
+            <div className="bg-white p-8 md:p-10 space-y-2">
+              <div className="flex items-center gap-2 text-primary">
+                <MapPin className="h-4 w-4" />
+                <h3 className="font-heading font-bold text-[#1A1A1A]">Victoria Inn, Brandon</h3>
               </div>
-              <p className="text-sm text-muted-foreground">3550 Victoria Ave, Brandon, MB R7B 2R4</p>
-              <p className="text-sm text-muted-foreground">Thursday dinner, speeches, and party</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6 space-y-3">
-              <div className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-primary" />
-                <h3 className="font-heading font-semibold text-lg">Glendale Golf Course, Brandon</h3>
+              <p className="text-sm text-[#1A1A1A]/50">3550 Victoria Ave, Brandon, MB R7B 2R4</p>
+              <p className="text-sm text-[#1A1A1A]/50">Thursday dinner, speeches, and party</p>
+            </div>
+            <div className="bg-white p-8 md:p-10 space-y-2">
+              <div className="flex items-center gap-2 text-primary">
+                <MapPin className="h-4 w-4" />
+                <h3 className="font-heading font-bold text-[#1A1A1A]">Glendale Golf Course</h3>
               </div>
-              <p className="text-sm text-muted-foreground">1401 Chicken Rd, Brandon, MB R7A 5Y1</p>
-              <p className="text-sm text-muted-foreground">Friday golf tournament</p>
-            </CardContent>
-          </Card>
+              <p className="text-sm text-[#1A1A1A]/50">1401 Chicken Rd, Brandon, MB R7A 5Y1</p>
+              <p className="text-sm text-[#1A1A1A]/50">Friday golf tournament</p>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 };

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/hooks/use-toast";
@@ -11,20 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 const tierIcons: Record<string, any> = { Title: Star, Gold: Award, Silver: Medal, Hole: Flag };
 
-interface Tier {
-  id: string;
-  name: string;
-  price: number;
-  benefits: string[];
-  sort_order: number;
-}
-
-interface Sponsor {
-  id: string;
-  business_name: string;
-  tier_name: string;
-  logo_url: string | null;
-}
+interface Tier { id: string; name: string; price: number; benefits: string[]; sort_order: number; }
+interface Sponsor { id: string; business_name: string; tier_name: string; logo_url: string | null; }
 
 const SponsorPage = () => {
   const { addItem, setDrawerOpen } = useCart();
@@ -32,12 +19,7 @@ const SponsorPage = () => {
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [selectedTier, setSelectedTier] = useState<Tier | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const [form, setForm] = useState({
-    businessName: "",
-    contactName: "",
-    contactEmail: "",
-    contactPhone: "",
-  });
+  const [form, setForm] = useState({ businessName: "", contactName: "", contactEmail: "", contactPhone: "" });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -71,104 +53,126 @@ const SponsorPage = () => {
 
   if (submitted) {
     return (
-      <div className="container py-20 text-center space-y-6 animate-fade-in">
-        <CheckCircle className="h-16 w-16 text-primary mx-auto" />
-        <h2 className="font-heading font-bold text-3xl">Sponsorship Added!</h2>
-        <p className="text-muted-foreground">Your sponsorship has been added to your cart.</p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button variant="outline" onClick={() => { setSubmitted(false); setForm({ businessName: "", contactName: "", contactEmail: "", contactPhone: "" }); }}>
-            Continue Shopping
-          </Button>
-          <Button onClick={() => setDrawerOpen(true)}>Go to Cart</Button>
+      <div className="section-light">
+        <div className="container py-20 text-center space-y-6 animate-fade-in">
+          <CheckCircle className="h-16 w-16 text-primary mx-auto" />
+          <h2 className="font-heading font-extrabold text-3xl text-[#1A1A1A]">Sponsorship Added!</h2>
+          <p className="text-[#1A1A1A]/60">Your sponsorship has been added to your cart.</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button variant="outline" className="rounded border-[#1A1A1A]/20 text-[#1A1A1A]" onClick={() => { setSubmitted(false); setForm({ businessName: "", contactName: "", contactEmail: "", contactPhone: "" }); }}>
+              Continue Shopping
+            </Button>
+            <Button className="rounded bg-primary text-white hover:bg-[#4A7C09]" onClick={() => setDrawerOpen(true)}>Go to Cart</Button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container py-12 md:py-20 space-y-16 animate-fade-in">
-      <div className="text-center space-y-4">
-        <h1 className="font-heading font-bold text-4xl md:text-5xl">Become a Sponsor</h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Support the Hope 4 Holden tournament and make a meaningful impact in the fight against A-T.
-        </p>
-      </div>
+    <div>
+      <section className="section-dark">
+        <div className="container py-20 md:py-28 animate-fade-in">
+          <p className="section-label">Partner With Us</p>
+          <h1 className="font-heading font-extrabold text-4xl md:text-6xl text-white leading-[0.95] mb-4">
+            Become a Sponsor
+          </h1>
+          <p className="text-white/60 text-lg max-w-xl">
+            Support the tournament and make a meaningful impact in the fight against A-T.
+          </p>
+        </div>
+      </section>
 
       {/* Tier cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {tiers.map((tier) => (
-          <Card key={tier.name} className="group hover:shadow-lg transition-all hover:-translate-y-1 flex flex-col">
-            <CardHeader className="text-center">
-              {(() => { const Icon = tierIcons[tier.name] || Flag; return <Icon className="h-10 w-10 text-primary mx-auto mb-2" />; })()}
-              <CardTitle className="font-heading text-lg">{tier.name}</CardTitle>
-              <p className="text-3xl font-heading font-bold text-primary">${tier.price.toLocaleString()}</p>
-            </CardHeader>
-            <CardContent className="flex-1 flex flex-col">
-              <ul className="space-y-2 flex-1 mb-6">
-                {tier.benefits.map((b) => (
-                  <li key={b} className="text-sm text-muted-foreground flex items-start gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                    {b}
-                  </li>
-                ))}
-              </ul>
-              <Button className="w-full" onClick={() => setSelectedTier(tier)}>
-                Become a Sponsor
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <section className="section-light">
+        <div className="container py-20 md:py-28 animate-fade-in">
+          <p className="section-label">Sponsorship Tiers</p>
+          <h2 className="font-heading font-extrabold text-3xl md:text-4xl text-[#1A1A1A] mb-12">
+            Choose your level.
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[#1A1A1A]/10">
+            {tiers.map((tier) => {
+              const Icon = tierIcons[tier.name] || Flag;
+              return (
+                <div key={tier.name} className="bg-white p-8 flex flex-col">
+                  <Icon className="h-8 w-8 text-primary mb-4" />
+                  <h3 className="font-heading font-bold text-lg text-[#1A1A1A] mb-1">{tier.name}</h3>
+                  <p className="font-heading font-extrabold text-2xl text-primary mb-6">${tier.price.toLocaleString()}</p>
+                  <ul className="space-y-2 flex-1 mb-6">
+                    {tier.benefits.map((b) => (
+                      <li key={b} className="text-sm text-[#1A1A1A]/60 flex items-start gap-2 text-left">
+                        <span className="text-primary mt-1">·</span>
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-sm" onClick={() => setSelectedTier(tier)}>
+                    Select
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
       {/* Current sponsors */}
-      <div className="text-center space-y-6">
-        <h2 className="font-heading font-bold text-3xl">Current Sponsors</h2>
-        {sponsors.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-            {sponsors.map((s) => (
-              <div key={s.id} className="flex flex-col items-center gap-2 p-4 border rounded-lg">
-                {s.logo_url ? (
-                  <img src={s.logo_url} alt={s.business_name} className="h-16 object-contain" />
-                ) : (
-                  <div className="h-16 w-16 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">{s.business_name.charAt(0)}</div>
-                )}
-                <p className="text-sm font-medium">{s.business_name}</p>
-                <span className="text-xs text-muted-foreground">{s.tier_name} Sponsor</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="py-12 border-2 border-dashed border-border rounded-lg">
-            <p className="text-muted-foreground">Be our first sponsor!</p>
-          </div>
-        )}
-      </div>
+      <section className="section-dark">
+        <div className="container py-20 md:py-28 animate-fade-in">
+          <p className="section-label">Current Sponsors</p>
+          <h2 className="font-heading font-extrabold text-3xl md:text-4xl text-white mb-12">
+            Thank you to our partners.
+          </h2>
+          {sponsors.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {sponsors.map((s) => (
+                <div key={s.id} className="bg-white/5 border border-white/10 p-6 rounded flex flex-col items-center gap-3">
+                  {s.logo_url ? (
+                    <img src={s.logo_url} alt={s.business_name} className="h-16 object-contain" />
+                  ) : (
+                    <div className="h-16 w-16 bg-white/10 rounded flex items-center justify-center text-lg font-heading font-bold text-white/30">{s.business_name.charAt(0)}</div>
+                  )}
+                  <p className="text-sm font-medium text-white">{s.business_name}</p>
+                  <span className="text-xs text-white/40 font-heading uppercase tracking-wider">{s.tier_name}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-16 border border-dashed border-white/15 rounded text-center">
+              <p className="text-white/40">Be our first sponsor.</p>
+            </div>
+          )}
+        </div>
+      </section>
 
-      {/* Sponsor form dialog */}
+      {/* Form dialog */}
       <Dialog open={!!selectedTier} onOpenChange={(open) => !open && setSelectedTier(null)}>
-        <DialogContent>
+        <DialogContent className="rounded">
           <DialogHeader>
-            <DialogTitle className="font-heading">{selectedTier?.name} — ${selectedTier?.price.toLocaleString()}</DialogTitle>
+            <DialogTitle className="font-heading font-bold">{selectedTier?.name} — ${selectedTier?.price.toLocaleString()}</DialogTitle>
             <DialogDescription>Fill in your details to add this sponsorship to your cart.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="businessName">Business Name</Label>
-              <Input id="businessName" name="businessName" value={form.businessName} onChange={handleChange} required />
+              <Input id="businessName" name="businessName" value={form.businessName} onChange={handleChange} required className="rounded" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="contactName">Contact Name</Label>
-              <Input id="contactName" name="contactName" value={form.contactName} onChange={handleChange} required />
+              <Input id="contactName" name="contactName" value={form.contactName} onChange={handleChange} required className="rounded" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="contactEmail">Contact Email</Label>
-              <Input id="contactEmail" name="contactEmail" type="email" value={form.contactEmail} onChange={handleChange} required />
+              <Input id="contactEmail" name="contactEmail" type="email" value={form.contactEmail} onChange={handleChange} required className="rounded" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="contactPhone">Contact Phone</Label>
-              <Input id="contactPhone" name="contactPhone" type="tel" value={form.contactPhone} onChange={handleChange} required />
+              <Input id="contactPhone" name="contactPhone" type="tel" value={form.contactPhone} onChange={handleChange} required className="rounded" />
             </div>
-            <Button type="submit" className="w-full">Add to Cart — ${selectedTier?.price.toLocaleString()}</Button>
+            <Button type="submit" className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold">
+              Add to Cart — ${selectedTier?.price.toLocaleString()}
+            </Button>
           </form>
         </DialogContent>
       </Dialog>
