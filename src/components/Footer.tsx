@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import h4hLogo from "@/assets/h4h-logo.png";
 
 const Footer = () => {
   const [email, setEmail] = useState("");
@@ -30,10 +31,8 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           {/* Brand */}
           <div className="space-y-4">
-            <Link to="/" className="font-heading font-extrabold text-xl tracking-tight">
-              <span className="text-primary">HOPE</span>
-              <span className="text-white/60 mx-1">4</span>
-              <span className="text-white">Holden</span>
+            <Link to="/" className="inline-block">
+              <img src={h4hLogo} alt="Hope 4 Holden" className="h-12 w-auto invert" />
             </Link>
             <p className="text-sm text-white/50 leading-relaxed">
               Raising funds for the Ataxia Telangiectasia Children's Project to help find a cure.

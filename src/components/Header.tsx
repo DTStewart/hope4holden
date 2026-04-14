@@ -3,6 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
+import h4hLogo from "@/assets/h4h-logo.png";
+import { useCart } from "@/contexts/CartContext";
 
 const navLinks = [
   { to: "/tournament", label: "Tournament" },
@@ -23,10 +25,8 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 bg-[#1A1A1A] text-white">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="font-heading font-extrabold text-xl tracking-tight">
-          <span className="text-primary">HOPE</span>
-          <span className="text-white/60 mx-1">4</span>
-          <span className="text-white">Holden</span>
+        <Link to="/" className="flex items-center">
+          <img src={h4hLogo} alt="Hope 4 Holden" className="h-10 w-auto invert" />
         </Link>
 
         {/* Desktop nav */}
