@@ -5,6 +5,7 @@ import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image, Shopp
 import RegistrationsTab from "./RegistrationsTab";
 import SponsorsTab from "./SponsorsTab";
 import DonationsTab from "./DonationsTab";
+import OrdersTab from "./OrdersTab";
 import MessagesTab from "./MessagesTab";
 import SettingsTab from "./SettingsTab";
 import SubscribersTab from "./SubscribersTab";
