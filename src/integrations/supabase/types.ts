@@ -315,6 +315,7 @@ export type Database = {
         Row: {
           amount: number
           approved: boolean
+          brand_assets: Json
           business_name: string
           contact_email: string
           contact_name: string
@@ -332,6 +333,7 @@ export type Database = {
         Insert: {
           amount: number
           approved?: boolean
+          brand_assets?: Json
           business_name: string
           contact_email: string
           contact_name: string
@@ -349,6 +351,7 @@ export type Database = {
         Update: {
           amount?: number
           approved?: boolean
+          brand_assets?: Json
           business_name?: string
           contact_email?: string
           contact_name?: string

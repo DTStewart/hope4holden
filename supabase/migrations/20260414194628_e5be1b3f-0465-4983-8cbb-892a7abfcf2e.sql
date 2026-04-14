@@ -1,0 +1,1 @@
+ALTER TABLE public.sponsors ADD COLUMN brand_assets jsonb NOT NULL DEFAULT '[]'::jsonb;
