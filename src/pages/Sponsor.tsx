@@ -73,7 +73,7 @@ const SponsorPage = () => {
   return (
     <div>
       <section className="section-dark relative overflow-hidden">
-        <img src={sponsorHero} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+        <img src={sponsorHero} alt="" className="absolute inset-0 w-full h-full object-cover object-[center_75%] opacity-30" />
         <div className="container py-20 md:py-28 animate-fade-in relative z-10">
           <p className="section-label">Partner With Us</p>
           <h1 className="font-heading font-extrabold text-4xl md:text-6xl text-white leading-[0.95] mb-4">
