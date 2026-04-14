@@ -288,13 +288,22 @@ export default function SponsorsTab() {
                             {s.approved ? "Yes" : "No"}
                           </Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="space-x-1">
                           <Button
                             size="sm"
                             variant={s.approved ? "destructive" : "default"}
                             onClick={() => toggleApproval.mutate({ id: s.id, approved: !s.approved })}
                           >
                             {s.approved ? <X className="h-3 w-3" /> : <Check className="h-3 w-3" />}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            title="Resend upload email"
+                            disabled={sendingEmailFor === s.id}
+                            onClick={() => handleResendUploadEmail(s)}
+                          >
+                            {sendingEmailFor === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
                           </Button>
                         </TableCell>
                       </TableRow>
