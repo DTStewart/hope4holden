@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image, ShoppingCart } from "lucide-react";
+import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image, ShoppingCart, ClipboardList } from "lucide-react";
 import RegistrationsTab from "./RegistrationsTab";
 import SponsorsTab from "./SponsorsTab";
 import DonationsTab from "./DonationsTab";
@@ -10,6 +10,7 @@ import MessagesTab from "./MessagesTab";
 import SettingsTab from "./SettingsTab";
 import SubscribersTab from "./SubscribersTab";
 import GalleryTab from "./GalleryTab";
+import WaitlistTab from "./WaitlistTab";
 
 export default function AdminDashboard() {
   const { user, signOut } = useAuth();
