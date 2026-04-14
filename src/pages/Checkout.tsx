@@ -5,19 +5,33 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle, XCircle, Loader2, ShoppingCart } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, ShoppingCart, ExternalLink } from "lucide-react";
 
 const CheckoutPage = () => {
   const { items, totalAmount, clearCart, setDrawerOpen } = useCart();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [hadRecurring, setHadRecurring] = useState(false);
 
   const success = searchParams.get("success") === "true";
   const canceled = searchParams.get("canceled") === "true";
 
   useEffect(() => {
-    if (success) clearCart();
+    if (success) {
+      // Check for recurring donations before clearing the cart
+      const stored = localStorage.getItem("h4h-cart");
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          const hasRecurring = parsed.some(
+            (item: any) => item.type === "donation" && item.formData?.wantsRecurring
+          );
+          if (hasRecurring) setHadRecurring(true);
+        } catch {}
+      }
+      clearCart();
+    }
   }, [success, clearCart]);
 
   const handleCheckout = async () => {
