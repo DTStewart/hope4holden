@@ -23,9 +23,9 @@ const HomePage = () => {
       {/* Hero — bold, dark, full-bleed */}
       <section className="relative bg-[#1A1A1A] overflow-hidden">
         <div className="absolute inset-0">
-          <img src={heroBg} alt="Kids in H4H shirts at the golf tournament" className="w-full h-full object-cover opacity-30" />
+          <img src={heroBg} alt="Kids in H4H shirts at the golf tournament" className="w-full h-full object-cover opacity-50" />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1A1A1A] via-[#1A1A1A]/80 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1A1A1A]/90 via-[#1A1A1A]/60 to-transparent" />
         <div className="container relative py-28 md:py-40 lg:py-48">
           <div className="max-w-3xl animate-fade-in">
             <p className="font-heading font-bold text-xs tracking-[0.3em] uppercase text-primary mb-6">
