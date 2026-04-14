@@ -5,19 +5,33 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle, XCircle, Loader2, ShoppingCart } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, ShoppingCart, ExternalLink } from "lucide-react";
 
 const CheckoutPage = () => {
   const { items, totalAmount, clearCart, setDrawerOpen } = useCart();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [hadRecurring, setHadRecurring] = useState(false);
 
   const success = searchParams.get("success") === "true";
   const canceled = searchParams.get("canceled") === "true";
 
   useEffect(() => {
-    if (success) clearCart();
+    if (success) {
+      // Check for recurring donations before clearing the cart
+      const stored = localStorage.getItem("h4h-cart");
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          const hasRecurring = parsed.some(
+            (item: any) => item.type === "donation" && item.formData?.wantsRecurring
+          );
+          if (hasRecurring) setHadRecurring(true);
+        } catch {}
+      }
+      clearCart();
+    }
   }, [success, clearCart]);
 
   const handleCheckout = async () => {
@@ -52,6 +66,19 @@ const CheckoutPage = () => {
           <Button onClick={() => navigate("/")} size="lg" className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider">
             Back to Home
           </Button>
+          {hadRecurring && (
+            <div className="bg-accent/10 border border-accent/20 rounded p-6 text-left space-y-3">
+              <p className="text-[#1A1A1A]/80 text-sm">
+                To set up a recurring donation, please visit the ATCP website:
+              </p>
+              <Button asChild variant="outline" className="rounded border-primary text-primary hover:bg-primary/5">
+                <a href="https://www.atcp.org/donate" target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Set Up Recurring Donation
+                </a>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );
