@@ -9,7 +9,7 @@ const TournamentPage = () => {
         <img
           src={tournamentHero}
           alt="Hope 4 Holden golf tournament group photo"
-          className="absolute inset-0 w-full h-full object-cover opacity-30"
+          className="absolute inset-0 w-full h-full object-cover object-bottom opacity-30"
         />
         <div className="container py-20 md:py-28 animate-fade-in relative z-10">
           <p className="section-label">June 18–19, 2026</p>
