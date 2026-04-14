@@ -41,7 +41,7 @@ const Header = () => {
                   : "text-white/70 hover:text-white"
               }`}
             >
-              {link.label}
+              {link.icon ? <Home className="h-4 w-4" /> : link.label}
             </Link>
           ))}
         </nav>
