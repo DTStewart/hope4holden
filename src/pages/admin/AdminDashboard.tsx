@@ -1,13 +1,14 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus } from "lucide-react";
+import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image } from "lucide-react";
 import RegistrationsTab from "./RegistrationsTab";
 import SponsorsTab from "./SponsorsTab";
 import DonationsTab from "./DonationsTab";
 import MessagesTab from "./MessagesTab";
 import SettingsTab from "./SettingsTab";
 import SubscribersTab from "./SubscribersTab";
+import GalleryTab from "./GalleryTab";
 
 export default function AdminDashboard() {
   const { user, signOut } = useAuth();
@@ -29,7 +30,7 @@ export default function AdminDashboard() {
 
       <div className="p-6 max-w-7xl mx-auto">
         <Tabs defaultValue="registrations" className="space-y-6">
-          <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full">
+          <TabsList className="grid grid-cols-4 md:grid-cols-7 w-full">
             <TabsTrigger value="registrations" className="text-xs md:text-sm">
               <Users className="h-4 w-4 mr-1 hidden md:inline" />
               Registrations
@@ -54,6 +55,10 @@ export default function AdminDashboard() {
               <UserPlus className="h-4 w-4 mr-1 hidden md:inline" />
               Subscribers
             </TabsTrigger>
+            <TabsTrigger value="gallery" className="text-xs md:text-sm">
+              <Image className="h-4 w-4 mr-1 hidden md:inline" />
+              Gallery
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="registrations"><RegistrationsTab /></TabsContent>
@@ -62,6 +67,7 @@ export default function AdminDashboard() {
           <TabsContent value="messages"><MessagesTab /></TabsContent>
           <TabsContent value="settings"><SettingsTab /></TabsContent>
           <TabsContent value="subscribers"><SubscribersTab /></TabsContent>
+          <TabsContent value="gallery"><GalleryTab /></TabsContent>
         </Tabs>
       </div>
     </div>
