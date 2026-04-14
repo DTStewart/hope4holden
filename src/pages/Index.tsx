@@ -11,10 +11,9 @@ const HomePage = () => {
 
   useEffect(() => {
     supabase
-      .from("sponsors")
+      .from("sponsors_public" as any)
       .select("id, business_name, tier_name, logo_url")
-      .eq("approved", true)
-      .then(({ data }) => {
+      .then(({ data }: any) => {
         if (data) setSponsors(data);
       });
   }, []);

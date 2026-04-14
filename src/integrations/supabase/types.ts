@@ -486,7 +486,44 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      sponsors_public: {
+        Row: {
+          approved: boolean | null
+          brand_assets: Json | null
+          business_name: string | null
+          id: string | null
+          logo_url: string | null
+          tier_id: string | null
+          tier_name: string | null
+        }
+        Insert: {
+          approved?: boolean | null
+          brand_assets?: Json | null
+          business_name?: string | null
+          id?: string | null
+          logo_url?: string | null
+          tier_id?: string | null
+          tier_name?: string | null
+        }
+        Update: {
+          approved?: boolean | null
+          brand_assets?: Json | null
+          business_name?: string | null
+          id?: string | null
+          logo_url?: string | null
+          tier_id?: string | null
+          tier_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsors_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "sponsorship_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       decrement_spots: { Args: never; Returns: number }

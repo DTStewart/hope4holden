@@ -102,15 +102,28 @@ export default function SponsorUpload() {
       const uploadedAssets: Array<{ url: string; filename: string; label: string }> = [];
 
       for (const entry of files) {
-        const ext = entry.file.name.split(".").pop() || "png";
-        const path = `${sponsor.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const { error: uploadError } = await supabase.storage
-          .from("sponsor-logos")
-          .upload(path, entry.file, { upsert: true });
-        if (uploadError) throw uploadError;
-        const { data: urlData } = supabase.storage.from("sponsor-logos").getPublicUrl(path);
+        // Upload each file through the edge function (service role handles storage)
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const uploadRes = await fetch(
+          `${supabaseUrl}/functions/v1/sponsor-upload?token=${encodeURIComponent(token)}&filename=${encodeURIComponent(entry.file.name)}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": entry.file.type,
+              "apikey": supabaseKey,
+              "Authorization": `Bearer ${supabaseKey}`,
+            },
+            body: entry.file,
+          }
+        );
+        if (!uploadRes.ok) {
+          const err = await uploadRes.json();
+          throw new Error(err.error || "Upload failed");
+        }
+        const { url } = await uploadRes.json();
         uploadedAssets.push({
-          url: urlData.publicUrl,
+          url,
           filename: entry.file.name,
           label: entry.label || entry.file.name,
         });
