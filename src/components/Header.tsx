@@ -4,7 +4,6 @@ import { Menu, X, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import h4hLogo from "@/assets/h4h-logo.png";
-import { useCart } from "@/contexts/CartContext";
 
 const navLinks = [
   { to: "/tournament", label: "Tournament" },
