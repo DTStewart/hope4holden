@@ -20,6 +20,7 @@ import Checkout from "./pages/Checkout";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Unsubscribe from "./pages/Unsubscribe";
+import SponsorUpload from "./pages/SponsorUpload";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,6 +56,7 @@ const App = () => (
                 }
               />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
+              <Route path="/sponsor-upload/:token" element={<SponsorUpload />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
