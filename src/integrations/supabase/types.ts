@@ -289,6 +289,7 @@ export type Database = {
           benefits: Json
           created_at: string
           id: string
+          max_slots: number | null
           name: string
           price: number
           sort_order: number
@@ -299,6 +300,7 @@ export type Database = {
           benefits?: Json
           created_at?: string
           id?: string
+          max_slots?: number | null
           name: string
           price: number
           sort_order?: number
@@ -309,6 +311,7 @@ export type Database = {
           benefits?: Json
           created_at?: string
           id?: string
+          max_slots?: number | null
           name?: string
           price?: number
           sort_order?: number
