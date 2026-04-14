@@ -41,7 +41,14 @@ const SponsorPage = () => {
     const fetchData = async () => {
       try {
         const tiersRes = await supabase.from("sponsorship_tiers").select("*").eq("active", true).order("sort_order");
-        if (tiersRes.data) setTiers(tiersRes.data.map((t: any) => ({ ...t, benefits: t.benefits as string[], max_slots: t.max_slots })));
+        console.log("tiersRes full object:", JSON.stringify(tiersRes, null, 2));
+        console.log("tiersRes.data:", tiersRes.data);
+        console.log("tiersRes.error:", tiersRes.error);
+        if (tiersRes.data) {
+          const mapped = tiersRes.data.map((t: any) => ({ ...t, benefits: t.benefits as string[], max_slots: t.max_slots }));
+          console.log("Setting tiers state:", mapped);
+          setTiers(mapped);
+        }
       } catch (e) {
         console.error("Failed to load tiers", e);
       }
