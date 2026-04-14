@@ -85,8 +85,9 @@ const RegisterPage = () => {
   if (regStatus === "coming_soon") {
     return (
       <div>
-        <section className="section-dark">
-          <div className="container py-20 md:py-28 text-center animate-fade-in">
+        <section className="section-dark relative overflow-hidden">
+          <img src={registrationHero} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+          <div className="container py-20 md:py-28 text-center animate-fade-in relative z-10">
             <Clock className="h-16 w-16 text-primary mx-auto mb-6" />
             <h1 className="font-heading font-extrabold text-4xl md:text-6xl text-white mb-4">Coming Soon</h1>
             <p className="text-white/60 text-lg max-w-xl mx-auto">
@@ -136,8 +137,9 @@ const RegisterPage = () => {
   if (regStatus === "sold_out") {
     return (
       <div>
-        <section className="section-dark">
-          <div className="container py-20 md:py-28 text-center animate-fade-in">
+        <section className="section-dark relative overflow-hidden">
+          <img src={registrationHero} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+          <div className="container py-20 md:py-28 text-center animate-fade-in relative z-10">
             <h1 className="font-heading font-extrabold text-4xl md:text-6xl text-white mb-4">Sold Out</h1>
             <p className="text-white/60 text-lg mb-8">All spots have been filled. Join the waitlist below.</p>
           </div>
@@ -202,8 +204,9 @@ const RegisterPage = () => {
   // Open — registration form
   return (
     <div>
-      <section className="section-dark">
-        <div className="container py-20 md:py-28 animate-fade-in">
+      <section className="section-dark relative overflow-hidden">
+        <img src={registrationHero} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+        <div className="container py-20 md:py-28 animate-fade-in relative z-10">
           <p className="section-label">Team Registration</p>
           <h1 className="font-heading font-extrabold text-4xl md:text-6xl text-white leading-[0.95] mb-4">
             Register Your Team
