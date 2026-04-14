@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { CheckCircle, Upload, Loader2, AlertCircle, ImageIcon } from "lucide-react";
 
-const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/svg+xml"];
 const MIN_RES = 500;
 
@@ -52,18 +52,12 @@ export default function SponsorUpload() {
         resolve("File size exceeds 10MB. Please use a smaller file.");
         return;
       }
-      // SVGs don't have pixel dimensions to check
-      if (f.type === "image/svg+xml") {
-        resolve(null);
-        return;
-      }
+      if (f.type === "image/svg+xml") { resolve(null); return; }
       const img = new Image();
       img.onload = () => {
         if (img.width < MIN_RES || img.height < MIN_RES) {
           resolve(`Image must be at least ${MIN_RES}×${MIN_RES} pixels. Yours is ${img.width}×${img.height}.`);
-        } else {
-          resolve(null);
-        }
+        } else { resolve(null); }
       };
       img.onerror = () => resolve("Could not read image dimensions.");
       img.src = URL.createObjectURL(f);
@@ -75,12 +69,7 @@ export default function SponsorUpload() {
     if (!f) return;
     setValidationError(null);
     const err = await validateFile(f);
-    if (err) {
-      setValidationError(err);
-      setFile(null);
-      setPreview(null);
-      return;
-    }
+    if (err) { setValidationError(err); setFile(null); setPreview(null); return; }
     setFile(f);
     setPreview(URL.createObjectURL(f));
   };
@@ -91,28 +80,20 @@ export default function SponsorUpload() {
     try {
       const ext = file.name.split(".").pop() || "png";
       const path = `${sponsor.id}/${Date.now()}.${ext}`;
-
       const { error: uploadError } = await supabase.storage
         .from("sponsor-logos")
         .upload(path, file, { upsert: true });
-
       if (uploadError) throw uploadError;
-
       const { data: urlData } = supabase.storage.from("sponsor-logos").getPublicUrl(path);
-
       const res = await supabase.functions.invoke("sponsor-upload", {
         body: { token, logoUrl: urlData.publicUrl },
       });
-
       if (res.error) throw new Error("Failed to save logo");
-
       setStatus("uploaded");
       toast({ title: "Logo uploaded successfully!" });
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
-    } finally {
-      setUploading(false);
-    }
+    } finally { setUploading(false); }
   };
 
   return (
@@ -121,7 +102,6 @@ export default function SponsorUpload() {
         {status === "loading" && (
           <div className="text-center"><Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" /></div>
         )}
-
         {status === "invalid" && (
           <div className="text-center space-y-4">
             <AlertCircle className="h-14 w-14 text-destructive mx-auto" />
@@ -129,18 +109,14 @@ export default function SponsorUpload() {
             <p className="text-muted-foreground">This upload link is invalid or has expired.</p>
           </div>
         )}
-
         {status === "already" && sponsor && (
           <div className="text-center space-y-4">
             <CheckCircle className="h-14 w-14 text-primary mx-auto" />
             <h1 className="font-heading font-bold text-2xl text-foreground">Logo Already Uploaded</h1>
             <p className="text-muted-foreground">A logo has already been uploaded for <strong>{sponsor.business_name}</strong>.</p>
-            {sponsor.logo_url && (
-              <img src={sponsor.logo_url} alt="Uploaded logo" className="max-h-32 mx-auto mt-4 object-contain" />
-            )}
+            {sponsor.logo_url && <img src={sponsor.logo_url} alt="Uploaded logo" className="max-h-32 mx-auto mt-4 object-contain" />}
           </div>
         )}
-
         {status === "uploaded" && (
           <div className="text-center space-y-4">
             <CheckCircle className="h-14 w-14 text-primary mx-auto" />
@@ -148,7 +124,6 @@ export default function SponsorUpload() {
             <p className="text-muted-foreground">Your logo has been uploaded and will be reviewed by our team before being published.</p>
           </div>
         )}
-
         {status === "ready" && sponsor && (
           <div className="space-y-6">
             <div className="text-center space-y-2">
@@ -158,7 +133,6 @@ export default function SponsorUpload() {
                 <strong>{sponsor.business_name}</strong> — {sponsor.tier_name} Sponsor
               </p>
             </div>
-
             <div className="bg-card border border-border rounded p-6 space-y-5">
               <div className="bg-muted/50 border border-border rounded p-4 text-sm text-muted-foreground space-y-1">
                 <p className="font-medium text-foreground">Logo Guidelines</p>
@@ -169,12 +143,8 @@ export default function SponsorUpload() {
                   <li><strong>Recommended:</strong> PNG or SVG with a transparent background for best results</li>
                 </ul>
               </div>
-
               <div>
-                <label
-                  htmlFor="logo-file"
-                  className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-lg p-8 cursor-pointer hover:border-primary transition-colors"
-                >
+                <label htmlFor="logo-file" className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-lg p-8 cursor-pointer hover:border-primary transition-colors">
                   {preview ? (
                     <img src={preview} alt="Preview" className="max-h-40 object-contain" />
                   ) : (
@@ -184,33 +154,16 @@ export default function SponsorUpload() {
                     </>
                   )}
                 </label>
-                <input
-                  id="logo-file"
-                  type="file"
-                  accept=".png,.jpg,.jpeg,.svg"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-                {file && (
-                  <p className="text-xs text-muted-foreground mt-2 text-center">
-                    {file.name} ({(file.size / 1024 / 1024).toFixed(1)} MB)
-                  </p>
-                )}
+                <input id="logo-file" type="file" accept=".png,.jpg,.jpeg,.svg" className="hidden" onChange={handleFileChange} />
+                {file && <p className="text-xs text-muted-foreground mt-2 text-center">{file.name} ({(file.size / 1024 / 1024).toFixed(1)} MB)</p>}
               </div>
-
               {validationError && (
                 <div className="flex items-start gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded">
                   <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
                   <span>{validationError}</span>
                 </div>
               )}
-
-              <Button
-                onClick={handleUpload}
-                disabled={!file || uploading}
-                className="w-full rounded bg-primary text-primary-foreground hover:bg-accent font-heading font-bold"
-                size="lg"
-              >
+              <Button onClick={handleUpload} disabled={!file || uploading} className="w-full rounded bg-primary text-primary-foreground hover:bg-accent font-heading font-bold" size="lg">
                 {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 {uploading ? "Uploading..." : "Submit Logo"}
               </Button>

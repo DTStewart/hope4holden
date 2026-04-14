@@ -195,7 +195,6 @@ export default function SponsorsTab() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Logo</TableHead>
                     <TableHead>Business</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Email</TableHead>
@@ -209,13 +208,6 @@ export default function SponsorsTab() {
                 <TableBody>
                   {sponsors?.map((s) => (
                     <TableRow key={s.id}>
-                      <TableCell>
-                        {s.logo_url ? (
-                          <img src={s.logo_url} alt={s.business_name} className="h-10 w-10 object-contain rounded border" />
-                        ) : (
-                          <div className="h-10 w-10 bg-muted rounded border flex items-center justify-center text-xs text-muted-foreground">—</div>
-                        )}
-                      </TableCell>
                       <TableCell className="font-medium">{s.business_name}</TableCell>
                       <TableCell>{s.contact_name}</TableCell>
                       <TableCell>{s.contact_email}</TableCell>

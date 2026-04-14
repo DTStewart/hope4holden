@@ -110,10 +110,8 @@ serve(async (req) => {
             });
             break;
 
-          case "sponsorship": {
-            // Generate a unique upload token
-            const uploadToken = crypto.randomUUID();
-            const { data: sponsorRow } = await supabase.from("sponsors").insert({
+          case "sponsorship":
+            await supabase.from("sponsors").insert({
               business_name: formData.businessName || "",
               contact_name: formData.contactName || "",
               contact_email: formData.contactEmail || "",
@@ -123,29 +121,7 @@ serve(async (req) => {
               amount: item.amount,
               stripe_session_id: session.id,
               paid: true,
-              logo_upload_token: uploadToken,
-            }).select("id").single();
-
-            // Determine site URL for upload link
-            const siteUrl = Deno.env.get("SITE_URL") || "https://hope4holden.lovable.app";
-            const uploadUrl = `${siteUrl}/sponsor-upload/${uploadToken}`;
-
-            // Send confirmation email to sponsor with upload link
-            if (formData.contactEmail) {
-              await supabase.functions.invoke("send-transactional-email", {
-                body: {
-                  templateName: "sponsor-confirmation",
-                  recipientEmail: formData.contactEmail,
-                  idempotencyKey: `sponsor-confirm-${sponsorRow?.id || uploadToken}`,
-                  templateData: {
-                    businessName: formData.businessName || "",
-                    tierName: formData.tier || "",
-                    uploadUrl,
-                  },
-                },
-              });
-            }
-
+            });
             await notifyAdmins(supabase, "admin-new-sponsorship", {
               businessName: formData.businessName || "",
               contactName: formData.contactName || "",
@@ -154,7 +130,6 @@ serve(async (req) => {
               amount: item.amount,
             });
             break;
-          }
 
           case "donation":
             await supabase.from("donations").insert({
