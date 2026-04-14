@@ -11,7 +11,7 @@ const RegisterPage = () => {
   const { addItem, setDrawerOpen } = useCart();
   const [submitted, setSubmitted] = useState(false);
   const [spotsAvailable, setSpotsAvailable] = useState<number | null>(null);
-  const [registrationOpen, setRegistrationOpen] = useState(true);
+  const [registrationOpen, setRegistrationOpen] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
