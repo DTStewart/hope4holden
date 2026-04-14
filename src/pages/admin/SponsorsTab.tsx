@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, Save, Download } from "lucide-react";
+import { Check, X, Save, Download, ImageIcon } from "lucide-react";
 import { exportToCsv } from "@/lib/exportCsv";
 
 function TiersCard() {
@@ -130,9 +131,16 @@ function TiersCard() {
   );
 }
 
+interface BrandAsset {
+  url: string;
+  filename: string;
+  label?: string;
+}
+
 export default function SponsorsTab() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [assetsDialog, setAssetsDialog] = useState<{ sponsor: any; assets: BrandAsset[] } | null>(null);
 
   const { data: sponsors, isLoading } = useQuery({
     queryKey: ["admin-sponsors"],
@@ -157,6 +165,11 @@ export default function SponsorsTab() {
     },
   });
 
+  const getAssets = (s: any): BrandAsset[] => {
+    const assets = (s as any).brand_assets;
+    return Array.isArray(assets) ? assets : [];
+  };
+
   if (isLoading) return <div className="text-center py-8 text-muted-foreground">Loading...</div>;
 
   return (
@@ -173,10 +186,11 @@ export default function SponsorsTab() {
                 variant="outline"
                 onClick={() =>
                   exportToCsv("sponsors.csv",
-                    ["Business", "Contact", "Email", "Phone", "Tier", "Amount", "Paid", "Approved", "Date"],
+                    ["Business", "Contact", "Email", "Phone", "Tier", "Amount", "Paid", "Approved", "Assets", "Date"],
                     sponsors.map((s) => [
                       s.business_name, s.contact_name, s.contact_email, s.contact_phone || "",
                       s.tier_name, String(s.amount), s.paid ? "Yes" : "No", s.approved ? "Yes" : "No",
+                      String(getAssets(s).length),
                       new Date(s.created_at).toLocaleDateString(),
                     ])
                   )
@@ -201,45 +215,87 @@ export default function SponsorsTab() {
                     <TableHead>Tier</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Paid</TableHead>
+                    <TableHead>Assets</TableHead>
                     <TableHead>Approved</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sponsors?.map((s) => (
-                    <TableRow key={s.id}>
-                      <TableCell className="font-medium">{s.business_name}</TableCell>
-                      <TableCell>{s.contact_name}</TableCell>
-                      <TableCell>{s.contact_email}</TableCell>
-                      <TableCell>{s.tier_name}</TableCell>
-                      <TableCell>${s.amount}</TableCell>
-                      <TableCell>
-                        <Badge variant={s.paid ? "default" : "destructive"}>
-                          {s.paid ? "Yes" : "No"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={s.approved ? "default" : "secondary"}>
-                          {s.approved ? "Yes" : "No"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          size="sm"
-                          variant={s.approved ? "destructive" : "default"}
-                          onClick={() => toggleApproval.mutate({ id: s.id, approved: !s.approved })}
-                        >
-                          {s.approved ? <X className="h-3 w-3" /> : <Check className="h-3 w-3" />}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {sponsors?.map((s) => {
+                    const assets = getAssets(s);
+                    return (
+                      <TableRow key={s.id}>
+                        <TableCell className="font-medium">{s.business_name}</TableCell>
+                        <TableCell>{s.contact_name}</TableCell>
+                        <TableCell>{s.contact_email}</TableCell>
+                        <TableCell>{s.tier_name}</TableCell>
+                        <TableCell>${s.amount}</TableCell>
+                        <TableCell>
+                          <Badge variant={s.paid ? "default" : "destructive"}>
+                            {s.paid ? "Yes" : "No"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {assets.length > 0 ? (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="gap-1"
+                              onClick={() => setAssetsDialog({ sponsor: s, assets })}
+                            >
+                              <ImageIcon className="h-3 w-3" />
+                              {assets.length}
+                            </Button>
+                          ) : s.logo_url ? (
+                            <img src={s.logo_url} alt="Logo" className="h-8 w-8 object-contain rounded" />
+                          ) : (
+                            <span className="text-muted-foreground text-xs">None</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={s.approved ? "default" : "secondary"}>
+                            {s.approved ? "Yes" : "No"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant={s.approved ? "destructive" : "default"}
+                            onClick={() => toggleApproval.mutate({ id: s.id, approved: !s.approved })}
+                          >
+                            {s.approved ? <X className="h-3 w-3" /> : <Check className="h-3 w-3" />}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Assets preview dialog */}
+      <Dialog open={!!assetsDialog} onOpenChange={() => setAssetsDialog(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{assetsDialog?.sponsor?.business_name} — Brand Assets</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
+            {assetsDialog?.assets.map((asset, i) => (
+              <a key={i} href={asset.url} target="_blank" rel="noopener noreferrer" className="group block">
+                <div className="border border-border rounded p-2 hover:border-primary transition-colors">
+                  <img src={asset.url} alt={asset.label || asset.filename} className="w-full h-24 object-contain" />
+                  <p className="text-xs text-muted-foreground mt-1 truncate text-center">
+                    {asset.label || asset.filename}
+                  </p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
