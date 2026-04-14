@@ -4,15 +4,24 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Footer = () => {
   const [email, setEmail] = useState("");
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    // TODO: Save to Supabase email_subscribers
-    toast({ title: "Thank you!", description: "You've been added to our mailing list." });
+    const { error } = await supabase.from("email_subscribers").insert({ email });
+    if (error) {
+      if (error.code === "23505") {
+        toast({ title: "Already subscribed!", description: "This email is already on our list." });
+      } else {
+        toast({ title: "Something went wrong", description: error.message, variant: "destructive" });
+      }
+    } else {
+      toast({ title: "Thank you!", description: "You've been added to our mailing list." });
+    }
     setEmail("");
   };
 

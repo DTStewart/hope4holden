@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,15 +7,30 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle, Users } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const RegisterPage = () => {
   const { addItem, setDrawerOpen } = useCart();
   const navigate = useNavigate();
   const [submitted, setSubmitted] = useState(false);
+  const [spotsAvailable, setSpotsAvailable] = useState<number | null>(null);
+  const [registrationOpen, setRegistrationOpen] = useState(true);
 
-  // TODO: Fetch from Supabase settings
-  const spotsAvailable = 36;
-  const registrationOpen = true;
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data } = await supabase
+        .from("settings")
+        .select("key, value")
+        .in("key", ["registration_open", "spots_remaining"]);
+      if (data) {
+        for (const s of data) {
+          if (s.key === "registration_open") setRegistrationOpen(s.value === true || s.value === "true");
+          if (s.key === "spots_remaining") setSpotsAvailable(Number(s.value));
+        }
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const [form, setForm] = useState({
     teamName: "",
@@ -82,10 +97,12 @@ const RegisterPage = () => {
       <div className="text-center space-y-4">
         <h1 className="font-heading font-bold text-4xl md:text-5xl">Register Your Team</h1>
         <p className="text-lg text-muted-foreground">$600 per team of 4 golfers</p>
-        <div className="flex items-center justify-center gap-2 text-primary font-medium">
-          <Users className="h-5 w-5" />
-          <span>{spotsAvailable} spots remaining</span>
-        </div>
+        {spotsAvailable !== null && (
+          <div className="flex items-center justify-center gap-2 text-primary font-medium">
+            <Users className="h-5 w-5" />
+            <span>{spotsAvailable} spots remaining</span>
+          </div>
+        )}
       </div>
 
       <Card>
