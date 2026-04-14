@@ -103,7 +103,6 @@ const SponsorPage = () => {
               <CardTitle className="font-heading text-lg">{tier.name}</CardTitle>
               <p className="text-3xl font-heading font-bold text-primary">${tier.price.toLocaleString()}</p>
             </CardHeader>
-            </CardHeader>
             <CardContent className="flex-1 flex flex-col">
               <ul className="space-y-2 flex-1 mb-6">
                 {tier.benefits.map((b) => (
