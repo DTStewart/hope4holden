@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import heroBg from "@/assets/hero-bg.jpg";
+import h4hLogo from "@/assets/h4h-logo.png";
 
 const HomePage = () => {
   const [sponsors, setSponsors] = useState<{ id: string; business_name: string; tier_name: string; logo_url: string | null }[]>([]);
@@ -28,12 +29,10 @@ const HomePage = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-[#1A1A1A]/90 via-[#1A1A1A]/60 to-transparent" />
         <div className="container relative py-28 md:py-40 lg:py-48">
           <div className="max-w-3xl animate-fade-in">
+            <img src={h4hLogo} alt="Hope 4 Holden logo" className="h-20 md:h-28 w-auto invert mb-6" />
             <p className="font-heading font-bold text-xs tracking-[0.3em] uppercase text-primary mb-6">
               Charity Golf Tournament
             </p>
-            <h1 className="font-heading font-extrabold text-5xl md:text-7xl lg:text-8xl text-white leading-[0.95] mb-6">
-              HOPE 4<br />Holden
-            </h1>
             <p className="font-heading font-bold text-xl md:text-2xl text-primary mb-4">
               "Beat Disease"
             </p>
