@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, Save } from "lucide-react";
+import { Check, X, Save, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/exportCsv";
 
 function TiersCard() {
   const queryClient = useQueryClient();
