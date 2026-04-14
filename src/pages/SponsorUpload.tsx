@@ -7,7 +7,7 @@ import { CheckCircle, Upload, Loader2, AlertCircle, ImageIcon, X, Plus } from "l
 
 const MAX_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/svg+xml"];
-const MIN_RES = 500;
+
 
 interface SponsorInfo {
   id: string;
