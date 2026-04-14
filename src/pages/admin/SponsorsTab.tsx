@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, Save, Download, ImageIcon } from "lucide-react";
+import { Check, X, Save, Download, ImageIcon, Mail, Loader2 } from "lucide-react";
 import { exportToCsv } from "@/lib/exportCsv";
 
 function TiersCard() {
@@ -141,6 +141,37 @@ export default function SponsorsTab() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [assetsDialog, setAssetsDialog] = useState<{ sponsor: any; assets: BrandAsset[] } | null>(null);
+  const [sendingEmailFor, setSendingEmailFor] = useState<string | null>(null);
+
+  const handleResendUploadEmail = async (sponsor: any) => {
+    if (!sponsor.logo_upload_token) {
+      toast({ title: "No upload token", description: "This sponsor doesn't have an upload token. It may not have completed payment.", variant: "destructive" });
+      return;
+    }
+    setSendingEmailFor(sponsor.id);
+    try {
+      const siteUrl = window.location.origin;
+      const uploadUrl = `${siteUrl}/sponsor-upload/${sponsor.logo_upload_token}`;
+      const { error } = await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "sponsor-logo-upload",
+          recipientEmail: sponsor.contact_email,
+          idempotencyKey: `sponsor-upload-resend-${sponsor.id}-${Date.now()}`,
+          templateData: {
+            businessName: sponsor.business_name,
+            tierName: sponsor.tier_name,
+            uploadUrl,
+          },
+        },
+      });
+      if (error) throw error;
+      toast({ title: "Email sent!", description: `Upload link sent to ${sponsor.contact_email}` });
+    } catch (err: any) {
+      toast({ title: "Failed to send email", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setSendingEmailFor(null);
+    }
+  };
 
   const { data: sponsors, isLoading } = useQuery({
     queryKey: ["admin-sponsors"],
