@@ -20,6 +20,7 @@ import Checkout from "./pages/Checkout";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Unsubscribe from "./pages/Unsubscribe";
+import SponsorUpload from "./pages/SponsorUpload";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
