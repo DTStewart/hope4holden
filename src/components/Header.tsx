@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ShoppingCart } from "lucide-react";
+import { Menu, X, ShoppingCart, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import h4hLogo from "@/assets/h4h-logo.png";
 
 const navLinks = [
+  { to: "/", label: "Home", icon: true },
   { to: "/tournament", label: "Tournament" },
   { to: "/register", label: "Register" },
   { to: "/sponsor", label: "Sponsor" },
