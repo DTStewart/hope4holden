@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ShoppingCart } from "lucide-react";
+import { Menu, X, ShoppingCart, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
 import h4hLogo from "@/assets/h4h-logo.png";
 
 const navLinks = [
+  { to: "/", label: "Home", icon: true },
   { to: "/tournament", label: "Tournament" },
   { to: "/register", label: "Register" },
   { to: "/sponsor", label: "Sponsor" },
@@ -40,7 +41,7 @@ const Header = () => {
                   : "text-white/70 hover:text-white"
               }`}
             >
-              {link.label}
+              {link.icon ? <Home className="h-4 w-4" /> : link.label}
             </Link>
           ))}
         </nav>
@@ -84,7 +85,7 @@ const Header = () => {
                     : "text-white/70 hover:text-white"
                 }`}
               >
-                {link.label}
+                {link.icon ? <><Home className="h-4 w-4 inline mr-2" />Home</> : link.label}
               </Link>
             ))}
           </div>
