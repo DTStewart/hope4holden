@@ -60,12 +60,8 @@ export default function SponsorUpload() {
         return;
       }
       if (f.type === "image/svg+xml") { resolve(null); return; }
-      const img = new Image();
-      img.onload = () => {
-        if (img.width < MIN_RES || img.height < MIN_RES) {
-          resolve(`Image must be at least ${MIN_RES}×${MIN_RES} pixels. Yours is ${img.width}×${img.height}.`);
-        } else { resolve(null); }
-      };
+      // No minimum resolution requirement — accept any dimensions
+      resolve(null);
       img.onerror = () => resolve("Could not read image dimensions.");
       img.src = URL.createObjectURL(f);
     });
