@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Anyone can insert pending orders" ON public.pending_orders;
