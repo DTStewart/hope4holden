@@ -24,26 +24,33 @@ export default function SettingsTab() {
 
   const getSetting = (key: string) => {
     const s = settings?.find((s) => s.key === key);
-    return s ? String(s.value) : "";
+    return s ? s.value : null;
   };
+
+  const getStringVal = (key: string) => {
+    const v = getSetting(key);
+    return v != null ? String(v) : "";
+  };
+
+  const isRegistrationOpen = getSetting("registration_open") !== false;
 
   const [spotsRemaining, setSpotsRemaining] = useState<string | null>(null);
 
-  const displayedSpots = spotsRemaining ?? getSetting("spots_remaining");
+  const displayedSpots = spotsRemaining ?? getStringVal("spots_remaining");
 
-  const updateSetting = useMutation({
-    mutationFn: async ({ key, value }: { key: string; value: string }) => {
+  const upsertSetting = useMutation({
+    mutationFn: async ({ key, value }: { key: string; value: any }) => {
       const existing = settings?.find((s) => s.key === key);
       if (existing) {
         const { error } = await supabase
           .from("settings")
-          .update({ value: Number(value) as any })
+          .update({ value: value as any })
           .eq("key", key);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("settings")
-          .insert({ key, value: Number(value) as any });
+          .insert({ key, value: value as any });
         if (error) throw error;
       }
     },
@@ -61,7 +68,25 @@ export default function SettingsTab() {
         <CardHeader>
           <CardTitle>Tournament Settings</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
+          {/* Registration toggle */}
+          <div className="flex items-center justify-between max-w-sm">
+            <div className="space-y-1">
+              <Label htmlFor="reg-toggle" className="text-sm font-medium">Team Registration</Label>
+              <p className="text-xs text-muted-foreground">
+                {isRegistrationOpen ? "Registration is open" : "Registration is closed"}
+              </p>
+            </div>
+            <Switch
+              id="reg-toggle"
+              checked={isRegistrationOpen}
+              onCheckedChange={(checked) =>
+                upsertSetting.mutate({ key: "registration_open", value: checked })
+              }
+            />
+          </div>
+
+          {/* Spots remaining */}
           <div className="flex items-end gap-4 max-w-sm">
             <div className="flex-1 space-y-2">
               <Label htmlFor="spots">Spots Remaining</Label>
@@ -75,9 +100,9 @@ export default function SettingsTab() {
             </div>
             <Button
               onClick={() =>
-                updateSetting.mutate({
+                upsertSetting.mutate({
                   key: "spots_remaining",
-                  value: displayedSpots,
+                  value: Number(displayedSpots),
                 })
               }
             >
