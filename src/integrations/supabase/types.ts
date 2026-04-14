@@ -321,6 +321,7 @@ export type Database = {
           contact_phone: string | null
           created_at: string
           id: string
+          logo_upload_token: string | null
           logo_url: string | null
           paid: boolean
           stripe_session_id: string | null
@@ -337,6 +338,7 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           id?: string
+          logo_upload_token?: string | null
           logo_url?: string | null
           paid?: boolean
           stripe_session_id?: string | null
@@ -353,6 +355,7 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           id?: string
+          logo_upload_token?: string | null
           logo_url?: string | null
           paid?: boolean
           stripe_session_id?: string | null
