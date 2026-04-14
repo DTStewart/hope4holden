@@ -25,7 +25,27 @@ export default function RegistrationsTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Team Registrations ({registrations?.length ?? 0})</CardTitle>
+        <CardTitle className="flex items-center justify-between">
+          <span>Team Registrations ({registrations?.length ?? 0})</span>
+          {registrations && registrations.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                exportToCsv("registrations.csv",
+                  ["Team Name", "Captain", "Email", "Phone", "Address", "City", "Province", "Postal Code", "Status", "Paid", "Date"],
+                  registrations.map((r) => [
+                    r.team_name, r.captain_name, r.captain_email, r.captain_phone,
+                    r.captain_address || "", r.captain_city || "", r.captain_province || "", r.captain_postal_code || "",
+                    r.status, r.paid ? "Yes" : "No", new Date(r.created_at).toLocaleDateString(),
+                  ])
+                )
+              }
+            >
+              <Download className="h-4 w-4 mr-1" /> Export CSV
+            </Button>
+          )}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {registrations?.length === 0 ? (
