@@ -50,13 +50,70 @@ const RegisterPage = () => {
     toast({ title: "Team registration added to cart!" });
   };
 
+  const [waitlistForm, setWaitlistForm] = useState({ name: "", email: "", phone: "", teamName: "" });
+  const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
+
+  const handleWaitlistChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setWaitlistForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { error } = await supabase.from("waitlist").insert({
+      name: waitlistForm.name,
+      email: waitlistForm.email,
+      phone: waitlistForm.phone,
+      team_name: waitlistForm.teamName,
+    });
+    if (error) {
+      toast({ title: "Error", description: "Could not submit waitlist form. Please try again.", variant: "destructive" });
+      return;
+    }
+    setWaitlistSubmitted(true);
+    toast({ title: "You've been added to the waitlist!" });
+  };
+
   if (!registrationOpen) {
     return (
       <div>
         <section className="section-dark">
           <div className="container py-20 md:py-28 text-center animate-fade-in">
             <h1 className="font-heading font-extrabold text-4xl md:text-6xl text-white mb-4">Sold Out</h1>
-            <p className="text-white/60 text-lg">All spots have been filled. Contact us to join the waitlist.</p>
+            <p className="text-white/60 text-lg mb-8">All spots have been filled. Join the waitlist below.</p>
+          </div>
+        </section>
+        <section className="section-light">
+          <div className="container py-16 md:py-20 max-w-xl animate-fade-in">
+            {waitlistSubmitted ? (
+              <div className="text-center space-y-4">
+                <CheckCircle className="h-16 w-16 text-primary mx-auto" />
+                <h2 className="font-heading font-extrabold text-3xl text-[#1A1A1A]">You're on the List!</h2>
+                <p className="text-[#1A1A1A]/60">We'll contact you if a spot opens up.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleWaitlistSubmit} className="space-y-4 bg-white p-8 md:p-10 border border-[#1A1A1A]/10 rounded">
+                <h2 className="font-heading font-bold text-xl text-[#1A1A1A] mb-2">Join the Waitlist</h2>
+                <div className="space-y-2">
+                  <Label htmlFor="wl-name" className="text-[#1A1A1A] font-medium">Full Name</Label>
+                  <Input id="wl-name" name="name" value={waitlistForm.name} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="wl-email" className="text-[#1A1A1A] font-medium">Email</Label>
+                  <Input id="wl-email" name="email" type="email" value={waitlistForm.email} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="wl-phone" className="text-[#1A1A1A] font-medium">Phone</Label>
+                  <Input id="wl-phone" name="phone" type="tel" value={waitlistForm.phone} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="wl-teamName" className="text-[#1A1A1A] font-medium">Team Name</Label>
+                  <Input id="wl-teamName" name="teamName" value={waitlistForm.teamName} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15" />
+                </div>
+                <Button type="submit" className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider" size="lg">
+                  Join Waitlist
+                </Button>
+              </form>
+            )}
           </div>
         </section>
       </div>
