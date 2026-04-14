@@ -35,8 +35,6 @@ const HomePage = () => {
             </p>
             <p className="font-heading font-bold text-xl md:text-2xl text-primary mb-4">
               "Beat Disease"
-            <p className="font-heading font-bold text-xl md:text-2xl text-primary mb-4">
-              "Beat Disease"
             </p>
             <p className="text-lg text-white/60 max-w-xl mb-10">
               June 18–19, 2026 · Brandon, Manitoba<br />
