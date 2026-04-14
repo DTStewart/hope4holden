@@ -13,7 +13,7 @@ const HomePage = () => {
     supabase
       .from("sponsors_public" as any)
       .select("id, business_name, tier_name, logo_url")
-      .then(({ data }) => {
+      .then(({ data }: any) => {
         if (data) setSponsors(data);
       });
   }, []);

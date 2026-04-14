@@ -28,7 +28,7 @@ const SponsorPage = () => {
         supabase.from("sponsors_public" as any).select("id, business_name, tier_name, logo_url"),
       ]);
       if (tiersRes.data) setTiers(tiersRes.data.map((t: any) => ({ ...t, benefits: t.benefits as string[] })));
-      if (sponsorsRes.data) setSponsors(sponsorsRes.data);
+      if (sponsorsRes.data) setSponsors(sponsorsRes.data as any);
     };
     fetchData();
   }, []);
