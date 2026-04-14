@@ -1,113 +1,164 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Handshake, Heart, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const HomePage = () => {
+  const [sponsors, setSponsors] = useState<{ id: string; business_name: string; tier_name: string; logo_url: string | null }[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("sponsors")
+      .select("id, business_name, tier_name, logo_url")
+      .eq("approved", true)
+      .then(({ data }) => {
+        if (data) setSponsors(data);
+      });
+  }, []);
+
   return (
     <div>
-      {/* Hero */}
-      <section className="relative bg-foreground text-background overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-foreground via-foreground/95 to-primary/20" />
-        <div className="container relative py-24 md:py-36 flex flex-col items-center text-center gap-6 animate-fade-in">
-          <div className="font-heading font-extrabold text-4xl md:text-6xl lg:text-7xl tracking-tight">
-            <span className="text-primary">HOPE</span> 4 Holden
-          </div>
-          <p className="text-2xl md:text-3xl font-heading font-bold tracking-wide text-primary">
-            "Beat Disease"
-          </p>
-          <p className="text-lg md:text-xl text-background/80 max-w-2xl">
-            Charity Golf Tournament — June 18-19, 2026 • Brandon, Manitoba
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 mt-4">
-            <Button asChild size="lg" className="text-lg px-8">
-              <Link to="/register">Register Your Team</Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="text-lg px-8 border-background/30 text-background hover:bg-background/10">
-              <Link to="/about">Learn More</Link>
-            </Button>
+      {/* Hero — bold, dark, full-bleed */}
+      <section className="relative bg-[#1A1A1A] overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(122,180,13,0.08)_0%,_transparent_60%)]" />
+        <div className="container relative py-28 md:py-40 lg:py-48">
+          <div className="max-w-3xl animate-fade-in">
+            <p className="font-heading font-bold text-xs tracking-[0.3em] uppercase text-primary mb-6">
+              Charity Golf Tournament
+            </p>
+            <h1 className="font-heading font-extrabold text-5xl md:text-7xl lg:text-8xl text-white leading-[0.95] mb-6">
+              HOPE 4<br />Holden
+            </h1>
+            <p className="font-heading font-bold text-xl md:text-2xl text-primary mb-4">
+              "Beat Disease"
+            </p>
+            <p className="text-lg text-white/60 max-w-xl mb-10">
+              June 18–19, 2026 · Brandon, Manitoba<br />
+              Two days of golf, dinner, and community — all for a cure.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button asChild size="lg" className="text-base font-heading font-bold uppercase tracking-wider px-8 rounded bg-primary text-white hover:bg-[#4A7C09]">
+                <Link to="/register">Register Your Team</Link>
+              </Button>
+              <Button asChild variant="ghost" size="lg" className="text-base font-heading font-semibold uppercase tracking-wider px-8 text-white/70 hover:text-white hover:bg-white/5">
+                <Link to="/about">Learn More</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Action cards */}
-      <section className="container py-16 md:py-24">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in-up">
-          {[
-            {
-              icon: Users,
-              title: "Register Your Team",
-              desc: "Sign up your team of 4 for dinner and golf. $600 per team.",
-              link: "/register",
-              cta: "Register Now",
-            },
-            {
-              icon: Handshake,
-              title: "Become a Sponsor",
-              desc: "Support the cause and get your brand in front of the community.",
-              link: "/sponsor",
-              cta: "View Packages",
-            },
-            {
-              icon: Heart,
-              title: "Make a Donation",
-              desc: "Every dollar helps fund research for a cure for Ataxia Telangiectasia.",
-              link: "/donate",
-              cta: "Donate Now",
-            },
-          ].map((card) => (
-            <Card
-              key={card.title}
-              className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-            >
-              <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
-                  <card.icon className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle className="font-heading text-xl">{card.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-muted-foreground">{card.desc}</p>
-                <Button asChild variant="link" className="p-0 h-auto text-primary">
-                  <Link to={card.link} className="flex items-center gap-1">
-                    {card.cta} <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+      {/* What you can do — asymmetric grid */}
+      <section className="section-light">
+        <div className="container py-20 md:py-28">
+          <p className="section-label">Get Involved</p>
+          <h2 className="font-heading font-extrabold text-3xl md:text-5xl text-[#1A1A1A] mb-12 max-w-lg">
+            Three ways to make a difference.
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[#1A1A1A]/10">
+            {[
+              {
+                title: "Register",
+                desc: "Sign up your team of 4 for dinner and golf. $600 per team.",
+                link: "/register",
+                cta: "Register Now",
+              },
+              {
+                title: "Sponsor",
+                desc: "Get your brand in front of the community and support a great cause.",
+                link: "/sponsor",
+                cta: "View Packages",
+              },
+              {
+                title: "Donate",
+                desc: "Every dollar funds research for a cure for Ataxia Telangiectasia.",
+                link: "/donate",
+                cta: "Donate Now",
+              },
+            ].map((card) => (
+              <div key={card.title} className="bg-white p-8 md:p-10 space-y-4">
+                <h3 className="font-heading font-bold text-xl text-[#1A1A1A]">{card.title}</h3>
+                <p className="text-[#1A1A1A]/60 leading-relaxed text-left">{card.desc}</p>
+                <Link
+                  to={card.link}
+                  className="inline-flex items-center gap-2 text-sm font-heading font-bold text-primary hover:text-[#4A7C09] transition-colors"
+                >
+                  {card.cta} <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* About summary */}
-      <section className="bg-secondary">
-        <div className="container py-16 md:py-24 text-center max-w-3xl mx-auto space-y-6">
-          <h2 className="font-heading font-bold text-3xl md:text-4xl">About Hope 4 Holden</h2>
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            Holden Stewart is a vibrant young boy from Brandon, Manitoba, living with Ataxia
-            Telangiectasia (A-T), a rare genetic disorder. The Hope 4 Holden charity golf tournament
-            raises funds for the ATCP to support research and find a cure.
-          </p>
-          <Button asChild variant="outline" size="lg">
-            <Link to="/about">
-              Learn More About Holden <ArrowRight className="h-4 w-4 ml-2" />
-            </Link>
-          </Button>
+      {/* About Holden — dark section */}
+      <section className="section-dark">
+        <div className="container py-20 md:py-28">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <p className="section-label">The Story</p>
+              <h2 className="font-heading font-extrabold text-3xl md:text-5xl text-white mb-8 leading-tight">
+                About Holden
+              </h2>
+              <p className="text-white/60 leading-relaxed mb-6 text-left">
+                Holden Stewart is a vibrant young boy from Brandon, Manitoba, living with Ataxia
+                Telangiectasia (A-T), a rare genetic disorder. Despite the challenges, Holden
+                approaches each day with infectious optimism and unyielding spirit.
+              </p>
+              <p className="text-white/60 leading-relaxed mb-8 text-left">
+                The Hope 4 Holden tournament raises funds for the ATCP to support research and
+                find a cure — because every child deserves a fighting chance.
+              </p>
+              <Button asChild variant="ghost" className="text-primary hover:text-[#4A7C09] hover:bg-white/5 font-heading font-bold uppercase tracking-wider p-0 h-auto">
+                <Link to="/about" className="flex items-center gap-2">
+                  Read Holden's Full Story <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+            <div className="bg-white/5 border border-white/10 p-10 rounded">
+              <blockquote className="font-heading font-extrabold text-3xl md:text-4xl text-primary leading-tight mb-4">
+                "Beat Disease"
+              </blockquote>
+              <p className="text-white/40 text-sm font-heading uppercase tracking-wider">— Holden Stewart</p>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Sponsors section */}
-      <section className="container py-16 md:py-24 text-center space-y-8">
-        <h2 className="font-heading font-bold text-3xl md:text-4xl">Our Sponsors</h2>
-        <p className="text-muted-foreground max-w-xl mx-auto">
-          We're grateful to the businesses and individuals who make this event possible.
-        </p>
-        {/* TODO: Dynamic sponsor logos from Supabase */}
-        <div className="py-12 border-2 border-dashed border-border rounded-lg">
-          <p className="text-muted-foreground mb-4">Be a part of something meaningful</p>
-          <Button asChild>
-            <Link to="/sponsor">Become Our First Sponsor</Link>
-          </Button>
+      <section className="section-light">
+        <div className="container py-20 md:py-28">
+          <p className="section-label">Our Supporters</p>
+          <h2 className="font-heading font-extrabold text-3xl md:text-5xl text-[#1A1A1A] mb-12 max-w-lg">
+            Thank you to our sponsors.
+          </h2>
+
+          {sponsors.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+              {sponsors.map((s) => (
+                <div key={s.id} className="bg-white p-6 flex flex-col items-center gap-3 border border-[#1A1A1A]/10 rounded">
+                  {s.logo_url ? (
+                    <img src={s.logo_url} alt={s.business_name} className="h-16 object-contain" />
+                  ) : (
+                    <div className="h-16 w-16 bg-[#F5F5F5] rounded flex items-center justify-center text-lg font-heading font-bold text-[#1A1A1A]/30">
+                      {s.business_name.charAt(0)}
+                    </div>
+                  )}
+                  <p className="text-sm font-medium text-[#1A1A1A]">{s.business_name}</p>
+                  <span className="text-xs text-[#1A1A1A]/40 font-heading uppercase tracking-wider">{s.tier_name}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-16 border-2 border-dashed border-[#1A1A1A]/15 rounded text-center">
+              <p className="text-[#1A1A1A]/40 mb-6">Be a part of something meaningful.</p>
+              <Button asChild className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider">
+                <Link to="/sponsor">Become a Sponsor</Link>
+              </Button>
+            </div>
+          )}
         </div>
       </section>
     </div>
