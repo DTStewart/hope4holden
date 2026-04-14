@@ -1,10 +1,11 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image } from "lucide-react";
+import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image, ShoppingCart } from "lucide-react";
 import RegistrationsTab from "./RegistrationsTab";
 import SponsorsTab from "./SponsorsTab";
 import DonationsTab from "./DonationsTab";
+import OrdersTab from "./OrdersTab";
 import MessagesTab from "./MessagesTab";
 import SettingsTab from "./SettingsTab";
 import SubscribersTab from "./SubscribersTab";
@@ -30,7 +31,7 @@ export default function AdminDashboard() {
 
       <div className="p-6 max-w-7xl mx-auto">
         <Tabs defaultValue="registrations" className="space-y-6">
-          <TabsList className="grid grid-cols-4 md:grid-cols-7 w-full">
+          <TabsList className="grid grid-cols-4 md:grid-cols-8 w-full">
             <TabsTrigger value="registrations" className="text-xs md:text-sm">
               <Users className="h-4 w-4 mr-1 hidden md:inline" />
               Registrations
@@ -42,6 +43,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="donations" className="text-xs md:text-sm">
               <Heart className="h-4 w-4 mr-1 hidden md:inline" />
               Donations
+            </TabsTrigger>
+            <TabsTrigger value="orders" className="text-xs md:text-sm">
+              <ShoppingCart className="h-4 w-4 mr-1 hidden md:inline" />
+              Orders
             </TabsTrigger>
             <TabsTrigger value="messages" className="text-xs md:text-sm">
               <Mail className="h-4 w-4 mr-1 hidden md:inline" />
@@ -64,6 +69,7 @@ export default function AdminDashboard() {
           <TabsContent value="registrations"><RegistrationsTab /></TabsContent>
           <TabsContent value="sponsors"><SponsorsTab /></TabsContent>
           <TabsContent value="donations"><DonationsTab /></TabsContent>
+          <TabsContent value="orders"><OrdersTab /></TabsContent>
           <TabsContent value="messages"><MessagesTab /></TabsContent>
           <TabsContent value="settings"><SettingsTab /></TabsContent>
           <TabsContent value="subscribers"><SubscribersTab /></TabsContent>
