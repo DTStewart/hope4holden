@@ -73,22 +73,8 @@ serve(async (req) => {
               paid: true,
             });
 
-            // Decrement spots
-            const { data: spotsSetting } = await supabase
-              .from("settings")
-              .select("value")
-              .eq("key", "spots_remaining")
-              .single();
-
-            if (spotsSetting) {
-              const current = Number(spotsSetting.value);
-              if (current > 0) {
-                await supabase
-                  .from("settings")
-                  .update({ value: (current - 1) as any })
-                  .eq("key", "spots_remaining");
-              }
-            }
+            // Atomically decrement spots
+            await supabase.rpc("decrement_spots");
             break;
 
           case "sponsorship":
