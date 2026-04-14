@@ -37,27 +37,37 @@ const SponsorPage = () => {
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({ businessName: "", contactName: "", contactEmail: "", contactPhone: "" });
 
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
+      setFetchError(null);
       try {
+        console.log("[Sponsor] Starting fetch of sponsorship_tiers...");
         const tiersRes = await supabase.from("sponsorship_tiers").select("*").eq("active", true).order("sort_order");
-        console.log("tiersRes full object:", JSON.stringify(tiersRes, null, 2));
-        console.log("tiersRes.data:", tiersRes.data);
-        console.log("tiersRes.error:", tiersRes.error);
-        if (tiersRes.data) {
+        console.log("[Sponsor] tiersRes.error:", tiersRes.error);
+        console.log("[Sponsor] tiersRes.data length:", tiersRes.data?.length);
+        console.log("[Sponsor] tiersRes.data:", JSON.stringify(tiersRes.data));
+        if (tiersRes.error) {
+          console.error("[Sponsor] Supabase error:", tiersRes.error);
+          setFetchError(tiersRes.error.message);
+        } else if (tiersRes.data) {
           const mapped = tiersRes.data.map((t: any) => ({ ...t, benefits: t.benefits as string[], max_slots: t.max_slots }));
-          console.log("Setting tiers state:", mapped);
           setTiers(mapped);
         }
       } catch (e) {
-        console.error("Failed to load tiers", e);
+        console.error("[Sponsor] Failed to load tiers", e);
+        setFetchError(String(e));
       }
       try {
         const sponsorsRes = await supabase.from("sponsors_public" as any).select("id, business_name, tier_name, logo_url");
         if (sponsorsRes.data) setSponsors(sponsorsRes.data as any);
       } catch (e) {
-        console.error("Failed to load sponsors", e);
+        console.error("[Sponsor] Failed to load sponsors", e);
       }
+      setLoading(false);
     };
     fetchData();
   }, []);
@@ -152,6 +162,10 @@ const SponsorPage = () => {
           <p className="text-[#1A1A1A]/50 mb-12 max-w-2xl">
             Number in brackets indicates available spots. All sponsorships include recognition and meaningful engagement opportunities.
           </p>
+
+          {loading && <p className="text-[#1A1A1A]/60 py-8">Loading sponsorship packages...</p>}
+          {fetchError && <p className="text-red-600 py-4">Error loading tiers: {fetchError}</p>}
+          {!loading && !fetchError && tiers.length === 0 && <p className="text-[#1A1A1A]/60 py-8">No sponsorship tiers found. (Debug: check console)</p>}
 
           {/* Premium tiers */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-px bg-[#1A1A1A]/10 mb-8">
