@@ -4,24 +4,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/hooks/use-toast";
-import { CheckCircle, Users } from "lucide-react";
+import { CheckCircle, Users, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
+type RegistrationStatus = "coming_soon" | "open" | "sold_out";
 
 const RegisterPage = () => {
   const { addItem, setDrawerOpen } = useCart();
   const [submitted, setSubmitted] = useState(false);
   const [spotsAvailable, setSpotsAvailable] = useState<number | null>(null);
-  const [registrationOpen, setRegistrationOpen] = useState(false);
+  const [regStatus, setRegStatus] = useState<RegistrationStatus>("coming_soon");
 
   useEffect(() => {
     const fetchSettings = async () => {
       const { data } = await supabase
         .from("settings")
         .select("key, value")
-        .in("key", ["registration_open", "spots_remaining"]);
+        .in("key", ["registration_status", "spots_remaining"]);
       if (data) {
         for (const s of data) {
-          if (s.key === "registration_open") setRegistrationOpen(s.value === true || s.value === "true");
+          if (s.key === "registration_status") {
+            const val = typeof s.value === "string" ? s.value : String(s.value);
+            if (["coming_soon", "open", "sold_out"].includes(val)) {
+              setRegStatus(val as RegistrationStatus);
+            }
+          }
           if (s.key === "spots_remaining") setSpotsAvailable(Number(s.value));
         }
       }
@@ -73,7 +80,25 @@ const RegisterPage = () => {
     toast({ title: "You've been added to the waitlist!" });
   };
 
-  if (!registrationOpen) {
+  // Coming Soon state
+  if (regStatus === "coming_soon") {
+    return (
+      <div>
+        <section className="section-dark">
+          <div className="container py-20 md:py-28 text-center animate-fade-in">
+            <Clock className="h-16 w-16 text-primary mx-auto mb-6" />
+            <h1 className="font-heading font-extrabold text-4xl md:text-6xl text-white mb-4">Coming Soon</h1>
+            <p className="text-white/60 text-lg max-w-xl mx-auto">
+              Team registration for the Hope 4 Holden Golf Tournament will be opening soon. Check back for updates!
+            </p>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // Sold Out state — show waitlist
+  if (regStatus === "sold_out") {
     return (
       <div>
         <section className="section-dark">
@@ -120,6 +145,7 @@ const RegisterPage = () => {
     );
   }
 
+  // Registration submitted confirmation
   if (submitted) {
     return (
       <div className="section-light">
@@ -138,6 +164,7 @@ const RegisterPage = () => {
     );
   }
 
+  // Open — registration form
   return (
     <div>
       <section className="section-dark">

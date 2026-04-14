@@ -5,9 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Save } from "lucide-react";
+
+const STATUS_OPTIONS = [
+  { value: "coming_soon", label: "Coming Soon" },
+  { value: "open", label: "Open" },
+  { value: "sold_out", label: "Sold Out" },
+];
 
 export default function SettingsTab() {
   const queryClient = useQueryClient();
@@ -32,10 +38,9 @@ export default function SettingsTab() {
     return v != null ? String(v) : "";
   };
 
-  const isRegistrationOpen = getSetting("registration_open") !== false;
+  const regStatus = getStringVal("registration_status") || "coming_soon";
 
   const [spotsRemaining, setSpotsRemaining] = useState<string | null>(null);
-
   const displayedSpots = spotsRemaining ?? getStringVal("spots_remaining");
 
   const upsertSetting = useMutation({
@@ -69,24 +74,32 @@ export default function SettingsTab() {
           <CardTitle>Tournament Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Registration toggle */}
-          <div className="flex items-center justify-between max-w-sm">
-            <div className="space-y-1">
-              <Label htmlFor="reg-toggle" className="text-sm font-medium">Team Registration</Label>
-              <p className="text-xs text-muted-foreground">
-                {isRegistrationOpen ? "Registration is open" : "Registration is closed"}
-              </p>
-            </div>
-            <Switch
-              id="reg-toggle"
-              checked={isRegistrationOpen}
-              onCheckedChange={(checked) =>
-                upsertSetting.mutate({ key: "registration_open", value: checked })
+          <div className="max-w-sm space-y-2">
+            <Label htmlFor="reg-status" className="text-sm font-medium">Registration Status</Label>
+            <Select
+              value={regStatus}
+              onValueChange={(val) =>
+                upsertSetting.mutate({ key: "registration_status", value: val })
               }
-            />
+            >
+              <SelectTrigger id="reg-status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {regStatus === "coming_soon" && "Registration page shows 'Coming Soon'"}
+              {regStatus === "open" && "Registration form is visible and accepting teams"}
+              {regStatus === "sold_out" && "Registration page shows 'Sold Out' with waitlist form"}
+            </p>
           </div>
 
-          {/* Spots remaining */}
           <div className="flex items-end gap-4 max-w-sm">
             <div className="flex-1 space-y-2">
               <Label htmlFor="spots">Spots Remaining</Label>
