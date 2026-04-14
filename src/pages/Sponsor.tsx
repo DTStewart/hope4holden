@@ -99,9 +99,10 @@ const SponsorPage = () => {
         {tiers.map((tier) => (
           <Card key={tier.name} className="group hover:shadow-lg transition-all hover:-translate-y-1 flex flex-col">
             <CardHeader className="text-center">
-              <tier.icon className="h-10 w-10 text-primary mx-auto mb-2" />
+              {(() => { const Icon = tierIcons[tier.name] || Flag; return <Icon className="h-10 w-10 text-primary mx-auto mb-2" />; })()}
               <CardTitle className="font-heading text-lg">{tier.name}</CardTitle>
               <p className="text-3xl font-heading font-bold text-primary">${tier.price.toLocaleString()}</p>
+            </CardHeader>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col">
               <ul className="space-y-2 flex-1 mb-6">
@@ -120,12 +121,28 @@ const SponsorPage = () => {
         ))}
       </div>
 
-      {/* Current sponsors placeholder */}
+      {/* Current sponsors */}
       <div className="text-center space-y-6">
         <h2 className="font-heading font-bold text-3xl">Current Sponsors</h2>
-        <div className="py-12 border-2 border-dashed border-border rounded-lg">
-          <p className="text-muted-foreground">Sponsor logos will appear here</p>
-        </div>
+        {sponsors.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+            {sponsors.map((s) => (
+              <div key={s.id} className="flex flex-col items-center gap-2 p-4 border rounded-lg">
+                {s.logo_url ? (
+                  <img src={s.logo_url} alt={s.business_name} className="h-16 object-contain" />
+                ) : (
+                  <div className="h-16 w-16 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">{s.business_name.charAt(0)}</div>
+                )}
+                <p className="text-sm font-medium">{s.business_name}</p>
+                <span className="text-xs text-muted-foreground">{s.tier_name} Sponsor</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-12 border-2 border-dashed border-border rounded-lg">
+            <p className="text-muted-foreground">Be our first sponsor!</p>
+          </div>
+        )}
       </div>
 
       {/* Sponsor form dialog */}
