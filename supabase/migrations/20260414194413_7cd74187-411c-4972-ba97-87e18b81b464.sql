@@ -1,0 +1,1 @@
+UPDATE public.settings SET key = 'registration_status', value = '"coming_soon"'::jsonb, updated_at = now() WHERE key = 'registration_open';
