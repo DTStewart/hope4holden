@@ -89,8 +89,42 @@ const RegisterPage = () => {
             <Clock className="h-16 w-16 text-primary mx-auto mb-6" />
             <h1 className="font-heading font-extrabold text-4xl md:text-6xl text-white mb-4">Coming Soon</h1>
             <p className="text-white/60 text-lg max-w-xl mx-auto">
-              Team registration for the Hope 4 Holden Golf Tournament will be opening soon. Check back for updates!
+              Team registration for the Hope 4 Holden Golf Tournament will be opening soon. Leave your details below and we'll notify you when registration opens!
             </p>
+          </div>
+        </section>
+        <section className="section-light">
+          <div className="container py-16 md:py-20 max-w-xl animate-fade-in">
+            {waitlistSubmitted ? (
+              <div className="text-center space-y-4">
+                <CheckCircle className="h-16 w-16 text-primary mx-auto" />
+                <h2 className="font-heading font-extrabold text-3xl text-[#1A1A1A]">Thanks for Your Interest!</h2>
+                <p className="text-[#1A1A1A]/60">We'll contact you when registration opens.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleWaitlistSubmit} className="space-y-4 bg-white p-8 md:p-10 border border-[#1A1A1A]/10 rounded">
+                <h2 className="font-heading font-bold text-xl text-[#1A1A1A] mb-2">Get Notified When Registration Opens</h2>
+                <div className="space-y-2">
+                  <Label htmlFor="cs-name" className="text-[#1A1A1A] font-medium">Full Name</Label>
+                  <Input id="cs-name" name="name" value={waitlistForm.name} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cs-email" className="text-[#1A1A1A] font-medium">Email</Label>
+                  <Input id="cs-email" name="email" type="email" value={waitlistForm.email} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cs-phone" className="text-[#1A1A1A] font-medium">Phone</Label>
+                  <Input id="cs-phone" name="phone" type="tel" value={waitlistForm.phone} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cs-teamName" className="text-[#1A1A1A] font-medium">Team Name</Label>
+                  <Input id="cs-teamName" name="teamName" value={waitlistForm.teamName} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15" />
+                </div>
+                <Button type="submit" className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider" size="lg">
+                  Notify Me
+                </Button>
+              </form>
+            )}
           </div>
         </section>
       </div>
