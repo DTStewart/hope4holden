@@ -97,10 +97,12 @@ const RegisterPage = () => {
       <div className="text-center space-y-4">
         <h1 className="font-heading font-bold text-4xl md:text-5xl">Register Your Team</h1>
         <p className="text-lg text-muted-foreground">$600 per team of 4 golfers</p>
-        <div className="flex items-center justify-center gap-2 text-primary font-medium">
-          <Users className="h-5 w-5" />
-          <span>{spotsAvailable} spots remaining</span>
-        </div>
+        {spotsAvailable !== null && (
+          <div className="flex items-center justify-center gap-2 text-primary font-medium">
+            <Users className="h-5 w-5" />
+            <span>{spotsAvailable} spots remaining</span>
+          </div>
+        )}
       </div>
 
       <Card>
