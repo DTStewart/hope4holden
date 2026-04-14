@@ -8,6 +8,10 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// Fixed prices (in dollars) — must match what the frontend displays
+const REGISTRATION_PRICE = 600;
+const MIN_DONATION = 5;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -29,9 +33,75 @@ serve(async (req) => {
       });
     }
 
-    // Save pending order to Supabase
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const totalAmount = items.reduce(
+
+    // ── Server-side price validation ──
+    // Pre-fetch sponsorship tiers for tier price lookups
+    const { data: allTiers } = await supabase
+      .from("sponsorship_tiers")
+      .select("id, price, name")
+      .eq("active", true);
+
+    const tierMap = new Map<string, { price: number; name: string }>();
+    for (const t of allTiers || []) {
+      tierMap.set(t.id, { price: t.price, name: t.name });
+    }
+
+    const validatedItems = [];
+    for (const item of items) {
+      if (!item.type || typeof item.type !== "string") {
+        return new Response(
+          JSON.stringify({ error: "Each item must have a type" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      let serverAmount: number;
+
+      switch (item.type) {
+        case "registration":
+          serverAmount = REGISTRATION_PRICE;
+          break;
+
+        case "sponsorship": {
+          const tierId = item.formData?.tierId;
+          if (!tierId || !tierMap.has(tierId)) {
+            return new Response(
+              JSON.stringify({ error: `Invalid sponsorship tier: ${tierId}` }),
+              { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          serverAmount = tierMap.get(tierId)!.price;
+          break;
+        }
+
+        case "donation": {
+          const donationAmount = Number(item.amount);
+          if (!donationAmount || donationAmount < MIN_DONATION) {
+            return new Response(
+              JSON.stringify({ error: `Donation must be at least $${MIN_DONATION}` }),
+              { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          serverAmount = donationAmount;
+          break;
+        }
+
+        default:
+          return new Response(
+            JSON.stringify({ error: `Unknown item type: ${item.type}` }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+      }
+
+      validatedItems.push({
+        ...item,
+        amount: serverAmount, // override client amount with server-validated amount
+      });
+    }
+
+    // Save pending order with validated amounts
+    const totalAmount = validatedItems.reduce(
       (sum: number, item: any) => sum + item.amount,
       0
     );
@@ -39,7 +109,7 @@ serve(async (req) => {
     const { data: pendingOrder, error: orderError } = await supabase
       .from("pending_orders")
       .insert({
-        items: items,
+        items: validatedItems,
         total_amount: totalAmount,
         status: "pending",
       })
@@ -54,7 +124,7 @@ serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
-    const lineItems = items.map((item: any) => ({
+    const lineItems = validatedItems.map((item: any) => ({
       price_data: {
         currency: "cad",
         product_data: {
