@@ -34,7 +34,7 @@ const HomePage = () => {
               Charity Golf Tournament
             </p>
             <p className="font-heading font-bold text-xl md:text-2xl text-primary mb-4">
-              "Beat Disease"
+              "Driving for a Cure"
             </p>
             <p className="text-lg text-white/60 max-w-xl mb-10">
               June 18–19, 2026 · Brandon, Manitoba<br />
