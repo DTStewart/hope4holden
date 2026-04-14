@@ -37,27 +37,37 @@ const SponsorPage = () => {
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({ businessName: "", contactName: "", contactEmail: "", contactPhone: "" });
 
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
+      setFetchError(null);
       try {
+        console.log("[Sponsor] Starting fetch of sponsorship_tiers...");
         const tiersRes = await supabase.from("sponsorship_tiers").select("*").eq("active", true).order("sort_order");
-        console.log("tiersRes full object:", JSON.stringify(tiersRes, null, 2));
-        console.log("tiersRes.data:", tiersRes.data);
-        console.log("tiersRes.error:", tiersRes.error);
-        if (tiersRes.data) {
+        console.log("[Sponsor] tiersRes.error:", tiersRes.error);
+        console.log("[Sponsor] tiersRes.data length:", tiersRes.data?.length);
+        console.log("[Sponsor] tiersRes.data:", JSON.stringify(tiersRes.data));
+        if (tiersRes.error) {
+          console.error("[Sponsor] Supabase error:", tiersRes.error);
+          setFetchError(tiersRes.error.message);
+        } else if (tiersRes.data) {
           const mapped = tiersRes.data.map((t: any) => ({ ...t, benefits: t.benefits as string[], max_slots: t.max_slots }));
-          console.log("Setting tiers state:", mapped);
           setTiers(mapped);
         }
       } catch (e) {
-        console.error("Failed to load tiers", e);
+        console.error("[Sponsor] Failed to load tiers", e);
+        setFetchError(String(e));
       }
       try {
         const sponsorsRes = await supabase.from("sponsors_public" as any).select("id, business_name, tier_name, logo_url");
         if (sponsorsRes.data) setSponsors(sponsorsRes.data as any);
       } catch (e) {
-        console.error("Failed to load sponsors", e);
+        console.error("[Sponsor] Failed to load sponsors", e);
       }
+      setLoading(false);
     };
     fetchData();
   }, []);
