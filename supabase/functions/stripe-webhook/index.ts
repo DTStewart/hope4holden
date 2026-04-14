@@ -2,6 +2,39 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
+async function notifyAdmins(
+  supabase: any,
+  templateName: string,
+  templateData: Record<string, any>
+) {
+  try {
+    // Get admin user IDs
+    const { data: adminRoles } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "admin");
+
+    if (!adminRoles || adminRoles.length === 0) return;
+
+    // Get admin emails from auth.users
+    for (const role of adminRoles) {
+      const { data: userData } = await supabase.auth.admin.getUserById(role.user_id);
+      if (!userData?.user?.email) continue;
+
+      await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName,
+          recipientEmail: userData.user.email,
+          idempotencyKey: `${templateName}-${Date.now()}-${role.user_id}`,
+          templateData,
+        },
+      });
+    }
+  } catch (err) {
+    console.error("Failed to notify admins:", err);
+  }
+}
+
 serve(async (req) => {
   try {
     const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
@@ -18,7 +51,6 @@ serve(async (req) => {
     const body = await req.text();
     const sig = req.headers.get("stripe-signature");
 
-    // If webhook secret is configured, verify signature
     const STRIPE_WEBHOOK_SECRET = Deno.env.get("STRIPE_WEBHOOK_SECRET");
     let event: Stripe.Event;
 
@@ -39,7 +71,6 @@ serve(async (req) => {
 
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-      // Get pending order
       const { data: order, error: orderError } = await supabase
         .from("pending_orders")
         .select("*")
@@ -51,7 +82,6 @@ serve(async (req) => {
         return new Response("OK", { status: 200 });
       }
 
-      // Process each item
       const items = order.items as any[];
       for (const item of items) {
         const formData = item.formData || {};
@@ -72,9 +102,12 @@ serve(async (req) => {
               stripe_session_id: session.id,
               paid: true,
             });
-
-            // Atomically decrement spots
             await supabase.rpc("decrement_spots");
+            await notifyAdmins(supabase, "admin-new-registration", {
+              teamName: formData.teamName || "Unknown Team",
+              captainName: formData.captainName || "",
+              captainEmail: formData.captainEmail || "",
+            });
             break;
 
           case "sponsorship":
@@ -89,6 +122,13 @@ serve(async (req) => {
               stripe_session_id: session.id,
               paid: true,
             });
+            await notifyAdmins(supabase, "admin-new-sponsorship", {
+              businessName: formData.businessName || "",
+              contactName: formData.contactName || "",
+              contactEmail: formData.contactEmail || "",
+              tierName: formData.tier || "",
+              amount: item.amount,
+            });
             break;
 
           case "donation":
@@ -100,11 +140,15 @@ serve(async (req) => {
               stripe_session_id: session.id,
               paid: true,
             });
+            await notifyAdmins(supabase, "admin-new-donation", {
+              donorName: formData.donorName || "Anonymous",
+              donorEmail: formData.donorEmail || "",
+              amount: item.amount,
+            });
             break;
         }
       }
 
-      // Mark order as completed
       await supabase
         .from("pending_orders")
         .update({ status: "completed", stripe_session_id: session.id })
