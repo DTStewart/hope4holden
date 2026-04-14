@@ -17,15 +17,28 @@ const GalleryPage = () => {
   const [lightbox, setLightbox] = useState<number | null>(null);
 
   useEffect(() => {
-    supabase
-      .from("gallery_photos")
-      .select("id, year, caption, photo_url")
-      .order("year", { ascending: false })
-      .order("sort_order", { ascending: true })
-      .then(({ data }) => {
-        if (data) setPhotos(data);
+    const fetchPhotos = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("gallery_photos")
+          .select("id, year, caption, photo_url")
+          .order("year", { ascending: false })
+          .order("sort_order", { ascending: true });
+        
+        if (error) {
+          console.error("Gallery fetch error:", error);
+        }
+        if (data) {
+          console.log("Gallery photos loaded:", data.length);
+          setPhotos(data);
+        }
+      } catch (err) {
+        console.error("Gallery fetch exception:", err);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+    fetchPhotos();
   }, []);
 
   // Keyboard navigation for lightbox
