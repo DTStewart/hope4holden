@@ -14,16 +14,317 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      donations: {
+        Row: {
+          amount: number
+          created_at: string
+          donor_email: string
+          donor_name: string
+          id: string
+          paid: boolean
+          stripe_session_id: string | null
+          wants_recurring: boolean
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          donor_email: string
+          donor_name: string
+          id?: string
+          paid?: boolean
+          stripe_session_id?: string | null
+          wants_recurring?: boolean
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          donor_email?: string
+          donor_name?: string
+          id?: string
+          paid?: boolean
+          stripe_session_id?: string | null
+          wants_recurring?: boolean
+        }
+        Relationships: []
+      }
+      email_subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read: boolean
+          sender_email: string
+          sender_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean
+          sender_email: string
+          sender_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean
+          sender_email?: string
+          sender_name?: string
+        }
+        Relationships: []
+      }
+      pending_orders: {
+        Row: {
+          created_at: string
+          id: string
+          items: Json
+          status: string
+          stripe_session_id: string | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          items?: Json
+          status?: string
+          stripe_session_id?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          items?: Json
+          status?: string
+          stripe_session_id?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      registrations: {
+        Row: {
+          business_name: string | null
+          captain_address: string | null
+          captain_city: string | null
+          captain_email: string
+          captain_name: string
+          captain_phone: string
+          captain_postal_code: string | null
+          captain_province: string | null
+          created_at: string
+          id: string
+          paid: boolean
+          status: string
+          stripe_session_id: string | null
+          team_name: string
+          updated_at: string
+        }
+        Insert: {
+          business_name?: string | null
+          captain_address?: string | null
+          captain_city?: string | null
+          captain_email: string
+          captain_name: string
+          captain_phone: string
+          captain_postal_code?: string | null
+          captain_province?: string | null
+          created_at?: string
+          id?: string
+          paid?: boolean
+          status?: string
+          stripe_session_id?: string | null
+          team_name: string
+          updated_at?: string
+        }
+        Update: {
+          business_name?: string | null
+          captain_address?: string | null
+          captain_city?: string | null
+          captain_email?: string
+          captain_name?: string
+          captain_phone?: string
+          captain_postal_code?: string | null
+          captain_province?: string | null
+          created_at?: string
+          id?: string
+          paid?: boolean
+          status?: string
+          stripe_session_id?: string | null
+          team_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      sponsors: {
+        Row: {
+          amount: number
+          approved: boolean
+          business_name: string
+          contact_email: string
+          contact_name: string
+          contact_phone: string | null
+          created_at: string
+          id: string
+          logo_url: string | null
+          paid: boolean
+          stripe_session_id: string | null
+          tier_id: string | null
+          tier_name: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          approved?: boolean
+          business_name: string
+          contact_email: string
+          contact_name: string
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          paid?: boolean
+          stripe_session_id?: string | null
+          tier_id?: string | null
+          tier_name: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          approved?: boolean
+          business_name?: string
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          paid?: boolean
+          stripe_session_id?: string | null
+          tier_id?: string | null
+          tier_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsors_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "sponsorship_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsorship_tiers: {
+        Row: {
+          active: boolean
+          benefits: Json
+          created_at: string
+          id: string
+          name: string
+          price: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          benefits?: Json
+          created_at?: string
+          id?: string
+          name: string
+          price: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          benefits?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          price?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +451,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
