@@ -66,6 +66,19 @@ const CheckoutPage = () => {
           <Button onClick={() => navigate("/")} size="lg" className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider">
             Back to Home
           </Button>
+          {hadRecurring && (
+            <div className="bg-accent/10 border border-accent/20 rounded p-6 text-left space-y-3">
+              <p className="text-[#1A1A1A]/80 text-sm">
+                To set up a recurring donation, please visit the ATCP website:
+              </p>
+              <Button asChild variant="outline" className="rounded border-primary text-primary hover:bg-primary/5">
+                <a href="https://www.atcp.org/donate" target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Set Up Recurring Donation
+                </a>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );
