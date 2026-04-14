@@ -163,6 +163,10 @@ const SponsorPage = () => {
             Number in brackets indicates available spots. All sponsorships include recognition and meaningful engagement opportunities.
           </p>
 
+          {loading && <p className="text-[#1A1A1A]/60 py-8">Loading sponsorship packages...</p>}
+          {fetchError && <p className="text-red-600 py-4">Error loading tiers: {fetchError}</p>}
+          {!loading && !fetchError && tiers.length === 0 && <p className="text-[#1A1A1A]/60 py-8">No sponsorship tiers found. (Debug: check console)</p>}
+
           {/* Premium tiers */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-px bg-[#1A1A1A]/10 mb-8">
             {premiumTiers.map((tier) => {
