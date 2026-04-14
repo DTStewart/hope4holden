@@ -39,12 +39,18 @@ const SponsorPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [tiersRes, sponsorsRes] = await Promise.all([
-        supabase.from("sponsorship_tiers").select("*").eq("active", true).order("sort_order"),
-        supabase.from("sponsors_public" as any).select("id, business_name, tier_name, logo_url"),
-      ]);
-      if (tiersRes.data) setTiers(tiersRes.data.map((t: any) => ({ ...t, benefits: t.benefits as string[], max_slots: t.max_slots })));
-      if (sponsorsRes.data) setSponsors(sponsorsRes.data as any);
+      try {
+        const tiersRes = await supabase.from("sponsorship_tiers").select("*").eq("active", true).order("sort_order");
+        if (tiersRes.data) setTiers(tiersRes.data.map((t: any) => ({ ...t, benefits: t.benefits as string[], max_slots: t.max_slots })));
+      } catch (e) {
+        console.error("Failed to load tiers", e);
+      }
+      try {
+        const sponsorsRes = await supabase.from("sponsors_public" as any).select("id, business_name, tier_name, logo_url");
+        if (sponsorsRes.data) setSponsors(sponsorsRes.data as any);
+      } catch (e) {
+        console.error("Failed to load sponsors", e);
+      }
     };
     fetchData();
   }, []);
