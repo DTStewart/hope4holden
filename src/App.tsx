@@ -56,6 +56,7 @@ const App = () => (
                 }
               />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
+              <Route path="/sponsor-upload/:token" element={<SponsorUpload />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
