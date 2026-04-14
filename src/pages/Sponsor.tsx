@@ -25,7 +25,7 @@ const SponsorPage = () => {
     const fetchData = async () => {
       const [tiersRes, sponsorsRes] = await Promise.all([
         supabase.from("sponsorship_tiers").select("*").eq("active", true).order("sort_order"),
-        supabase.from("sponsors").select("id, business_name, tier_name, logo_url").eq("approved", true),
+        supabase.from("sponsors_public" as any).select("id, business_name, tier_name, logo_url"),
       ]);
       if (tiersRes.data) setTiers(tiersRes.data.map((t: any) => ({ ...t, benefits: t.benefits as string[] })));
       if (sponsorsRes.data) setSponsors(sponsorsRes.data);
