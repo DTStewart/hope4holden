@@ -110,8 +110,10 @@ serve(async (req) => {
             });
             break;
 
-          case "sponsorship":
-            await supabase.from("sponsors").insert({
+          case "sponsorship": {
+            // Generate a unique upload token for the sponsor
+            const uploadToken = crypto.randomUUID();
+            const { data: sponsorRow } = await supabase.from("sponsors").insert({
               business_name: formData.businessName || "",
               contact_name: formData.contactName || "",
               contact_email: formData.contactEmail || "",
@@ -121,7 +123,27 @@ serve(async (req) => {
               amount: item.amount,
               stripe_session_id: session.id,
               paid: true,
-            });
+              logo_upload_token: uploadToken,
+            }).select("id").single();
+
+            // Send logo upload email to sponsor
+            const siteUrl = Deno.env.get("SITE_URL") || "https://hope4holden.lovable.app";
+            const uploadUrl = `${siteUrl}/sponsor-upload/${uploadToken}`;
+            if (formData.contactEmail) {
+              await supabase.functions.invoke("send-transactional-email", {
+                body: {
+                  templateName: "sponsor-logo-upload",
+                  recipientEmail: formData.contactEmail,
+                  idempotencyKey: `sponsor-upload-${sponsorRow?.id || uploadToken}`,
+                  templateData: {
+                    businessName: formData.businessName || "",
+                    tierName: formData.tier || "",
+                    uploadUrl,
+                  },
+                },
+              });
+            }
+
             await notifyAdmins(supabase, "admin-new-sponsorship", {
               businessName: formData.businessName || "",
               contactName: formData.contactName || "",
@@ -130,6 +152,7 @@ serve(async (req) => {
               amount: item.amount,
             });
             break;
+          }
 
           case "donation":
             await supabase.from("donations").insert({
