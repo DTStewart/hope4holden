@@ -6,14 +6,26 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { Mail, Phone, CheckCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const ContactPage = () => {
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", message: "" });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Save to Supabase messages table
+    setLoading(true);
+    const { error } = await supabase.from("messages").insert({
+      sender_name: form.name,
+      sender_email: form.email,
+      message: form.message,
+    });
+    setLoading(false);
+    if (error) {
+      toast({ title: "Something went wrong", description: error.message, variant: "destructive" });
+      return;
+    }
     toast({ title: "Message sent!", description: "We'll get back to you as soon as possible." });
     setSubmitted(true);
   };
@@ -72,7 +84,9 @@ const ContactPage = () => {
                   <Label htmlFor="message">Message</Label>
                   <Textarea id="message" rows={5} value={form.message} onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))} required />
                 </div>
-                <Button type="submit" className="w-full">Send Message</Button>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Sending..." : "Send Message"}
+                </Button>
               </form>
             )}
           </CardContent>

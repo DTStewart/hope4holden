@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,56 +7,30 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/hooks/use-toast";
 import { CheckCircle, Star, Award, Medal, Flag } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-const tiers = [
-  {
-    name: "Title Sponsor",
-    price: 5000,
-    icon: Star,
-    benefits: [
-      "Logo on all event materials",
-      "Prominent signage at dinner and golf course",
-      "Speaking opportunity at dinner",
-      "Complimentary team registration (4 golfers)",
-      "Social media recognition",
-    ],
-  },
-  {
-    name: "Gold Sponsor",
-    price: 2500,
-    icon: Award,
-    benefits: [
-      "Logo on event materials",
-      "Signage at dinner and golf course",
-      "Recognition during speeches",
-      "Social media recognition",
-    ],
-  },
-  {
-    name: "Silver Sponsor",
-    price: 1000,
-    icon: Medal,
-    benefits: [
-      "Logo on event program",
-      "Signage at golf course",
-      "Social media recognition",
-    ],
-  },
-  {
-    name: "Hole Sponsor",
-    price: 500,
-    icon: Flag,
-    benefits: [
-      "Custom sign at a designated hole",
-      "Logo on event website",
-      "Social media mention",
-    ],
-  },
-];
+const tierIcons: Record<string, any> = { Title: Star, Gold: Award, Silver: Medal, Hole: Flag };
+
+interface Tier {
+  id: string;
+  name: string;
+  price: number;
+  benefits: string[];
+  sort_order: number;
+}
+
+interface Sponsor {
+  id: string;
+  business_name: string;
+  tier_name: string;
+  logo_url: string | null;
+}
 
 const SponsorPage = () => {
   const { addItem, setDrawerOpen } = useCart();
-  const [selectedTier, setSelectedTier] = useState<typeof tiers[0] | null>(null);
+  const [tiers, setTiers] = useState<Tier[]>([]);
+  const [sponsors, setSponsors] = useState<Sponsor[]>([]);
+  const [selectedTier, setSelectedTier] = useState<Tier | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({
     businessName: "",
@@ -64,6 +38,18 @@ const SponsorPage = () => {
     contactEmail: "",
     contactPhone: "",
   });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const [tiersRes, sponsorsRes] = await Promise.all([
+        supabase.from("sponsorship_tiers").select("*").eq("active", true).order("sort_order"),
+        supabase.from("sponsors").select("id, business_name, tier_name, logo_url").eq("approved", true),
+      ]);
+      if (tiersRes.data) setTiers(tiersRes.data.map((t: any) => ({ ...t, benefits: t.benefits as string[] })));
+      if (sponsorsRes.data) setSponsors(sponsorsRes.data);
+    };
+    fetchData();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -74,9 +60,9 @@ const SponsorPage = () => {
     if (!selectedTier) return;
     addItem({
       type: "sponsorship",
-      description: `${selectedTier.name}: ${form.businessName}`,
+      description: `${selectedTier.name} Sponsor: ${form.businessName}`,
       amount: selectedTier.price,
-      formData: { ...form, tier: selectedTier.name },
+      formData: { ...form, tier: selectedTier.name, tierId: selectedTier.id },
     });
     setSubmitted(true);
     setSelectedTier(null);
