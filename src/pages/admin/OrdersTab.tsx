@@ -52,7 +52,7 @@ export default function OrdersTab() {
       if (error) throw error;
       return (data || []).map((o) => ({
         ...o,
-        items: (Array.isArray(o.items) ? o.items : []) as OrderItem[],
+        items: (Array.isArray(o.items) ? o.items : []) as unknown as OrderItem[],
       })) as Order[];
     },
   });
