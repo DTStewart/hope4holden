@@ -1,13 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/hooks/use-toast";
-import { CheckCircle, Star, Award, Medal, Flag, ShoppingCart, Utensils, CreditCard, Droplets, Gift, Heart, Trophy, Package } from "lucide-react";
+import { Star, Award, Medal, Flag, ShoppingCart, Utensils, CreditCard, Droplets, Gift, Heart, Trophy, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import sponsorHero from "@/assets/sponsor-hero.jpeg";
 
@@ -31,14 +28,9 @@ interface Tier { id: string; name: string; price: number; benefits: string[]; so
 interface Sponsor { id: string; business_name: string; tier_name: string; logo_url: string | null; }
 
 const SponsorPage = () => {
-  const { addItem, contact, setContact } = useCart();
-  const navigate = useNavigate();
+  const { addItem, setDrawerOpen } = useCart();
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
-  const [selectedTier, setSelectedTier] = useState<Tier | null>(null);
-  const [submitted, setSubmitted] = useState(false);
-  const [form, setForm] = useState({ businessName: "", contactName: contact.name, contactEmail: contact.email, contactPhone: contact.phone });
-
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
@@ -47,20 +39,14 @@ const SponsorPage = () => {
       setLoading(true);
       setFetchError(null);
       try {
-        console.log("[Sponsor] Starting fetch of sponsorship_tiers...");
         const tiersRes = await supabase.from("sponsorship_tiers").select("*").eq("active", true).order("sort_order");
-        console.log("[Sponsor] tiersRes.error:", tiersRes.error);
-        console.log("[Sponsor] tiersRes.data length:", tiersRes.data?.length);
-        console.log("[Sponsor] tiersRes.data:", JSON.stringify(tiersRes.data));
         if (tiersRes.error) {
-          console.error("[Sponsor] Supabase error:", tiersRes.error);
           setFetchError(tiersRes.error.message);
         } else if (tiersRes.data) {
           const mapped = tiersRes.data.map((t: any) => ({ ...t, benefits: t.benefits as string[], max_slots: t.max_slots }));
           setTiers(mapped);
         }
       } catch (e) {
-        console.error("[Sponsor] Failed to load tiers", e);
         setFetchError(String(e));
       }
       try {
@@ -74,42 +60,8 @@ const SponsorPage = () => {
     fetchData();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
   const isSoldOut = (tier: Tier) => tier.max_slots === 0;
   const isInKind = (tier: Tier) => tier.price === 0 && !isSoldOut(tier);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTier) return;
-    addItem({
-      type: "sponsorship",
-      description: `${selectedTier.name}: ${form.businessName}`,
-      amount: selectedTier.price,
-      formData: { ...form, tier: selectedTier.name, tierId: selectedTier.id },
-    });
-    setContact({ name: form.contactName, email: form.contactEmail, phone: form.contactPhone });
-    setSubmitted(true);
-    setSelectedTier(null);
-    toast({ title: "Sponsorship added to cart!" });
-  };
-
-  const handleInKindSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTier) return;
-    addItem({
-      type: "sponsorship",
-      description: `${selectedTier.name}: ${form.businessName}`,
-      amount: 0,
-      formData: { ...form, tier: selectedTier.name, tierId: selectedTier.id },
-    });
-    setContact({ name: form.contactName, email: form.contactEmail, phone: form.contactPhone });
-    setSubmitted(true);
-    setSelectedTier(null);
-    toast({ title: "Sponsorship request submitted!" });
-  };
 
   const getPriceLabel = (tier: Tier) => {
     if (isSoldOut(tier)) return "SOLD OUT";
@@ -118,25 +70,17 @@ const SponsorPage = () => {
     return `$${tier.price.toLocaleString()}`;
   };
 
-  if (submitted) {
-    return (
-      <div className="section-light">
-        <div className="container py-20 text-center space-y-6 animate-fade-in">
-          <CheckCircle className="h-16 w-16 text-primary mx-auto" />
-          <h2 className="font-heading font-extrabold text-3xl text-[#1A1A1A]">Sponsorship Added!</h2>
-          <p className="text-[#1A1A1A]/60">Your sponsorship has been added to your cart.</p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button variant="outline" className="rounded border-[#1A1A1A]/20 text-[#1A1A1A]" onClick={() => { setSubmitted(false); setForm({ businessName: "", contactName: "", contactEmail: "", contactPhone: "" }); }}>
-              Continue Shopping
-            </Button>
-            <Button className="rounded bg-primary text-white hover:bg-[#4A7C09]" onClick={() => navigate("/checkout")}>Go to Checkout</Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleSelect = (tier: Tier) => {
+    addItem({
+      type: "sponsorship",
+      description: `${tier.name} Sponsorship`,
+      amount: tier.price,
+      formData: { tier: tier.name, tierId: tier.id },
+    });
+    toast({ title: `${tier.name} sponsorship added to cart!` });
+    setDrawerOpen(true);
+  };
 
-  // Split tiers into premium (top row) and standard
   const premiumTiers = tiers.filter(t => t.sort_order <= 7);
   const standardTiers = tiers.filter(t => t.sort_order > 7);
 
@@ -155,7 +99,6 @@ const SponsorPage = () => {
         </div>
       </section>
 
-      {/* Premium tier cards */}
       <section className="section-light">
         <div className="container py-20 md:py-28 animate-fade-in">
           <p className="section-label">Sponsorship Packages</p>
@@ -168,7 +111,7 @@ const SponsorPage = () => {
 
           {loading && <p className="text-[#1A1A1A]/60 py-8">Loading sponsorship packages...</p>}
           {fetchError && <p className="text-red-600 py-4">Error loading tiers: {fetchError}</p>}
-          {!loading && !fetchError && tiers.length === 0 && <p className="text-[#1A1A1A]/60 py-8">No sponsorship tiers found. (Debug: check console)</p>}
+          {!loading && !fetchError && tiers.length === 0 && <p className="text-[#1A1A1A]/60 py-8">No sponsorship tiers found.</p>}
 
           {/* Premium tiers */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-px bg-[#1A1A1A]/10 mb-8">
@@ -186,7 +129,7 @@ const SponsorPage = () => {
                     )}
                   </div>
                   <h3 className="font-heading font-bold text-lg text-[#1A1A1A] mb-1">{tier.name}</h3>
-                  <p className={`font-heading font-extrabold text-2xl mb-6 ${soldOut ? "text-[#1A1A1A]/40 line-through" : inKind ? "text-primary" : "text-primary"}`}>
+                  <p className={`font-heading font-extrabold text-2xl mb-6 ${soldOut ? "text-[#1A1A1A]/40 line-through" : "text-primary"}`}>
                     {getPriceLabel(tier)}
                   </p>
                   <ul className="space-y-2 flex-1 mb-6">
@@ -199,10 +142,10 @@ const SponsorPage = () => {
                   </ul>
                   <Button
                     className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-sm"
-                    onClick={() => !soldOut && setSelectedTier(tier)}
+                    onClick={() => handleSelect(tier)}
                     disabled={soldOut}
                   >
-                    {soldOut ? "Sold Out" : "Select"}
+                    {soldOut ? "Sold Out" : inKind ? "Add to Cart" : "Select"}
                   </Button>
                 </div>
               );
@@ -241,10 +184,10 @@ const SponsorPage = () => {
                   </ul>
                   <Button
                     className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-sm"
-                    onClick={() => !soldOut && setSelectedTier(tier)}
+                    onClick={() => handleSelect(tier)}
                     disabled={soldOut}
                   >
-                    {soldOut ? "Sold Out" : inKind ? "Inquire" : "Select"}
+                    {soldOut ? "Sold Out" : inKind ? "Add to Cart" : "Select"}
                   </Button>
                 </div>
               );
@@ -281,47 +224,6 @@ const SponsorPage = () => {
           )}
         </div>
       </section>
-
-      {/* Form dialog */}
-      <Dialog open={!!selectedTier} onOpenChange={(open) => !open && setSelectedTier(null)}>
-        <DialogContent className="rounded">
-          <DialogHeader>
-            <DialogTitle className="font-heading font-bold">
-              {selectedTier?.name}
-              {selectedTier && !isInKind(selectedTier) && ` — $${selectedTier.price.toLocaleString()}`}
-              {selectedTier && selectedTier.name === "Fairway Friend" && "+"}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedTier && isInKind(selectedTier)
-                ? "Fill in your details and we'll be in touch to coordinate."
-                : "Fill in your details to add this sponsorship to your cart."}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={selectedTier && isInKind(selectedTier) ? handleInKindSubmit : handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="businessName">Business Name</Label>
-              <Input id="businessName" name="businessName" value={form.businessName} onChange={handleChange} required className="rounded" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="contactName">Contact Name</Label>
-              <Input id="contactName" name="contactName" value={form.contactName} onChange={handleChange} required className="rounded" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="contactEmail">Contact Email</Label>
-              <Input id="contactEmail" name="contactEmail" type="email" value={form.contactEmail} onChange={handleChange} required className="rounded" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="contactPhone">Contact Phone</Label>
-              <Input id="contactPhone" name="contactPhone" type="tel" value={form.contactPhone} onChange={handleChange} required className="rounded" />
-            </div>
-            <Button type="submit" className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold">
-              {selectedTier && isInKind(selectedTier)
-                ? "Submit Request"
-                : `Add to Cart — $${selectedTier?.price.toLocaleString()}`}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
