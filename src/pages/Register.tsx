@@ -459,9 +459,9 @@ const ParticipatePage = () => {
                 </Button>
               </div>
             </div>
-            </div>
           </div>
         </div>
+      </section>
     </div>
   );
 };
