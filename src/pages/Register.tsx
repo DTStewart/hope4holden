@@ -436,17 +436,28 @@ const ParticipatePage = () => {
               )}
             </div>
 
-            <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <Checkbox id="recurring" checked={wantsRecurring} onCheckedChange={(checked) => setWantsRecurring(!!checked)} />
                 <Label htmlFor="recurring" className="text-xs cursor-pointer text-[#1A1A1A]/70">
                   I'd like to set up a recurring donation
                 </Label>
               </div>
-              <Button onClick={handleAddDonation} className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-sm" size="default">
-                <ShoppingCart className="h-4 w-4 mr-2" />
-                Add to Cart — ${donationAmount || 0}
-              </Button>
+              {wantsRecurring && (
+                <p className="text-xs text-[#1A1A1A]/50 bg-[#1A1A1A]/[0.03] border border-[#1A1A1A]/10 rounded px-3 py-2">
+                  After completing your one-time donation through our checkout, you'll be redirected to the{" "}
+                  <a href="https://atcp.org/ways-to-give/support-a-tcp-canada/" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                    ATCP website
+                  </a>{" "}
+                  to set up your recurring donation directly with them.
+                </p>
+              )}
+              <div className="flex justify-end">
+                <Button onClick={handleAddDonation} className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-sm" size="default">
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Add to Cart — ${donationAmount || 0}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
