@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle, XCircle, Loader2, ShoppingCart, ExternalLink, Trash2 } from "lucide-react";
 
 const CheckoutPage = () => {
-  const { items, totalAmount, clearCart, removeItem, setDrawerOpen } = useCart();
+  const { items, totalAmount, clearCart, removeItem } = useCart();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -52,19 +52,14 @@ const CheckoutPage = () => {
 
   useEffect(() => {
     if (success) {
-      const stored = localStorage.getItem("h4h_cart");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          const hasRecurring = parsed.some(
-            (item: any) => item.type === "donation" && item.formData?.wantsRecurring
-          );
-          if (hasRecurring) setHadRecurring(true);
-        } catch {}
-      }
+      const hasRecurring = items.some(
+        (item) => item.type === "donation" && item.formData?.wantsRecurring
+      );
+      if (hasRecurring) setHadRecurring(true);
       clearCart();
     }
-  }, [success, clearCart]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [success]);
 
   const buildItemsPayload = () => {
     return items.map((item) => {
