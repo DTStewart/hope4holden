@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      dinners: {
+        Row: {
+          amount: number
+          created_at: string
+          guest_email: string
+          guest_name: string
+          guest_phone: string
+          id: string
+          paid: boolean
+          quantity: number
+          stripe_session_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          guest_email: string
+          guest_name: string
+          guest_phone: string
+          id?: string
+          paid?: boolean
+          quantity?: number
+          stripe_session_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          guest_email?: string
+          guest_name?: string
+          guest_phone?: string
+          id?: string
+          paid?: boolean
+          quantity?: number
+          stripe_session_id?: string | null
+        }
+        Relationships: []
+      }
       donations: {
         Row: {
           amount: number
