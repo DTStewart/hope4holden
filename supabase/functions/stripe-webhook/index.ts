@@ -168,6 +168,10 @@ Deno.serve(async (req) => {
               wants_recurring: formData.wantsRecurring || false,
               stripe_session_id: session.id,
               paid: true,
+              donor_address: formData.street || null,
+              donor_city: formData.city || null,
+              donor_province: formData.province || null,
+              donor_postal_code: formData.postalCode || null,
             });
             await notifyAdmins(supabase, "admin-new-donation", {
               donorName: formData.donorName || "Anonymous",
