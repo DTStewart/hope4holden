@@ -120,7 +120,20 @@ Deno.serve(async (req) => {
       0
     );
 
-    // Create pending order and Stripe session in parallel
+    // Create pending order FIRST so we have the ID for Stripe metadata
+    const { data: orderData, error: orderError } = await supabase
+      .from("pending_orders")
+      .insert({
+        items: validatedItems,
+        total_amount: totalAmount,
+        status: "pending",
+      })
+      .select("id")
+      .single();
+
+    if (orderError) throw new Error(`Failed to create pending order: ${orderError.message}`);
+
+    // Now create Stripe session with the order ID already in metadata
     const stripe = new Stripe(STRIPE_SECRET_KEY, {
       apiVersion: "2025-08-27.basil",
     });
@@ -137,41 +150,23 @@ Deno.serve(async (req) => {
       quantity: 1,
     }));
 
-    const [orderResult, session] = await Promise.all([
-      supabase
-        .from("pending_orders")
-        .insert({
-          items: validatedItems,
-          total_amount: totalAmount,
-          status: "pending",
-        })
-        .select("id")
-        .single(),
-      stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        line_items: lineItems,
-        mode: "payment",
-        success_url: `${returnUrl}?success=true`,
-        cancel_url: `${returnUrl}?canceled=true`,
-        metadata: {
-          pending_order_placeholder: "true",
-        },
-      }),
-    ]);
-
-    if (orderResult.error) throw new Error(`Failed to create pending order: ${orderResult.error.message}`);
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: lineItems,
+      mode: "payment",
+      success_url: `${returnUrl}?success=true`,
+      cancel_url: `${returnUrl}?canceled=true`,
+      metadata: {
+        pending_order_id: orderData.id,
+      },
+    });
 
     // Fire-and-forget: update pending order with stripe session id
     supabase
       .from("pending_orders")
       .update({ stripe_session_id: session.id })
-      .eq("id", orderResult.data.id)
+      .eq("id", orderData.id)
       .then(() => {});
-
-    // Also update session metadata with the order id (non-blocking)
-    stripe.checkout.sessions.update(session.id, {
-      metadata: { pending_order_id: orderResult.data.id },
-    }).catch(() => {});
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
