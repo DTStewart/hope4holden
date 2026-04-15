@@ -127,6 +127,11 @@ Deno.serve(async (req) => {
               logo_upload_token: uploadToken,
             }).select("id").single();
 
+            // Decrement available slots for this tier
+            if (formData.tierId) {
+              await supabase.rpc("decrement_sponsor_slots", { _tier_id: formData.tierId });
+            }
+
             // Send logo upload email to sponsor
             const siteUrl = Deno.env.get("SITE_URL") || "https://hope4holden.lovable.app";
             const uploadUrl = `${siteUrl}/sponsor-upload/${uploadToken}`;
