@@ -128,6 +128,25 @@ Deno.serve(async (req) => {
               paid: true,
             });
             await supabase.rpc("decrement_spots");
+
+            // Send receipt to captain
+            if (formData.captainEmail) {
+              try {
+                await sendTransactionalEmail(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+                  templateName: "registration-receipt",
+                  recipientEmail: formData.captainEmail,
+                  idempotencyKey: `reg-receipt-${session.id}`,
+                  templateData: {
+                    teamName: formData.teamName || "Unknown Team",
+                    captainName: formData.captainName || "",
+                    captainEmail: formData.captainEmail || "",
+                  },
+                });
+              } catch (err) {
+                console.error("Failed to send registration receipt:", err);
+              }
+            }
+
             await notifyAdmins(
               supabase,
               SUPABASE_URL,
@@ -233,6 +252,25 @@ Deno.serve(async (req) => {
               donor_province: formData.province || null,
               donor_postal_code: formData.postalCode || null,
             });
+
+            // Send receipt to donor
+            if (formData.donorEmail) {
+              try {
+                await sendTransactionalEmail(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+                  templateName: "donation-receipt",
+                  recipientEmail: formData.donorEmail,
+                  idempotencyKey: `donation-receipt-${session.id}`,
+                  templateData: {
+                    donorName: formData.donorName || "Anonymous",
+                    donorEmail: formData.donorEmail || "",
+                    amount: item.amount,
+                  },
+                });
+              } catch (err) {
+                console.error("Failed to send donation receipt:", err);
+              }
+            }
+
             await notifyAdmins(
               supabase,
               SUPABASE_URL,
@@ -256,6 +294,25 @@ Deno.serve(async (req) => {
               stripe_session_id: session.id,
               paid: true,
             });
+
+            // Send receipt to dinner guest
+            if (formData.guestEmail) {
+              try {
+                await sendTransactionalEmail(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+                  templateName: "dinner-receipt",
+                  recipientEmail: formData.guestEmail,
+                  idempotencyKey: `dinner-receipt-${session.id}`,
+                  templateData: {
+                    guestName: formData.guestName || "Unknown",
+                    guestEmail: formData.guestEmail || "",
+                    quantity: formData.quantity || 1,
+                    amount: item.amount,
+                  },
+                });
+              } catch (err) {
+                console.error("Failed to send dinner receipt:", err);
+              }
+            }
             break;
         }
       }
