@@ -170,7 +170,18 @@ Deno.serve(async (req) => {
               amount: item.amount,
             });
             break;
-        }
+
+          case "dinner":
+            await supabase.from("dinners").insert({
+              guest_name: formData.guestName || "Unknown",
+              guest_email: formData.guestEmail || "",
+              guest_phone: formData.guestPhone || "",
+              quantity: formData.quantity || 1,
+              amount: item.amount,
+              stripe_session_id: session.id,
+              paid: true,
+            });
+            break;
       }
 
       await supabase

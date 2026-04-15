@@ -1,6 +1,5 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0?target=deno";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,9 +9,10 @@ const corsHeaders = {
 
 // Fixed prices (in dollars) — must match what the frontend displays
 const REGISTRATION_PRICE = 600;
+const DINNER_PRICE = 45;
 const MIN_DONATION = 5;
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -35,7 +35,6 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // ── Server-side price validation ──
     // Pre-fetch sponsorship tiers for tier price lookups
     const { data: allTiers } = await supabase
       .from("sponsorship_tiers")
@@ -87,6 +86,18 @@ serve(async (req) => {
           break;
         }
 
+        case "dinner": {
+          const quantity = Number(item.formData?.quantity);
+          if (!quantity || quantity < 1) {
+            return new Response(
+              JSON.stringify({ error: "Dinner ticket quantity must be at least 1" }),
+              { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          serverAmount = quantity * DINNER_PRICE;
+          break;
+        }
+
         default:
           return new Response(
             JSON.stringify({ error: `Unknown item type: ${item.type}` }),
@@ -96,7 +107,7 @@ serve(async (req) => {
 
       validatedItems.push({
         ...item,
-        amount: serverAmount, // override client amount with server-validated amount
+        amount: serverAmount,
       });
     }
 
@@ -120,8 +131,7 @@ serve(async (req) => {
 
     // Build Stripe line items
     const stripe = new Stripe(STRIPE_SECRET_KEY, {
-      apiVersion: "2023-10-16",
-      httpClient: Stripe.createFetchHttpClient(),
+      apiVersion: "2025-08-27.basil",
     });
 
     const lineItems = validatedItems.map((item: any) => ({
