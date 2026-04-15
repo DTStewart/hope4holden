@@ -182,6 +182,7 @@ Deno.serve(async (req) => {
               paid: true,
             });
             break;
+        }
       }
 
       await supabase
