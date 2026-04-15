@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +31,8 @@ interface Tier { id: string; name: string; price: number; benefits: string[]; so
 interface Sponsor { id: string; business_name: string; tier_name: string; logo_url: string | null; }
 
 const SponsorPage = () => {
-  const { addItem, setDrawerOpen } = useCart();
+  const { addItem } = useCart();
+  const navigate = useNavigate();
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [selectedTier, setSelectedTier] = useState<Tier | null>(null);
@@ -126,7 +128,7 @@ const SponsorPage = () => {
             <Button variant="outline" className="rounded border-[#1A1A1A]/20 text-[#1A1A1A]" onClick={() => { setSubmitted(false); setForm({ businessName: "", contactName: "", contactEmail: "", contactPhone: "" }); }}>
               Continue Shopping
             </Button>
-            <Button className="rounded bg-primary text-white hover:bg-[#4A7C09]" onClick={() => setDrawerOpen(true)}>Go to Cart</Button>
+            <Button className="rounded bg-primary text-white hover:bg-[#4A7C09]" onClick={() => navigate("/checkout")}>Go to Checkout</Button>
           </div>
         </div>
       </div>
