@@ -8,7 +8,7 @@ const AboutPage = () => {
     <div>
       {/* Hero */}
       <section className="section-dark relative overflow-hidden">
-        <img src={aboutHero} alt="" className="absolute inset-0 w-full h-full object-cover object-[center_60%] opacity-30" />
+        <img src={aboutHero} alt="" className="absolute inset-0 w-full h-full object-cover object-[center_35%] opacity-30" />
         <div className="container py-20 md:py-28 animate-fade-in relative z-10">
           <p className="section-label">Our Story</p>
           <h1 className="font-heading font-extrabold text-4xl md:text-6xl lg:text-7xl text-white leading-[0.95] max-w-2xl">
