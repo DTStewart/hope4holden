@@ -42,6 +42,14 @@ const CheckoutPage = () => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  // Warm up the create-checkout edge function on mount
+  useEffect(() => {
+    if (items.length > 0 && !success && !canceled) {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout`;
+      fetch(url, { method: "OPTIONS" }).catch(() => {});
+    }
+  }, []);
+
   useEffect(() => {
     if (success) {
       const stored = localStorage.getItem("h4h_cart");
