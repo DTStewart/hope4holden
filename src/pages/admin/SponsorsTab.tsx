@@ -219,6 +219,7 @@ export default function SponsorsTab() {
     },
   });
 
+  const getAssets = (s: any): BrandAsset[] => {
     const assets = (s as any).brand_assets;
     return Array.isArray(assets) ? assets : [];
   };
