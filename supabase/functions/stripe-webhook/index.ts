@@ -1,13 +1,40 @@
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
+async function sendTransactionalEmail(
+  functionsBaseUrl: string,
+  serviceRoleKey: string,
+  payload: {
+    templateName: string;
+    recipientEmail: string;
+    idempotencyKey: string;
+    templateData?: Record<string, any>;
+  }
+) {
+  const response = await fetch(`${functionsBaseUrl}/functions/v1/send-transactional-email`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${serviceRoleKey}`,
+      apikey: serviceRoleKey,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`send-transactional-email failed (${response.status}): ${errorBody}`);
+  }
+}
+
 async function notifyAdmins(
   supabase: any,
+  functionsBaseUrl: string,
+  serviceRoleKey: string,
   templateName: string,
   templateData: Record<string, any>
 ) {
   try {
-    // Get admin user IDs
     const { data: adminRoles } = await supabase
       .from("user_roles")
       .select("user_id")
@@ -15,18 +42,15 @@ async function notifyAdmins(
 
     if (!adminRoles || adminRoles.length === 0) return;
 
-    // Get admin emails from auth.users
     for (const role of adminRoles) {
       const { data: userData } = await supabase.auth.admin.getUserById(role.user_id);
       if (!userData?.user?.email) continue;
 
-      await supabase.functions.invoke("send-transactional-email", {
-        body: {
-          templateName,
-          recipientEmail: userData.user.email,
-          idempotencyKey: `${templateName}-${Date.now()}-${role.user_id}`,
-          templateData,
-        },
+      await sendTransactionalEmail(functionsBaseUrl, serviceRoleKey, {
+        templateName,
+        recipientEmail: userData.user.email,
+        idempotencyKey: `${templateName}-${Date.now()}-${role.user_id}`,
+        templateData,
       });
     }
   } catch (err) {
@@ -104,40 +128,47 @@ Deno.serve(async (req) => {
               paid: true,
             });
             await supabase.rpc("decrement_spots");
-            await notifyAdmins(supabase, "admin-new-registration", {
-              teamName: formData.teamName || "Unknown Team",
-              captainName: formData.captainName || "",
-              captainEmail: formData.captainEmail || "",
-            });
+            await notifyAdmins(
+              supabase,
+              SUPABASE_URL,
+              SUPABASE_SERVICE_ROLE_KEY,
+              "admin-new-registration",
+              {
+                teamName: formData.teamName || "Unknown Team",
+                captainName: formData.captainName || "",
+                captainEmail: formData.captainEmail || "",
+              }
+            );
             break;
 
           case "sponsorship": {
-            // Generate a unique upload token for the sponsor
             const uploadToken = crypto.randomUUID();
-            const { data: sponsorRow } = await supabase.from("sponsors").insert({
-              business_name: formData.businessName || "",
-              contact_name: formData.contactName || "",
-              contact_email: formData.contactEmail || "",
-              contact_phone: formData.contactPhone,
-              tier_name: formData.tier || "",
-              tier_id: formData.tierId || null,
-              amount: item.amount,
-              stripe_session_id: session.id,
-              paid: true,
-              logo_upload_token: uploadToken,
-            }).select("id").single();
+            const { data: sponsorRow } = await supabase
+              .from("sponsors")
+              .insert({
+                business_name: formData.businessName || "",
+                contact_name: formData.contactName || "",
+                contact_email: formData.contactEmail || "",
+                contact_phone: formData.contactPhone,
+                tier_name: formData.tier || "",
+                tier_id: formData.tierId || null,
+                amount: item.amount,
+                stripe_session_id: session.id,
+                paid: true,
+                logo_upload_token: uploadToken,
+              })
+              .select("id")
+              .single();
 
-            // Decrement available slots for this tier
             if (formData.tierId) {
               await supabase.rpc("decrement_sponsor_slots", { _tier_id: formData.tierId });
             }
 
-            // Send logo upload email to sponsor
             const siteUrl = Deno.env.get("SITE_URL") || "https://hope4holden.lovable.app";
             const uploadUrl = `${siteUrl}/sponsor-upload/${uploadToken}`;
             if (formData.contactEmail) {
-              await supabase.functions.invoke("send-transactional-email", {
-                body: {
+              try {
+                await sendTransactionalEmail(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
                   templateName: "sponsor-logo-upload",
                   recipientEmail: formData.contactEmail,
                   idempotencyKey: `sponsor-upload-${sponsorRow?.id || uploadToken}`,
@@ -146,17 +177,25 @@ Deno.serve(async (req) => {
                     tierName: formData.tier || "",
                     uploadUrl,
                   },
-                },
-              });
+                });
+              } catch (err) {
+                console.error("Failed to send sponsor logo upload email:", err);
+              }
             }
 
-            await notifyAdmins(supabase, "admin-new-sponsorship", {
-              businessName: formData.businessName || "",
-              contactName: formData.contactName || "",
-              contactEmail: formData.contactEmail || "",
-              tierName: formData.tier || "",
-              amount: item.amount,
-            });
+            await notifyAdmins(
+              supabase,
+              SUPABASE_URL,
+              SUPABASE_SERVICE_ROLE_KEY,
+              "admin-new-sponsorship",
+              {
+                businessName: formData.businessName || "",
+                contactName: formData.contactName || "",
+                contactEmail: formData.contactEmail || "",
+                tierName: formData.tier || "",
+                amount: item.amount,
+              }
+            );
             break;
           }
 
@@ -173,11 +212,17 @@ Deno.serve(async (req) => {
               donor_province: formData.province || null,
               donor_postal_code: formData.postalCode || null,
             });
-            await notifyAdmins(supabase, "admin-new-donation", {
-              donorName: formData.donorName || "Anonymous",
-              donorEmail: formData.donorEmail || "",
-              amount: item.amount,
-            });
+            await notifyAdmins(
+              supabase,
+              SUPABASE_URL,
+              SUPABASE_SERVICE_ROLE_KEY,
+              "admin-new-donation",
+              {
+                donorName: formData.donorName || "Anonymous",
+                donorEmail: formData.donorEmail || "",
+                amount: item.amount,
+              }
+            );
             break;
 
           case "dinner":
