@@ -445,11 +445,11 @@ const ParticipatePage = () => {
               </div>
               {wantsRecurring && (
                 <p className="text-xs text-[#1A1A1A]/50 bg-[#1A1A1A]/[0.03] border border-[#1A1A1A]/10 rounded px-3 py-2">
-                  After completing your one-time donation through our checkout, you'll be redirected to the{" "}
+                  After you complete your purchase, we'll provide a link to the{" "}
                   <a href="https://atcp.org/ways-to-give/support-a-tcp-canada/" target="_blank" rel="noopener noreferrer" className="text-primary underline">
                     ATCP website
                   </a>{" "}
-                  to set up your recurring donation directly with them.
+                  where you can set up a recurring donation directly with them.
                 </p>
               )}
               <div className="flex justify-end">
