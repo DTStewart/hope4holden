@@ -562,6 +562,7 @@ export type Database = {
       }
     }
     Functions: {
+      decrement_sponsor_slots: { Args: { _tier_id: string }; Returns: number }
       decrement_spots: { Args: never; Returns: number }
       delete_email: {
         Args: { message_id: number; queue_name: string }
