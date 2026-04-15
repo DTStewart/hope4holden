@@ -70,6 +70,10 @@ export default function AdminDashboard() {
               <ClipboardList className="h-4 w-4 mr-1 hidden md:inline" />
               Waitlist
             </TabsTrigger>
+            <TabsTrigger value="dinners" className="text-xs md:text-sm">
+              <UtensilsCrossed className="h-4 w-4 mr-1 hidden md:inline" />
+              Dinners
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="registrations"><RegistrationsTab /></TabsContent>
@@ -81,6 +85,7 @@ export default function AdminDashboard() {
           <TabsContent value="subscribers"><SubscribersTab /></TabsContent>
           <TabsContent value="gallery"><GalleryTab /></TabsContent>
           <TabsContent value="waitlist"><WaitlistTab /></TabsContent>
+          <TabsContent value="dinners"><DinnersTab /></TabsContent>
         </Tabs>
       </div>
     </div>
