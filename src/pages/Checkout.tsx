@@ -154,7 +154,7 @@ const CheckoutPage = () => {
                 To set up a recurring donation, please visit the ATCP website:
               </p>
               <Button asChild variant="outline" className="rounded border-primary text-primary hover:bg-primary/5">
-                <a href="https://www.atcp.org/donate" target="_blank" rel="noopener noreferrer">
+                <a href="https://atcp.org/ways-to-give/support-a-tcp-canada/" target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Set Up Recurring Donation
                 </a>
