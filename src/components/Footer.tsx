@@ -84,8 +84,9 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="mt-12 pt-6 border-t border-white/10 text-xs text-white/30">
+        <div className="mt-12 pt-6 border-t border-white/10 text-xs text-white/30 flex items-center justify-between">
           <p>© {new Date().getFullYear()} Hope 4 Holden. All rights reserved.</p>
+          <Link to="/admin/login" className="hover:text-white/60 transition-colors">Admin</Link>
         </div>
       </div>
     </footer>
