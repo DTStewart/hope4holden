@@ -51,9 +51,9 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
-  // Defense in depth: verify_jwt=true already requires a valid JWT at the
-  // gateway layer. This adds an explicit role check so only service-role
-  // callers (e.g. stripe-webhook, process-email-queue) can send emails.
+  // Defense in depth: only service-role callers (e.g. stripe-webhook,
+  // process-email-queue) can send emails. We check both JWT claims and
+  // direct key comparison since edge-to-edge calls may pass the raw key.
   const authHeader = req.headers.get('Authorization')
   if (!authHeader?.startsWith('Bearer ')) {
     return new Response(
@@ -64,7 +64,10 @@ Deno.serve(async (req) => {
 
   const token = authHeader.slice('Bearer '.length).trim()
   const claims = parseJwtClaims(token)
-  if (claims?.role !== 'service_role') {
+  const isServiceRole =
+    claims?.role === 'service_role' ||
+    token === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  if (!isServiceRole) {
     return new Response(
       JSON.stringify({ error: 'Forbidden' }),
       { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
