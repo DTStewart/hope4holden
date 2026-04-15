@@ -14,6 +14,9 @@ import { template as adminNewDonation } from './admin-new-donation.tsx'
 import { template as adminNewSponsorship } from './admin-new-sponsorship.tsx'
 import { template as sponsorLogoUpload } from './sponsor-logo-upload.tsx'
 import { template as sponsorReceipt } from './sponsor-receipt.tsx'
+import { template as registrationReceipt } from './registration-receipt.tsx'
+import { template as donationReceipt } from './donation-receipt.tsx'
+import { template as dinnerReceipt } from './dinner-receipt.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'admin-new-registration': adminNewRegistration,
@@ -21,4 +24,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'admin-new-sponsorship': adminNewSponsorship,
   'sponsor-logo-upload': sponsorLogoUpload,
   'sponsor-receipt': sponsorReceipt,
+  'registration-receipt': registrationReceipt,
+  'donation-receipt': donationReceipt,
+  'dinner-receipt': dinnerReceipt,
 }
