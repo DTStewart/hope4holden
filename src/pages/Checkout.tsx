@@ -52,19 +52,14 @@ const CheckoutPage = () => {
 
   useEffect(() => {
     if (success) {
-      const stored = localStorage.getItem("h4h_cart");
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          const hasRecurring = parsed.some(
-            (item: any) => item.type === "donation" && item.formData?.wantsRecurring
-          );
-          if (hasRecurring) setHadRecurring(true);
-        } catch {}
-      }
+      const hasRecurring = items.some(
+        (item) => item.type === "donation" && item.formData?.wantsRecurring
+      );
+      if (hasRecurring) setHadRecurring(true);
       clearCart();
     }
-  }, [success, clearCart]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [success]);
 
   const buildItemsPayload = () => {
     return items.map((item) => {
