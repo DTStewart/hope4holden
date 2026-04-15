@@ -1,4 +1,4 @@
-import Stripe from "https://esm.sh/stripe@18.5.0";
+import Stripe from "npm:stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
@@ -35,15 +35,19 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Pre-fetch sponsorship tiers for tier price lookups
-    const { data: allTiers } = await supabase
-      .from("sponsorship_tiers")
-      .select("id, price, name")
-      .eq("active", true);
+    // Only fetch tiers if there's a sponsorship item
+    const hasSponsorships = items.some((i: any) => i.type === "sponsorship");
+    let tierMap = new Map<string, { price: number; name: string }>();
 
-    const tierMap = new Map<string, { price: number; name: string }>();
-    for (const t of allTiers || []) {
-      tierMap.set(t.id, { price: t.price, name: t.name });
+    if (hasSponsorships) {
+      const { data: allTiers } = await supabase
+        .from("sponsorship_tiers")
+        .select("id, price, name")
+        .eq("active", true);
+
+      for (const t of allTiers || []) {
+        tierMap.set(t.id, { price: t.price, name: t.name });
+      }
     }
 
     const validatedItems = [];
@@ -111,25 +115,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Save pending order with validated amounts
     const totalAmount = validatedItems.reduce(
       (sum: number, item: any) => sum + item.amount,
       0
     );
 
-    const { data: pendingOrder, error: orderError } = await supabase
-      .from("pending_orders")
-      .insert({
-        items: validatedItems,
-        total_amount: totalAmount,
-        status: "pending",
-      })
-      .select("id")
-      .single();
-
-    if (orderError) throw new Error(`Failed to create pending order: ${orderError.message}`);
-
-    // Build Stripe line items
+    // Create pending order and Stripe session in parallel
     const stripe = new Stripe(STRIPE_SECRET_KEY, {
       apiVersion: "2025-08-27.basil",
     });
@@ -146,22 +137,41 @@ Deno.serve(async (req) => {
       quantity: 1,
     }));
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: lineItems,
-      mode: "payment",
-      success_url: `${returnUrl}?success=true&order_id=${pendingOrder.id}`,
-      cancel_url: `${returnUrl}?canceled=true`,
-      metadata: {
-        pending_order_id: pendingOrder.id,
-      },
-    });
+    const [orderResult, session] = await Promise.all([
+      supabase
+        .from("pending_orders")
+        .insert({
+          items: validatedItems,
+          total_amount: totalAmount,
+          status: "pending",
+        })
+        .select("id")
+        .single(),
+      stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: lineItems,
+        mode: "payment",
+        success_url: `${returnUrl}?success=true`,
+        cancel_url: `${returnUrl}?canceled=true`,
+        metadata: {
+          pending_order_placeholder: "true",
+        },
+      }),
+    ]);
 
-    // Update pending order with stripe session id
-    await supabase
+    if (orderResult.error) throw new Error(`Failed to create pending order: ${orderResult.error.message}`);
+
+    // Fire-and-forget: update pending order with stripe session id
+    supabase
       .from("pending_orders")
       .update({ stripe_session_id: session.id })
-      .eq("id", pendingOrder.id);
+      .eq("id", orderResult.data.id)
+      .then(() => {});
+
+    // Also update session metadata with the order id (non-blocking)
+    stripe.checkout.sessions.update(session.id, {
+      metadata: { pending_order_id: orderResult.data.id },
+    }).catch(() => {});
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
