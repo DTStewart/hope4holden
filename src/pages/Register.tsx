@@ -6,11 +6,80 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/hooks/use-toast";
-import { CheckCircle, Users, Clock } from "lucide-react";
+import { CheckCircle, Users, Clock, UtensilsCrossed } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type RegistrationStatus = "coming_soon" | "open" | "sold_out";
 
+const DINNER_PRICE = 45;
+
+/* ─── Dinner-Only Form ─── */
+const DinnerSection = () => {
+  const { addItem } = useCart();
+  const navigate = useNavigate();
+  const [submitted, setSubmitted] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", phone: "", quantity: 1 });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type } = e.target;
+    setForm((prev) => ({ ...prev, [name]: type === "number" ? Math.max(1, Number(value)) : value }));
+  };
+
+  const total = form.quantity * DINNER_PRICE;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    addItem({
+      type: "dinner",
+      description: `Dinner Tickets x ${form.quantity}: ${form.name}`,
+      amount: total,
+      formData: { guestName: form.name, guestEmail: form.email, guestPhone: form.phone, quantity: form.quantity },
+    });
+    toast({ title: "Dinner tickets added to cart!" });
+    navigate("/checkout");
+  };
+
+  if (submitted) return null;
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 md:p-10 border border-[#1A1A1A]/10 rounded">
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          <UtensilsCrossed className="h-5 w-5 text-primary" />
+          <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40">Guest Details</p>
+        </div>
+        <div className="space-y-4 mt-4">
+          <div className="space-y-2">
+            <Label htmlFor="d-name" className="text-[#1A1A1A] font-medium">Full Name</Label>
+            <Input id="d-name" name="name" value={form.name} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="d-email" className="text-[#1A1A1A] font-medium">Email</Label>
+              <Input id="d-email" name="email" type="email" value={form.email} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="d-phone" className="text-[#1A1A1A] font-medium">Phone</Label>
+              <Input id="d-phone" name="phone" type="tel" value={form.phone} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="d-quantity" className="text-[#1A1A1A] font-medium">Number of Tickets</Label>
+            <Input id="d-quantity" name="quantity" type="number" min={1} value={form.quantity} onChange={handleChange} required className="rounded border-[#1A1A1A]/15 w-32" />
+          </div>
+          <p className="text-[#1A1A1A]/60 font-medium">
+            {form.quantity} ticket{form.quantity !== 1 ? "s" : ""} × ${DINNER_PRICE} = <span className="text-[#1A1A1A] font-bold">${total}</span>
+          </p>
+        </div>
+      </div>
+      <Button type="submit" className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider" size="lg">
+        Add to Cart — ${total}
+      </Button>
+    </form>
+  );
+};
+
+/* ─── Main Page ─── */
 const RegisterPage = () => {
   const { addItem } = useCart();
   const navigate = useNavigate();
@@ -203,17 +272,17 @@ const RegisterPage = () => {
     );
   }
 
-  // Open — registration form
+  // Open — registration + dinner form
   return (
     <div>
       <section className="section-dark relative overflow-hidden">
         <img src={registrationHero} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
         <div className="container py-20 md:py-28 animate-fade-in relative z-10">
-          <p className="section-label">Team Registration</p>
+          <p className="section-label">Join Us</p>
           <h1 className="font-heading font-extrabold text-4xl md:text-6xl text-white leading-[0.95] mb-4">
-            Register Your Team
+            Join Us
           </h1>
-          <p className="text-white/60 text-lg">$600 per team of 4 golfers</p>
+          <p className="text-white/60 text-lg">Register your team or grab dinner-only tickets</p>
           {spotsAvailable !== null && (
             <div className="flex items-center gap-2 text-primary font-heading font-bold mt-4">
               <Users className="h-5 w-5" />
@@ -223,8 +292,14 @@ const RegisterPage = () => {
         </div>
       </section>
 
+      {/* Section 1: Team Registration */}
       <section className="section-light">
         <div className="container py-16 md:py-20 max-w-2xl animate-fade-in">
+          <h2 className="font-heading font-extrabold text-2xl md:text-3xl text-[#1A1A1A] mb-2">Register Your Team</h2>
+          <p className="text-[#1A1A1A]/60 mb-6">$600 per team of 4 golfers</p>
+          <p className="text-sm text-primary font-medium bg-primary/10 border border-primary/20 rounded px-4 py-3 mb-6">
+            Team registration includes dinner on Thursday evening for all 4 golfers.
+          </p>
           <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 md:p-10 border border-[#1A1A1A]/10 rounded">
             <div>
               <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40 mb-4">Team Details</p>
@@ -278,6 +353,20 @@ const RegisterPage = () => {
               Add to Cart — $600
             </Button>
           </form>
+        </div>
+      </section>
+
+      {/* Separator */}
+      <div className="container max-w-2xl">
+        <hr className="border-[#1A1A1A]/10" />
+      </div>
+
+      {/* Section 2: Dinner Only */}
+      <section className="bg-[#F8F6F3]">
+        <div className="container py-16 md:py-20 max-w-2xl animate-fade-in">
+          <h2 className="font-heading font-extrabold text-2xl md:text-3xl text-[#1A1A1A] mb-2">Dinner Only</h2>
+          <p className="text-[#1A1A1A]/60 mb-6">$45 per person — join us for the Thursday evening dinner without golfing</p>
+          <DinnerSection />
         </div>
       </section>
     </div>

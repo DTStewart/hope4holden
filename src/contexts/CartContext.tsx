@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 
-export type CartItemType = "registration" | "sponsorship" | "donation";
+export type CartItemType = "registration" | "sponsorship" | "donation" | "dinner";
 
 export interface CartItem {
   id: string;
