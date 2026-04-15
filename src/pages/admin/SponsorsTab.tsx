@@ -197,7 +197,28 @@ export default function SponsorsTab() {
     },
   });
 
-  const getAssets = (s: any): BrandAsset[] => {
+  const deleteOne = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("sponsors").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-sponsors"] });
+      toast({ title: "Sponsor deleted" });
+    },
+  });
+
+  const deleteAll = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("sponsors").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-sponsors"] });
+      toast({ title: "All sponsors deleted" });
+    },
+  });
+
     const assets = (s as any).brand_assets;
     return Array.isArray(assets) ? assets : [];
   };
