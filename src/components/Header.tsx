@@ -8,9 +8,7 @@ import h4hLogo from "@/assets/h4h-logo.png";
 const navLinks = [
   { to: "/", label: "Home", icon: true },
   { to: "/tournament", label: "Tournament" },
-  { to: "/register", label: "Join Us" },
-  { to: "/sponsor", label: "Sponsor" },
-  { to: "/donate", label: "Donate" },
+  { to: "/register", label: "Participate" },
   { to: "/about", label: "About" },
   { to: "/gallery", label: "Gallery" },
   { to: "/faq", label: "FAQ" },
