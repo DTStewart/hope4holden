@@ -31,13 +31,13 @@ interface Tier { id: string; name: string; price: number; benefits: string[]; so
 interface Sponsor { id: string; business_name: string; tier_name: string; logo_url: string | null; }
 
 const SponsorPage = () => {
-  const { addItem } = useCart();
+  const { addItem, contact, setContact } = useCart();
   const navigate = useNavigate();
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [selectedTier, setSelectedTier] = useState<Tier | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const [form, setForm] = useState({ businessName: "", contactName: "", contactEmail: "", contactPhone: "" });
+  const [form, setForm] = useState({ businessName: "", contactName: contact.name, contactEmail: contact.email, contactPhone: contact.phone });
 
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -90,6 +90,7 @@ const SponsorPage = () => {
       amount: selectedTier.price,
       formData: { ...form, tier: selectedTier.name, tierId: selectedTier.id },
     });
+    setContact({ name: form.contactName, email: form.contactEmail, phone: form.contactPhone });
     setSubmitted(true);
     setSelectedTier(null);
     toast({ title: "Sponsorship added to cart!" });
@@ -98,13 +99,13 @@ const SponsorPage = () => {
   const handleInKindSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTier) return;
-    // For in-kind / $0 tiers, add to cart with $0 amount
     addItem({
       type: "sponsorship",
       description: `${selectedTier.name}: ${form.businessName}`,
       amount: 0,
       formData: { ...form, tier: selectedTier.name, tierId: selectedTier.id },
     });
+    setContact({ name: form.contactName, email: form.contactEmail, phone: form.contactPhone });
     setSubmitted(true);
     setSelectedTier(null);
     toast({ title: "Sponsorship request submitted!" });

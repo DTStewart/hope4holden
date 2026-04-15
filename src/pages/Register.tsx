@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCart } from "@/contexts/CartContext";
+import type { CartContact } from "@/contexts/CartContext";
 import { toast } from "@/hooks/use-toast";
 import { CheckCircle, Users, Clock, UtensilsCrossed, ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +17,7 @@ const DINNER_PRICE = 45;
 const TEAM_PRICE = 600;
 
 const RegisterPage = () => {
-  const { addItem } = useCart();
+  const { addItem, contact, setContact } = useCart();
   const navigate = useNavigate();
   const [submitted, setSubmitted] = useState(false);
   const [spotsAvailable, setSpotsAvailable] = useState<number | null>(null);
@@ -26,14 +27,14 @@ const RegisterPage = () => {
   const [wantsTeam, setWantsTeam] = useState(false);
   const [wantsDinner, setWantsDinner] = useState(false);
 
-  // Team form
+  // Team form — pre-fill from saved contact
   const [teamForm, setTeamForm] = useState({
-    teamName: "", captainName: "", captainEmail: "", captainPhone: "",
+    teamName: "", captainName: contact.name, captainEmail: contact.email, captainPhone: contact.phone,
     street: "", city: "", province: "", postalCode: "",
   });
 
-  // Dinner form
-  const [dinnerForm, setDinnerForm] = useState({ name: "", email: "", phone: "", quantity: 1 });
+  // Dinner form — pre-fill from saved contact
+  const [dinnerForm, setDinnerForm] = useState({ name: contact.name, email: contact.email, phone: contact.phone, quantity: 1 });
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -92,6 +93,13 @@ const RegisterPage = () => {
         amount: dinnerTotal,
         formData: { guestName: dinnerForm.name, guestEmail: dinnerForm.email, guestPhone: dinnerForm.phone, quantity: dinnerForm.quantity },
       });
+    }
+
+    // Save contact info from whichever form was filled
+    if (wantsTeam) {
+      setContact({ name: teamForm.captainName, email: teamForm.captainEmail, phone: teamForm.captainPhone });
+    } else if (wantsDinner) {
+      setContact({ name: dinnerForm.name, email: dinnerForm.email, phone: dinnerForm.phone });
     }
 
     setSubmitted(true);
