@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import registrationHero from "@/assets/registration-hero.jpg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 type RegistrationStatus = "coming_soon" | "open" | "sold_out";
 
 const RegisterPage = () => {
-  const { addItem, setDrawerOpen } = useCart();
+  const { addItem } = useCart();
+  const navigate = useNavigate();
   const [submitted, setSubmitted] = useState(false);
   const [spotsAvailable, setSpotsAvailable] = useState<number | null>(null);
   const [regStatus, setRegStatus] = useState<RegistrationStatus>("coming_soon");
@@ -194,7 +196,7 @@ const RegisterPage = () => {
             <Button variant="outline" className="rounded border-[#1A1A1A]/20 text-[#1A1A1A] hover:bg-[#1A1A1A]/5" onClick={() => { setSubmitted(false); setForm({ teamName: "", captainName: "", captainEmail: "", captainPhone: "", street: "", city: "", province: "", postalCode: "" }); }}>
               Continue Shopping
             </Button>
-            <Button className="rounded bg-primary text-white hover:bg-[#4A7C09]" onClick={() => setDrawerOpen(true)}>Go to Cart</Button>
+            <Button className="rounded bg-primary text-white hover:bg-[#4A7C09]" onClick={() => navigate("/checkout")}>Go to Checkout</Button>
           </div>
         </div>
       </div>

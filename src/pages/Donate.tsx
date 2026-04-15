@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import atcpLogo from "@/assets/atcp-logo.svg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,8 @@ import { CheckCircle } from "lucide-react";
 const suggestedAmounts = [25, 50, 100, 250, 500];
 
 const DonatePage = () => {
-  const { addItem, setDrawerOpen } = useCart();
+  const { addItem } = useCart();
+  const navigate = useNavigate();
   const [submitted, setSubmitted] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState<number | null>(100);
   const [customAmount, setCustomAmount] = useState("");
@@ -51,7 +53,7 @@ const DonatePage = () => {
             <Button variant="outline" className="rounded border-[#1A1A1A]/20 text-[#1A1A1A]" onClick={() => { setSubmitted(false); setForm({ donorName: "", donorEmail: "", wantsRecurring: false }); setSelectedAmount(100); setIsCustom(false); setCustomAmount(""); }}>
               Continue Shopping
             </Button>
-            <Button className="rounded bg-primary text-white hover:bg-[#4A7C09]" onClick={() => setDrawerOpen(true)}>Go to Cart</Button>
+            <Button className="rounded bg-primary text-white hover:bg-[#4A7C09]" onClick={() => navigate("/checkout")}>Go to Checkout</Button>
           </div>
         </div>
       </div>
