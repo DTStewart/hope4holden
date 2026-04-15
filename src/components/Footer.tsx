@@ -43,7 +43,7 @@ const Footer = () => {
           <div className="space-y-4">
             <h4 className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-primary">Quick Links</h4>
             <div className="flex flex-col gap-2 text-sm text-white/60">
-              <Link to="/register" className="hover:text-primary transition-colors">Register</Link>
+              <Link to="/register" className="hover:text-primary transition-colors">Join Us</Link>
               <Link to="/sponsor" className="hover:text-primary transition-colors">Sponsor</Link>
               <Link to="/donate" className="hover:text-primary transition-colors">Donate</Link>
               <Link to="/about" className="hover:text-primary transition-colors">About</Link>
