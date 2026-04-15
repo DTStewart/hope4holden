@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     }
 
     let event: Stripe.Event;
-    event = stripe.webhooks.constructEvent(body, sig, STRIPE_WEBHOOK_SECRET);
+    event = await stripe.webhooks.constructEventAsync(body, sig, STRIPE_WEBHOOK_SECRET);
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
