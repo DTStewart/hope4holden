@@ -10,6 +10,12 @@ export interface CartItem {
   formData: Record<string, any>;
 }
 
+export interface CartContact {
+  name: string;
+  email: string;
+  phone: string;
+}
+
 interface CartContextType {
   items: CartItem[];
   addItem: (item: Omit<CartItem, "id">) => void;
@@ -19,11 +25,16 @@ interface CartContextType {
   itemCount: number;
   isDrawerOpen: boolean;
   setDrawerOpen: (open: boolean) => void;
+  contact: CartContact;
+  setContact: (contact: Partial<CartContact>) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const CART_STORAGE_KEY = "h4h_cart";
+const CONTACT_STORAGE_KEY = "h4h_contact";
+
+const emptyContact: CartContact = { name: "", email: "", phone: "" };
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>(() => {
@@ -34,11 +45,27 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return [];
     }
   });
+  const [contact, setContactState] = useState<CartContact>(() => {
+    try {
+      const stored = localStorage.getItem(CONTACT_STORAGE_KEY);
+      return stored ? { ...emptyContact, ...JSON.parse(stored) } : emptyContact;
+    } catch {
+      return emptyContact;
+    }
+  });
   const [isDrawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   }, [items]);
+
+  useEffect(() => {
+    localStorage.setItem(CONTACT_STORAGE_KEY, JSON.stringify(contact));
+  }, [contact]);
+
+  const setContact = useCallback((partial: Partial<CartContact>) => {
+    setContactState((prev) => ({ ...prev, ...partial }));
+  }, []);
 
   const addItem = useCallback((item: Omit<CartItem, "id">) => {
     const newItem: CartItem = { ...item, id: crypto.randomUUID() };
@@ -51,6 +78,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clearCart = useCallback(() => {
     setItems([]);
+    setContactState(emptyContact);
+    localStorage.removeItem(CONTACT_STORAGE_KEY);
   }, []);
 
   const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
@@ -58,7 +87,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, clearCart, totalAmount, itemCount, isDrawerOpen, setDrawerOpen }}
+      value={{ items, addItem, removeItem, clearCart, totalAmount, itemCount, isDrawerOpen, setDrawerOpen, contact, setContact }}
     >
       {children}
     </CartContext.Provider>

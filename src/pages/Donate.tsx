@@ -12,13 +12,13 @@ import { CheckCircle } from "lucide-react";
 const suggestedAmounts = [25, 50, 100, 250, 500];
 
 const DonatePage = () => {
-  const { addItem } = useCart();
+  const { addItem, contact, setContact } = useCart();
   const navigate = useNavigate();
   const [submitted, setSubmitted] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState<number | null>(100);
   const [customAmount, setCustomAmount] = useState("");
   const [isCustom, setIsCustom] = useState(false);
-  const [form, setForm] = useState({ donorName: "", donorEmail: "", wantsRecurring: false });
+  const [form, setForm] = useState({ donorName: contact.name, donorEmail: contact.email, wantsRecurring: false });
 
   const amount = isCustom ? Number(customAmount) : selectedAmount;
 
@@ -38,6 +38,7 @@ const DonatePage = () => {
       amount,
       formData: { ...form, amount, wantsRecurring: form.wantsRecurring },
     });
+    setContact({ name: form.donorName, email: form.donorEmail });
     setSubmitted(true);
     toast({ title: "Donation added to cart!" });
   };
