@@ -234,25 +234,44 @@ export default function SponsorsTab() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Sponsors ({sponsors?.length ?? 0})</span>
-            {sponsors && sponsors.length > 0 && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() =>
-                  exportToCsv("sponsors.csv",
-                    ["Business", "Contact", "Email", "Phone", "Tier", "Amount", "Paid", "Approved", "Assets", "Date"],
-                    sponsors.map((s) => [
-                      s.business_name, s.contact_name, s.contact_email, s.contact_phone || "",
-                      s.tier_name, String(s.amount), s.paid ? "Yes" : "No", s.approved ? "Yes" : "No",
-                      String(getAssets(s).length),
-                      new Date(s.created_at).toLocaleDateString(),
-                    ])
-                  )
-                }
-              >
-                <Download className="h-4 w-4 mr-1" /> Export CSV
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {sponsors && sponsors.length > 0 && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      exportToCsv("sponsors.csv",
+                        ["Business", "Contact", "Email", "Phone", "Tier", "Amount", "Paid", "Approved", "Assets", "Date"],
+                        sponsors.map((s) => [
+                          s.business_name, s.contact_name, s.contact_email, s.contact_phone || "",
+                          s.tier_name, String(s.amount), s.paid ? "Yes" : "No", s.approved ? "Yes" : "No",
+                          String(getAssets(s).length),
+                          new Date(s.created_at).toLocaleDateString(),
+                        ])
+                      )
+                    }
+                  >
+                    <Download className="h-4 w-4 mr-1" /> Export CSV
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button size="sm" variant="destructive"><Trash2 className="h-4 w-4 mr-1" /> Delete All</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete all sponsors?</AlertDialogTitle>
+                        <AlertDialogDescription>This will permanently delete all {sponsors.length} sponsor(s). This action cannot be undone.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => deleteAll.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete All</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
