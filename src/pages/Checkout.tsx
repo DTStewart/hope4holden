@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle, XCircle, Loader2, ShoppingCart, ExternalLink, Trash2 } from "lucide-react";
 
 const CheckoutPage = () => {
-  const { items, totalAmount, clearCart, removeItem, setDrawerOpen } = useCart();
+  const { items, totalAmount, clearCart, removeItem } = useCart();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
