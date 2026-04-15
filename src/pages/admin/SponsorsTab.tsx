@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, Save, Download, ImageIcon, Mail, Loader2 } from "lucide-react";
+import { Check, X, Save, Download, ImageIcon, Mail, Loader2, Trash2 } from "lucide-react";
 import { exportToCsv } from "@/lib/exportCsv";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 function TiersCard() {
   const queryClient = useQueryClient();
@@ -196,6 +197,28 @@ export default function SponsorsTab() {
     },
   });
 
+  const deleteOne = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("sponsors").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-sponsors"] });
+      toast({ title: "Sponsor deleted" });
+    },
+  });
+
+  const deleteAll = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("sponsors").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-sponsors"] });
+      toast({ title: "All sponsors deleted" });
+    },
+  });
+
   const getAssets = (s: any): BrandAsset[] => {
     const assets = (s as any).brand_assets;
     return Array.isArray(assets) ? assets : [];
@@ -211,25 +234,44 @@ export default function SponsorsTab() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Sponsors ({sponsors?.length ?? 0})</span>
-            {sponsors && sponsors.length > 0 && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() =>
-                  exportToCsv("sponsors.csv",
-                    ["Business", "Contact", "Email", "Phone", "Tier", "Amount", "Paid", "Approved", "Assets", "Date"],
-                    sponsors.map((s) => [
-                      s.business_name, s.contact_name, s.contact_email, s.contact_phone || "",
-                      s.tier_name, String(s.amount), s.paid ? "Yes" : "No", s.approved ? "Yes" : "No",
-                      String(getAssets(s).length),
-                      new Date(s.created_at).toLocaleDateString(),
-                    ])
-                  )
-                }
-              >
-                <Download className="h-4 w-4 mr-1" /> Export CSV
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {sponsors && sponsors.length > 0 && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      exportToCsv("sponsors.csv",
+                        ["Business", "Contact", "Email", "Phone", "Tier", "Amount", "Paid", "Approved", "Assets", "Date"],
+                        sponsors.map((s) => [
+                          s.business_name, s.contact_name, s.contact_email, s.contact_phone || "",
+                          s.tier_name, String(s.amount), s.paid ? "Yes" : "No", s.approved ? "Yes" : "No",
+                          String(getAssets(s).length),
+                          new Date(s.created_at).toLocaleDateString(),
+                        ])
+                      )
+                    }
+                  >
+                    <Download className="h-4 w-4 mr-1" /> Export CSV
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button size="sm" variant="destructive"><Trash2 className="h-4 w-4 mr-1" /> Delete All</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete all sponsors?</AlertDialogTitle>
+                        <AlertDialogDescription>This will permanently delete all {sponsors.length} sponsor(s). This action cannot be undone.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => deleteAll.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete All</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -304,6 +346,9 @@ export default function SponsorsTab() {
                             onClick={() => handleResendUploadEmail(s)}
                           >
                             {sendingEmailFor === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                          </Button>
+                          <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteOne.mutate(s.id)}>
+                            <Trash2 className="h-3 w-3" />
                           </Button>
                         </TableCell>
                       </TableRow>
