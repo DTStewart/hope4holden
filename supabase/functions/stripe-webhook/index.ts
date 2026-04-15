@@ -164,6 +164,27 @@ Deno.serve(async (req) => {
               await supabase.rpc("decrement_sponsor_slots", { _tier_id: formData.tierId });
             }
 
+            // Send receipt email to sponsor
+            if (formData.contactEmail) {
+              try {
+                await sendTransactionalEmail(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+                  templateName: "sponsor-receipt",
+                  recipientEmail: formData.contactEmail,
+                  idempotencyKey: `sponsor-receipt-${sponsorRow?.id || uploadToken}`,
+                  templateData: {
+                    businessName: formData.businessName || "",
+                    contactName: formData.contactName || "",
+                    contactEmail: formData.contactEmail || "",
+                    tierName: formData.tier || "",
+                    amount: item.amount,
+                  },
+                });
+              } catch (err) {
+                console.error("Failed to send sponsor receipt email:", err);
+              }
+            }
+
+            // Send logo upload request email to sponsor
             const siteUrl = Deno.env.get("SITE_URL") || "https://hope4holden.lovable.app";
             const uploadUrl = `${siteUrl}/sponsor-upload/${uploadToken}`;
             if (formData.contactEmail) {
