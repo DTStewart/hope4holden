@@ -453,12 +453,12 @@ const ParticipatePage = () => {
                 </p>
               )}
               <div className="flex justify-end">
-              <Button onClick={handleAddDonation} className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-sm" size="default">
-                <ShoppingCart className="h-4 w-4 mr-2" />
-                Add to Cart — ${donationAmount || 0}
-              </Button>
+                <Button onClick={handleAddDonation} className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-sm" size="default">
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Add to Cart — ${donationAmount || 0}
+                </Button>
+              </div>
             </div>
-          </div>
         </div>
       </section>
     </div>
