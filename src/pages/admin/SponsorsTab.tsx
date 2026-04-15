@@ -347,6 +347,9 @@ export default function SponsorsTab() {
                           >
                             {sendingEmailFor === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
                           </Button>
+                          <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteOne.mutate(s.id)}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
