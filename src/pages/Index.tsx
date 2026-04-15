@@ -56,10 +56,10 @@ const HomePage = () => {
         <div className="container py-20 md:py-28">
           <p className="section-label">Get Involved</p>
           <h2 className="font-heading font-extrabold text-3xl md:text-5xl text-[#1A1A1A] mb-12 max-w-lg">
-            Three ways to make a difference.
+            Ways to make a difference.
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[#1A1A1A]/10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-[#1A1A1A]/10">
             {[
               {
                 title: "Register",
@@ -68,15 +68,21 @@ const HomePage = () => {
                 cta: "Register Now",
               },
               {
+                title: "Dinner Only",
+                desc: "Join us for the Thursday evening dinner at the Victoria Inn. $45/ticket.",
+                link: "/register#dinner",
+                cta: "Get Tickets",
+              },
+              {
                 title: "Sponsor",
                 desc: "Get your brand in front of the community and support a great cause.",
-                link: "/sponsor",
+                link: "/register#sponsor",
                 cta: "View Packages",
               },
               {
                 title: "Donate",
                 desc: "Every dollar funds research for a cure for Ataxia Telangiectasia.",
-                link: "/donate",
+                link: "/register#donate",
                 cta: "Donate Now",
               },
             ].map((card) => (
