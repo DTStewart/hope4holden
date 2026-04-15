@@ -68,12 +68,6 @@ const HomePage = () => {
                 cta: "Register Now",
               },
               {
-                title: "Dinner Only",
-                desc: "Join us for the Thursday evening dinner at the Victoria Inn. $45/ticket.",
-                link: "/register#dinner",
-                cta: "Get Tickets",
-              },
-              {
                 title: "Sponsor",
                 desc: "Get your brand in front of the community and support a great cause.",
                 link: "/register#sponsor",
@@ -84,6 +78,12 @@ const HomePage = () => {
                 desc: "Every dollar funds research for a cure for Ataxia Telangiectasia.",
                 link: "/register#donate",
                 cta: "Donate Now",
+              },
+              {
+                title: "Dinner Only",
+                desc: "Join us for the Thursday evening dinner at the Victoria Inn. $45/ticket.",
+                link: "/register#dinner",
+                cta: "Get Tickets",
               },
             ].map((card) => (
               <div key={card.title} className="bg-white p-8 md:p-10 space-y-4">
