@@ -54,8 +54,12 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
+          donor_address: string | null
+          donor_city: string | null
           donor_email: string
           donor_name: string
+          donor_postal_code: string | null
+          donor_province: string | null
           id: string
           paid: boolean
           stripe_session_id: string | null
@@ -64,8 +68,12 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
+          donor_address?: string | null
+          donor_city?: string | null
           donor_email: string
           donor_name: string
+          donor_postal_code?: string | null
+          donor_province?: string | null
           id?: string
           paid?: boolean
           stripe_session_id?: string | null
@@ -74,8 +82,12 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
+          donor_address?: string | null
+          donor_city?: string | null
           donor_email?: string
           donor_name?: string
+          donor_postal_code?: string | null
+          donor_province?: string | null
           id?: string
           paid?: boolean
           stripe_session_id?: string | null
