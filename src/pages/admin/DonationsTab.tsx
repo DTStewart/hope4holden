@@ -61,8 +61,8 @@ export default function DonationsTab() {
               <>
                 <Button size="sm" variant="outline" onClick={() =>
                   exportToCsv("donations.csv",
-                    ["Donor", "Email", "Amount", "Recurring", "Paid", "Date"],
-                    donations.map((d) => [d.donor_name, d.donor_email, String(d.amount), d.wants_recurring ? "Yes" : "No", d.paid ? "Yes" : "No", new Date(d.created_at).toLocaleDateString()])
+                    ["Donor", "Email", "Amount", "Recurring", "Paid", "Address", "City", "Province", "Postal Code", "Date"],
+                    donations.map((d: any) => [d.donor_name, d.donor_email, String(d.amount), d.wants_recurring ? "Yes" : "No", d.paid ? "Yes" : "No", d.donor_address || "", d.donor_city || "", d.donor_province || "", d.donor_postal_code || "", new Date(d.created_at).toLocaleDateString()])
                   )
                 }>
                   <Download className="h-4 w-4 mr-1" /> Export CSV
@@ -98,6 +98,7 @@ export default function DonationsTab() {
                   <TableHead>Donor</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Amount</TableHead>
+                  <TableHead>Address</TableHead>
                   <TableHead>Recurring</TableHead>
                   <TableHead>Paid</TableHead>
                   <TableHead>Date</TableHead>
@@ -105,11 +106,18 @@ export default function DonationsTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {donations?.map((d) => (
+                {donations?.map((d: any) => (
                   <TableRow key={d.id}>
                     <TableCell className="font-medium">{d.donor_name}</TableCell>
                     <TableCell>{d.donor_email}</TableCell>
                     <TableCell>${d.amount}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {d.donor_address ? (
+                        <>{d.donor_address}, {d.donor_city}, {d.donor_province} {d.donor_postal_code}</>
+                      ) : (
+                        <span className="italic">—</span>
+                      )}
+                    </TableCell>
                     <TableCell>{d.wants_recurring ? "Yes" : "No"}</TableCell>
                     <TableCell>
                       <Badge variant={d.paid ? "default" : "destructive"}>{d.paid ? "Yes" : "No"}</Badge>
