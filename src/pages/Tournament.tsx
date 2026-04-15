@@ -62,7 +62,7 @@ const TournamentPage = () => {
                 <Calendar className="h-5 w-5 text-primary" />
                 <div>
                   <h3 className="font-heading font-bold text-lg text-[#1A1A1A]">Friday, June 19</h3>
-                  <p className="text-sm text-[#1A1A1A]/50">Glendale Golf Course</p>
+                  <p className="text-sm text-[#1A1A1A]/50">Glen Lea Golf Course</p>
                 </div>
               </div>
               <div className="space-y-4">
@@ -130,9 +130,9 @@ const TournamentPage = () => {
             <div className="bg-white p-8 md:p-10 space-y-2">
               <div className="flex items-center gap-2 text-primary">
                 <MapPin className="h-4 w-4" />
-                <h3 className="font-heading font-bold text-[#1A1A1A]">Glendale Golf Course</h3>
+                <h3 className="font-heading font-bold text-[#1A1A1A]">Glen Lea Golf Course</h3>
               </div>
-              <p className="text-sm text-[#1A1A1A]/50">1401 Chicken Rd, Brandon, MB R7A 5Y1</p>
+              <p className="text-sm text-[#1A1A1A]/50">1000 Lori Rd, Brandon, MB</p>
               <p className="text-sm text-[#1A1A1A]/50">Friday golf tournament</p>
             </div>
           </div>
