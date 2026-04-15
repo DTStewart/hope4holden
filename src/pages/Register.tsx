@@ -40,35 +40,33 @@ interface Tier { id: string; name: string; price: number; benefits: string[]; so
 
 const suggestedAmounts = [25, 50, 100, 250, 500];
 
+const overviewCards = [
+  { anchor: "#register", icon: Users, title: "Register Your Team", price: "$600", desc: "Dinner + golf for 4" },
+  { anchor: "#dinner", icon: UtensilsCrossed, title: "Dinner Only", price: "$45/ticket", desc: "Thursday evening at the Victoria Inn" },
+  { anchor: "#sponsor", icon: Star, title: "Become a Sponsor", price: "From $150", desc: "Put your brand front and center" },
+  { anchor: "#donate", icon: Heart, title: "Make a Donation", price: "Any amount", desc: "Every dollar funds A-T research" },
+];
+
 const ParticipatePage = () => {
   const { addItem, setDrawerOpen } = useCart();
   const navigate = useNavigate();
 
-  // Registration state
   const [spotsAvailable, setSpotsAvailable] = useState<number | null>(null);
   const [regStatus, setRegStatus] = useState<RegistrationStatus>("open");
-
-  // Dinner state
   const [dinnerQty, setDinnerQty] = useState(1);
-
-  // Sponsor state
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [tiersLoading, setTiersLoading] = useState(true);
-
-  // Donate state
   const [selectedAmount, setSelectedAmount] = useState<number | null>(100);
   const [customAmount, setCustomAmount] = useState("");
   const [isCustom, setIsCustom] = useState(false);
   const [wantsRecurring, setWantsRecurring] = useState(false);
   const donationAmount = isCustom ? Number(customAmount) : selectedAmount;
 
-  // Waitlist (for coming_soon / sold_out)
   const [waitlistForm, setWaitlistForm] = useState({ name: "", email: "", phone: "", teamName: "" });
   const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
-      // Settings
       const { data: settings } = await supabase
         .from("settings")
         .select("key, value")
@@ -82,7 +80,6 @@ const ParticipatePage = () => {
           if (s.key === "spots_remaining") setSpotsAvailable(Number(s.value));
         }
       }
-      // Sponsorship tiers
       setTiersLoading(true);
       const { data: tiersData } = await supabase.from("sponsorship_tiers").select("*").eq("active", true).order("sort_order");
       if (tiersData) {
@@ -93,7 +90,6 @@ const ParticipatePage = () => {
     fetchData();
   }, []);
 
-  // Handlers
   const handleAddTeam = () => {
     addItem({ type: "registration", description: "Team Registration (4 golfers)", amount: TEAM_PRICE, formData: {} });
     toast({ title: "Team registration added to cart!" });
@@ -153,126 +149,147 @@ const ParticipatePage = () => {
 
   return (
     <div>
-      {/* Hero */}
+      {/* Hero — compact */}
       <section className="section-dark relative overflow-hidden">
         <img src={registrationHero} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
-        <div className="container py-20 md:py-28 animate-fade-in relative z-10">
+        <div className="container py-14 md:py-20 animate-fade-in relative z-10">
           <p className="section-label">Get Involved</p>
-          <h1 className="font-heading font-extrabold text-4xl md:text-6xl text-white leading-[0.95] mb-4">
+          <h1 className="font-heading font-extrabold text-4xl md:text-5xl text-white leading-[0.95] mb-3">
             Participate
           </h1>
-          <p className="text-white/60 text-lg max-w-xl">
-            Register a team, grab dinner tickets, become a sponsor, or make a donation — every contribution helps in the fight against A-T.
+          <p className="text-white/60 text-base max-w-xl">
+            Register a team, grab dinner tickets, become a sponsor, or donate — every contribution helps fight A-T.
           </p>
         </div>
       </section>
 
-      {/* ─── Section 1: Register Your Team ─── */}
-      <section id="register" className="section-light">
-        <div className="container py-16 md:py-20 max-w-2xl animate-fade-in">
-          <div className="flex items-center gap-3 mb-2">
-            <Users className="h-7 w-7 text-primary" />
-            <h2 className="font-heading font-extrabold text-2xl md:text-3xl text-[#1A1A1A]">Register Your Team</h2>
+      {/* ─── Overview Cards ─── */}
+      <section className="bg-white border-b border-[#1A1A1A]/10">
+        <div className="container py-6 md:py-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            {overviewCards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <a
+                  key={card.anchor}
+                  href={card.anchor}
+                  className="group border border-[#1A1A1A]/10 rounded p-4 md:p-5 hover:border-primary/30 hover:bg-primary/[0.02] transition-colors"
+                >
+                  <Icon className="h-5 w-5 text-primary mb-2" />
+                  <h3 className="font-heading font-bold text-sm md:text-base text-[#1A1A1A] leading-tight">{card.title}</h3>
+                  <p className="font-heading font-extrabold text-primary text-sm md:text-lg">{card.price}</p>
+                  <p className="text-[#1A1A1A]/50 text-xs mt-1 leading-snug">{card.desc}</p>
+                </a>
+              );
+            })}
           </div>
-          <p className="text-[#1A1A1A]/60 mb-6">$600 — Includes dinner Thursday and golf Friday for 4 golfers.</p>
-
-          {regStatus === "open" && (
-            <div className="bg-white p-8 border border-[#1A1A1A]/10 rounded space-y-4">
-              {spotsAvailable !== null && (
-                <div className="flex items-center gap-2 text-primary font-heading font-bold text-sm">
-                  <Users className="h-4 w-4" />
-                  <span>{spotsAvailable} spots remaining</span>
-                </div>
-              )}
-              <Button onClick={handleAddTeam} className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider" size="lg">
-                <ShoppingCart className="h-4 w-4 mr-2" />
-                Add to Cart — $600
-              </Button>
-            </div>
-          )}
-
-          {regStatus === "coming_soon" && (
-            <div className="bg-white p-8 border border-[#1A1A1A]/10 rounded space-y-4">
-              <div className="flex items-center gap-2 text-[#1A1A1A]/60">
-                <Clock className="h-5 w-5 text-primary" />
-                <span className="font-heading font-bold">Registration opens soon</span>
-              </div>
-              {waitlistSubmitted ? (
-                <div className="flex items-center gap-2 text-primary">
-                  <CheckCircle className="h-5 w-5" />
-                  <span className="font-medium">You're on the list! We'll notify you.</span>
-                </div>
-              ) : (
-                <form onSubmit={handleWaitlistSubmit} className="space-y-3">
-                  <p className="text-sm text-[#1A1A1A]/50">Leave your details and we'll notify you when registration opens.</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Input name="name" placeholder="Full Name" value={waitlistForm.name} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15" />
-                    <Input name="email" type="email" placeholder="Email" value={waitlistForm.email} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15" />
-                    <Input name="phone" type="tel" placeholder="Phone" value={waitlistForm.phone} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15" />
-                    <Input name="teamName" placeholder="Team Name" value={waitlistForm.teamName} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15" />
-                  </div>
-                  <Button type="submit" className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider">
-                    Notify Me
-                  </Button>
-                </form>
-              )}
-            </div>
-          )}
-
-          {regStatus === "sold_out" && (
-            <div className="bg-white p-8 border border-[#1A1A1A]/10 rounded space-y-4">
-              <Badge variant="destructive" className="text-sm">Sold Out</Badge>
-              {waitlistSubmitted ? (
-                <div className="flex items-center gap-2 text-primary">
-                  <CheckCircle className="h-5 w-5" />
-                  <span className="font-medium">You're on the waitlist!</span>
-                </div>
-              ) : (
-                <form onSubmit={handleWaitlistSubmit} className="space-y-3">
-                  <p className="text-sm text-[#1A1A1A]/50">All spots are filled. Join the waitlist below.</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Input name="name" placeholder="Full Name" value={waitlistForm.name} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15" />
-                    <Input name="email" type="email" placeholder="Email" value={waitlistForm.email} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15" />
-                    <Input name="phone" type="tel" placeholder="Phone" value={waitlistForm.phone} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15" />
-                    <Input name="teamName" placeholder="Team Name" value={waitlistForm.teamName} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15" />
-                  </div>
-                  <Button type="submit" className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider">
-                    Join Waitlist
-                  </Button>
-                </form>
-              )}
-            </div>
-          )}
         </div>
       </section>
 
-      {/* ─── Section 2: Dinner Only ─── */}
-      <section id="dinner" className="bg-[#F8F6F3]">
-        <div className="container py-16 md:py-20 max-w-2xl animate-fade-in">
-          <div className="flex items-center gap-3 mb-2">
-            <UtensilsCrossed className="h-7 w-7 text-primary" />
-            <h2 className="font-heading font-extrabold text-2xl md:text-3xl text-[#1A1A1A]">Dinner Only</h2>
-          </div>
-          <p className="text-[#1A1A1A]/60 mb-6">$45 per person — Join us for the Thursday evening dinner at the Victoria Inn.</p>
-
-          <div className="bg-white p-8 border border-[#1A1A1A]/10 rounded">
-            <div className="flex items-end gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="dinnerQty" className="text-[#1A1A1A] font-medium">Tickets</Label>
-                <Input
-                  id="dinnerQty"
-                  type="number"
-                  min={1}
-                  value={dinnerQty}
-                  onChange={(e) => setDinnerQty(Math.max(1, Number(e.target.value)))}
-                  className="rounded border-[#1A1A1A]/15 w-24"
-                />
+      {/* ─── Register + Dinner side by side ─── */}
+      <section className="section-light">
+        <div className="container py-10 md:py-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            {/* Register */}
+            <div id="register" className="bg-white p-6 border border-[#1A1A1A]/10 rounded scroll-mt-24">
+              <div className="flex items-center gap-2 mb-1">
+                <Users className="h-5 w-5 text-primary" />
+                <h2 className="font-heading font-bold text-lg text-[#1A1A1A]">Register Your Team</h2>
               </div>
-              <div className="flex items-center gap-4">
-                <span className="text-[#1A1A1A]/60 font-medium text-sm whitespace-nowrap">
+              <p className="text-[#1A1A1A]/50 text-sm mb-4">$600 — Dinner Thursday + golf Friday for 4 golfers.</p>
+
+              {regStatus === "open" && (
+                <div className="space-y-3">
+                  {spotsAvailable !== null && (
+                    <p className="text-primary font-heading font-bold text-xs flex items-center gap-1.5">
+                      <Users className="h-3.5 w-3.5" /> {spotsAvailable} spots remaining
+                    </p>
+                  )}
+                  <Button onClick={handleAddTeam} className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-sm" size="default">
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Add to Cart — $600
+                  </Button>
+                </div>
+              )}
+
+              {regStatus === "coming_soon" && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-[#1A1A1A]/60 text-sm">
+                    <Clock className="h-4 w-4 text-primary" />
+                    <span className="font-heading font-bold">Registration opens soon</span>
+                  </div>
+                  {waitlistSubmitted ? (
+                    <div className="flex items-center gap-2 text-primary text-sm">
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="font-medium">You're on the list!</span>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleWaitlistSubmit} className="space-y-2">
+                      <p className="text-xs text-[#1A1A1A]/50">Leave your details — we'll notify you.</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input name="name" placeholder="Full Name" value={waitlistForm.name} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15 text-sm" />
+                        <Input name="email" type="email" placeholder="Email" value={waitlistForm.email} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15 text-sm" />
+                        <Input name="phone" type="tel" placeholder="Phone" value={waitlistForm.phone} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15 text-sm" />
+                        <Input name="teamName" placeholder="Team Name" value={waitlistForm.teamName} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15 text-sm" />
+                      </div>
+                      <Button type="submit" size="sm" className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-xs">
+                        Notify Me
+                      </Button>
+                    </form>
+                  )}
+                </div>
+              )}
+
+              {regStatus === "sold_out" && (
+                <div className="space-y-3">
+                  <Badge variant="destructive" className="text-xs">Sold Out</Badge>
+                  {waitlistSubmitted ? (
+                    <div className="flex items-center gap-2 text-primary text-sm">
+                      <CheckCircle className="h-4 w-4" />
+                      <span className="font-medium">You're on the waitlist!</span>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleWaitlistSubmit} className="space-y-2">
+                      <p className="text-xs text-[#1A1A1A]/50">All spots filled. Join the waitlist.</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input name="name" placeholder="Full Name" value={waitlistForm.name} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15 text-sm" />
+                        <Input name="email" type="email" placeholder="Email" value={waitlistForm.email} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15 text-sm" />
+                        <Input name="phone" type="tel" placeholder="Phone" value={waitlistForm.phone} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15 text-sm" />
+                        <Input name="teamName" placeholder="Team Name" value={waitlistForm.teamName} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15 text-sm" />
+                      </div>
+                      <Button type="submit" size="sm" className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-xs">
+                        Join Waitlist
+                      </Button>
+                    </form>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Dinner */}
+            <div id="dinner" className="bg-white p-6 border border-[#1A1A1A]/10 rounded scroll-mt-24">
+              <div className="flex items-center gap-2 mb-1">
+                <UtensilsCrossed className="h-5 w-5 text-primary" />
+                <h2 className="font-heading font-bold text-lg text-[#1A1A1A]">Dinner Only</h2>
+              </div>
+              <p className="text-[#1A1A1A]/50 text-sm mb-4">$45/person — Thursday evening at the Victoria Inn.</p>
+
+              <div className="flex items-end gap-3 flex-wrap">
+                <div className="space-y-1">
+                  <Label htmlFor="dinnerQty" className="text-[#1A1A1A] font-medium text-sm">Tickets</Label>
+                  <Input
+                    id="dinnerQty"
+                    type="number"
+                    min={1}
+                    value={dinnerQty}
+                    onChange={(e) => setDinnerQty(Math.max(1, Number(e.target.value)))}
+                    className="rounded border-[#1A1A1A]/15 w-20 text-sm"
+                  />
+                </div>
+                <span className="text-[#1A1A1A]/50 text-sm pb-1">
                   {dinnerQty} × ${DINNER_PRICE} = <span className="text-[#1A1A1A] font-bold">${dinnerQty * DINNER_PRICE}</span>
                 </span>
-                <Button onClick={handleAddDinner} className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider" size="lg">
+                <Button onClick={handleAddDinner} className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-sm" size="default">
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Add to Cart
                 </Button>
@@ -282,45 +299,45 @@ const ParticipatePage = () => {
         </div>
       </section>
 
-      {/* ─── Section 3: Become a Sponsor ─── */}
-      <section id="sponsor" className="section-light">
-        <div className="container py-20 md:py-28 animate-fade-in">
-          <p className="section-label">Partner With Us</p>
-          <h2 className="font-heading font-extrabold text-3xl md:text-4xl text-[#1A1A1A] mb-4">
-            Become a Sponsor
-          </h2>
-          <p className="text-[#1A1A1A]/50 mb-12 max-w-2xl">
+      {/* ─── Sponsorship ─── */}
+      <section id="sponsor" className="bg-[#F8F6F3] scroll-mt-24">
+        <div className="container py-10 md:py-12 animate-fade-in">
+          <div className="flex items-center gap-2 mb-1">
+            <Star className="h-5 w-5 text-primary" />
+            <h2 className="font-heading font-bold text-lg md:text-xl text-[#1A1A1A]">Become a Sponsor</h2>
+          </div>
+          <p className="text-[#1A1A1A]/50 text-sm mb-6 max-w-xl">
             Support the tournament and make a meaningful impact. All sponsorships include recognition and engagement opportunities.
           </p>
 
-          {tiersLoading && <p className="text-[#1A1A1A]/60 py-8">Loading sponsorship packages...</p>}
+          {tiersLoading && <p className="text-[#1A1A1A]/60 text-sm py-4">Loading sponsorship packages...</p>}
 
-          {/* Premium tiers */}
           {premiumTiers.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-px bg-[#1A1A1A]/10 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-px bg-[#1A1A1A]/10 mb-4">
               {premiumTiers.map((tier) => {
                 const Icon = tierIcons[tier.name] || Flag;
                 const soldOut = isSoldOut(tier);
                 return (
-                  <div key={tier.id} className={`bg-white p-8 flex flex-col ${soldOut ? "opacity-60" : ""}`}>
-                    <div className="flex items-start justify-between mb-4">
-                      <Icon className="h-8 w-8 text-primary" />
-                      {soldOut && <Badge variant="destructive" className="text-xs">Sold Out</Badge>}
-                      {tier.max_slots != null && tier.max_slots > 0 && <Badge variant="secondary" className="text-xs">{tier.max_slots} available</Badge>}
+                  <div key={tier.id} className={`bg-white p-5 flex flex-col ${soldOut ? "opacity-60" : ""}`}>
+                    <div className="flex items-start justify-between mb-2">
+                      <Icon className="h-6 w-6 text-primary" />
+                      {soldOut && <Badge variant="destructive" className="text-[10px]">Sold Out</Badge>}
+                      {tier.max_slots != null && tier.max_slots > 0 && <Badge variant="secondary" className="text-[10px]">{tier.max_slots} avail</Badge>}
                     </div>
-                    <h3 className="font-heading font-bold text-lg text-[#1A1A1A] mb-1">{tier.name}</h3>
-                    <p className={`font-heading font-extrabold text-2xl mb-6 ${soldOut ? "text-[#1A1A1A]/40 line-through" : "text-primary"}`}>
+                    <h3 className="font-heading font-bold text-sm text-[#1A1A1A] mb-0.5">{tier.name}</h3>
+                    <p className={`font-heading font-extrabold text-xl mb-3 ${soldOut ? "text-[#1A1A1A]/40 line-through" : "text-primary"}`}>
                       {getPriceLabel(tier)}
                     </p>
-                    <ul className="space-y-2 flex-1 mb-6">
+                    <ul className="space-y-1 flex-1 mb-4">
                       {tier.benefits.map((b) => (
-                        <li key={b} className="text-sm text-[#1A1A1A]/60 flex items-start gap-2 text-left">
-                          <span className="text-primary mt-1">·</span>{b}
+                        <li key={b} className="text-xs text-[#1A1A1A]/60 flex items-start gap-1.5 text-left">
+                          <span className="text-primary mt-0.5">·</span>{b}
                         </li>
                       ))}
                     </ul>
                     <Button
-                      className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-sm"
+                      className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-xs"
+                      size="sm"
                       onClick={() => handleSelectTier(tier)}
                       disabled={soldOut}
                     >
@@ -332,33 +349,33 @@ const ParticipatePage = () => {
             </div>
           )}
 
-          {/* Standard tiers */}
           {standardTiers.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-[#1A1A1A]/10">
               {standardTiers.map((tier) => {
                 const Icon = tierIcons[tier.name] || Flag;
                 const soldOut = isSoldOut(tier);
                 return (
-                  <div key={tier.id} className={`bg-white p-8 flex flex-col ${soldOut ? "opacity-60" : ""}`}>
-                    <div className="flex items-start justify-between mb-4">
-                      <Icon className="h-7 w-7 text-primary" />
-                      {soldOut && <Badge variant="destructive" className="text-xs">Sold Out</Badge>}
-                      {tier.max_slots != null && tier.max_slots > 0 && <Badge variant="secondary" className="text-xs">{tier.max_slots} available</Badge>}
-                      {tier.max_slots == null && !soldOut && <Badge variant="secondary" className="text-xs">Unlimited</Badge>}
+                  <div key={tier.id} className={`bg-white p-5 flex flex-col ${soldOut ? "opacity-60" : ""}`}>
+                    <div className="flex items-start justify-between mb-2">
+                      <Icon className="h-5 w-5 text-primary" />
+                      {soldOut && <Badge variant="destructive" className="text-[10px]">Sold Out</Badge>}
+                      {tier.max_slots != null && tier.max_slots > 0 && <Badge variant="secondary" className="text-[10px]">{tier.max_slots} avail</Badge>}
+                      {tier.max_slots == null && !soldOut && <Badge variant="secondary" className="text-[10px]">Unlimited</Badge>}
                     </div>
-                    <h3 className="font-heading font-bold text-lg text-[#1A1A1A] mb-1">{tier.name}</h3>
-                    <p className={`font-heading font-extrabold text-xl mb-4 ${soldOut ? "text-[#1A1A1A]/40 line-through" : "text-primary"}`}>
+                    <h3 className="font-heading font-bold text-sm text-[#1A1A1A] mb-0.5">{tier.name}</h3>
+                    <p className={`font-heading font-extrabold text-lg mb-3 ${soldOut ? "text-[#1A1A1A]/40 line-through" : "text-primary"}`}>
                       {getPriceLabel(tier)}
                     </p>
-                    <ul className="space-y-2 flex-1 mb-6">
+                    <ul className="space-y-1 flex-1 mb-4">
                       {tier.benefits.map((b) => (
-                        <li key={b} className="text-sm text-[#1A1A1A]/60 flex items-start gap-2 text-left">
-                          <span className="text-primary mt-1">·</span>{b}
+                        <li key={b} className="text-xs text-[#1A1A1A]/60 flex items-start gap-1.5 text-left">
+                          <span className="text-primary mt-0.5">·</span>{b}
                         </li>
                       ))}
                     </ul>
                     <Button
-                      className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-sm"
+                      className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-xs"
+                      size="sm"
                       onClick={() => handleSelectTier(tier)}
                       disabled={soldOut}
                     >
@@ -372,31 +389,30 @@ const ParticipatePage = () => {
         </div>
       </section>
 
-      {/* ─── Section 4: Make a Donation ─── */}
-      <section id="donate" className="bg-[#F8F6F3]">
-        <div className="container py-16 md:py-20 max-w-2xl animate-fade-in">
-          <div className="flex items-center gap-3 mb-2">
-            <Heart className="h-7 w-7 text-primary" />
-            <h2 className="font-heading font-extrabold text-2xl md:text-3xl text-[#1A1A1A]">Make a Donation</h2>
+      {/* ─── Donation ─── */}
+      <section id="donate" className="section-light scroll-mt-24">
+        <div className="container py-10 md:py-12 max-w-2xl animate-fade-in">
+          <div className="flex items-center gap-2 mb-1">
+            <Heart className="h-5 w-5 text-primary" />
+            <h2 className="font-heading font-bold text-lg md:text-xl text-[#1A1A1A]">Make a Donation</h2>
           </div>
-          <p className="text-[#1A1A1A]/60 mb-6">Every dollar helps fund research for a cure for Ataxia Telangiectasia.</p>
+          <p className="text-[#1A1A1A]/50 text-sm mb-4">Every dollar helps fund research for a cure for Ataxia Telangiectasia.</p>
 
-          <div className="bg-white p-8 border border-[#1A1A1A]/10 rounded space-y-6">
+          <div className="bg-white p-6 border border-[#1A1A1A]/10 rounded space-y-4">
             <div className="flex items-center gap-3">
-              <img src={atcpLogo} alt="A-T Children's Project logo" className="h-8 w-auto" />
+              <img src={atcpLogo} alt="A-T Children's Project logo" className="h-7 w-auto" />
               <p className="text-xs text-[#1A1A1A]/50">Tax receipts issued by the ATCP.</p>
             </div>
 
-            {/* Amount selection */}
-            <div className="space-y-3">
-              <Label className="text-[#1A1A1A] font-medium">Select Amount</Label>
+            <div className="space-y-2">
+              <Label className="text-[#1A1A1A] font-medium text-sm">Select Amount</Label>
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                 {suggestedAmounts.map((amt) => (
                   <button
                     key={amt}
                     type="button"
                     onClick={() => { setSelectedAmount(amt); setIsCustom(false); }}
-                    className={`py-2.5 rounded text-sm font-heading font-bold transition-colors ${
+                    className={`py-2 rounded text-sm font-heading font-bold transition-colors ${
                       !isCustom && selectedAmount === amt
                         ? "bg-primary text-white"
                         : "bg-[#1A1A1A]/5 text-[#1A1A1A] hover:bg-[#1A1A1A]/10"
@@ -408,7 +424,7 @@ const ParticipatePage = () => {
                 <button
                   type="button"
                   onClick={() => setIsCustom(true)}
-                  className={`py-2.5 rounded text-sm font-heading font-bold transition-colors ${
+                  className={`py-2 rounded text-sm font-heading font-bold transition-colors ${
                     isCustom ? "bg-primary text-white" : "bg-[#1A1A1A]/5 text-[#1A1A1A] hover:bg-[#1A1A1A]/10"
                   }`}
                 >
@@ -416,21 +432,22 @@ const ParticipatePage = () => {
                 </button>
               </div>
               {isCustom && (
-                <Input type="number" min="1" step="1" value={customAmount} onChange={(e) => setCustomAmount(e.target.value)} placeholder="Enter amount" className="rounded border-[#1A1A1A]/15 w-40" />
+                <Input type="number" min="1" step="1" value={customAmount} onChange={(e) => setCustomAmount(e.target.value)} placeholder="Enter amount" className="rounded border-[#1A1A1A]/15 w-40 text-sm" />
               )}
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Checkbox id="recurring" checked={wantsRecurring} onCheckedChange={(checked) => setWantsRecurring(!!checked)} />
-              <Label htmlFor="recurring" className="text-sm cursor-pointer text-[#1A1A1A]/70">
-                I would like to set up a recurring donation
-              </Label>
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox id="recurring" checked={wantsRecurring} onCheckedChange={(checked) => setWantsRecurring(!!checked)} />
+                <Label htmlFor="recurring" className="text-xs cursor-pointer text-[#1A1A1A]/70">
+                  I'd like to set up a recurring donation
+                </Label>
+              </div>
+              <Button onClick={handleAddDonation} className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-sm" size="default">
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Add to Cart — ${donationAmount || 0}
+              </Button>
             </div>
-
-            <Button onClick={handleAddDonation} className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider" size="lg">
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              Add to Cart — ${donationAmount || 0}
-            </Button>
           </div>
         </div>
       </section>
