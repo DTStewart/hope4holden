@@ -4,88 +4,36 @@ import registrationHero from "@/assets/registration-hero.jpg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/hooks/use-toast";
-import { CheckCircle, Users, Clock, UtensilsCrossed } from "lucide-react";
+import { CheckCircle, Users, Clock, UtensilsCrossed, ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type RegistrationStatus = "coming_soon" | "open" | "sold_out";
 
 const DINNER_PRICE = 45;
+const TEAM_PRICE = 600;
 
-/* ─── Dinner-Only Form ─── */
-const DinnerSection = () => {
-  const { addItem } = useCart();
-  const navigate = useNavigate();
-  const [submitted, setSubmitted] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", quantity: 1 });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.target;
-    setForm((prev) => ({ ...prev, [name]: type === "number" ? Math.max(1, Number(value)) : value }));
-  };
-
-  const total = form.quantity * DINNER_PRICE;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    addItem({
-      type: "dinner",
-      description: `Dinner Tickets x ${form.quantity}: ${form.name}`,
-      amount: total,
-      formData: { guestName: form.name, guestEmail: form.email, guestPhone: form.phone, quantity: form.quantity },
-    });
-    toast({ title: "Dinner tickets added to cart!" });
-    navigate("/checkout");
-  };
-
-  if (submitted) return null;
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 md:p-10 border border-[#1A1A1A]/10 rounded">
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <UtensilsCrossed className="h-5 w-5 text-primary" />
-          <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40">Guest Details</p>
-        </div>
-        <div className="space-y-4 mt-4">
-          <div className="space-y-2">
-            <Label htmlFor="d-name" className="text-[#1A1A1A] font-medium">Full Name</Label>
-            <Input id="d-name" name="name" value={form.name} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="d-email" className="text-[#1A1A1A] font-medium">Email</Label>
-              <Input id="d-email" name="email" type="email" value={form.email} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="d-phone" className="text-[#1A1A1A] font-medium">Phone</Label>
-              <Input id="d-phone" name="phone" type="tel" value={form.phone} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="d-quantity" className="text-[#1A1A1A] font-medium">Number of Tickets</Label>
-            <Input id="d-quantity" name="quantity" type="number" min={1} value={form.quantity} onChange={handleChange} required className="rounded border-[#1A1A1A]/15 w-32" />
-          </div>
-          <p className="text-[#1A1A1A]/60 font-medium">
-            {form.quantity} ticket{form.quantity !== 1 ? "s" : ""} × ${DINNER_PRICE} = <span className="text-[#1A1A1A] font-bold">${total}</span>
-          </p>
-        </div>
-      </div>
-      <Button type="submit" className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider" size="lg">
-        Add to Cart — ${total}
-      </Button>
-    </form>
-  );
-};
-
-/* ─── Main Page ─── */
 const RegisterPage = () => {
   const { addItem } = useCart();
   const navigate = useNavigate();
   const [submitted, setSubmitted] = useState(false);
   const [spotsAvailable, setSpotsAvailable] = useState<number | null>(null);
   const [regStatus, setRegStatus] = useState<RegistrationStatus>("coming_soon");
+
+  // Section toggles
+  const [wantsTeam, setWantsTeam] = useState(false);
+  const [wantsDinner, setWantsDinner] = useState(false);
+
+  // Team form
+  const [teamForm, setTeamForm] = useState({
+    teamName: "", captainName: "", captainEmail: "", captainPhone: "",
+    street: "", city: "", province: "", postalCode: "",
+  });
+
+  // Dinner form
+  const [dinnerForm, setDinnerForm] = useState({ name: "", email: "", phone: "", quantity: 1 });
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -108,27 +56,50 @@ const RegisterPage = () => {
     fetchSettings();
   }, []);
 
-  const [form, setForm] = useState({
-    teamName: "", captainName: "", captainEmail: "", captainPhone: "",
-    street: "", city: "", province: "", postalCode: "",
-  });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleTeamChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTeamForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleDinnerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type } = e.target;
+    setDinnerForm((prev) => ({ ...prev, [name]: type === "number" ? Math.max(1, Number(value)) : value }));
+  };
+
+  const dinnerTotal = dinnerForm.quantity * DINNER_PRICE;
+  const cartTotal = (wantsTeam ? TEAM_PRICE : 0) + (wantsDinner ? dinnerTotal : 0);
+
+  const handleAddAllToCart = (e: React.FormEvent) => {
     e.preventDefault();
-    addItem({
-      type: "registration",
-      description: `Team Registration: ${form.teamName}`,
-      amount: 600,
-      formData: { ...form },
-    });
+
+    if (!wantsTeam && !wantsDinner) {
+      toast({ title: "Nothing selected", description: "Please select at least one option.", variant: "destructive" });
+      return;
+    }
+
+    if (wantsTeam) {
+      addItem({
+        type: "registration",
+        description: `Team Registration: ${teamForm.teamName}`,
+        amount: TEAM_PRICE,
+        formData: { ...teamForm },
+      });
+    }
+
+    if (wantsDinner) {
+      addItem({
+        type: "dinner",
+        description: `Dinner Tickets x ${dinnerForm.quantity}: ${dinnerForm.name}`,
+        amount: dinnerTotal,
+        formData: { guestName: dinnerForm.name, guestEmail: dinnerForm.email, guestPhone: dinnerForm.phone, quantity: dinnerForm.quantity },
+      });
+    }
+
     setSubmitted(true);
-    toast({ title: "Team registration added to cart!" });
+    const items = [wantsTeam && "team registration", wantsDinner && "dinner tickets"].filter(Boolean).join(" and ");
+    toast({ title: `Added ${items} to cart!` });
   };
 
+  // Waitlist form (shared by coming_soon + sold_out)
   const [waitlistForm, setWaitlistForm] = useState({ name: "", email: "", phone: "", teamName: "" });
   const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
 
@@ -204,7 +175,7 @@ const RegisterPage = () => {
     );
   }
 
-  // Sold Out state — show waitlist
+  // Sold Out state
   if (regStatus === "sold_out") {
     return (
       <div>
@@ -253,16 +224,22 @@ const RegisterPage = () => {
     );
   }
 
-  // Registration submitted confirmation
+  // Submitted confirmation
   if (submitted) {
     return (
       <div className="section-light">
         <div className="container py-20 text-center space-y-6 animate-fade-in">
           <CheckCircle className="h-16 w-16 text-primary mx-auto" />
-          <h2 className="font-heading font-extrabold text-3xl text-[#1A1A1A]">Registration Added!</h2>
-          <p className="text-[#1A1A1A]/60">"{form.teamName}" has been added to your cart.</p>
+          <h2 className="font-heading font-extrabold text-3xl text-[#1A1A1A]">Added to Cart!</h2>
+          <p className="text-[#1A1A1A]/60">Your selections have been added to your cart.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button variant="outline" className="rounded border-[#1A1A1A]/20 text-[#1A1A1A] hover:bg-[#1A1A1A]/5" onClick={() => { setSubmitted(false); setForm({ teamName: "", captainName: "", captainEmail: "", captainPhone: "", street: "", city: "", province: "", postalCode: "" }); }}>
+            <Button variant="outline" className="rounded border-[#1A1A1A]/20 text-[#1A1A1A] hover:bg-[#1A1A1A]/5" onClick={() => {
+              setSubmitted(false);
+              setWantsTeam(false);
+              setWantsDinner(false);
+              setTeamForm({ teamName: "", captainName: "", captainEmail: "", captainPhone: "", street: "", city: "", province: "", postalCode: "" });
+              setDinnerForm({ name: "", email: "", phone: "", quantity: 1 });
+            }}>
               Continue Shopping
             </Button>
             <Button className="rounded bg-primary text-white hover:bg-[#4A7C09]" onClick={() => navigate("/checkout")}>Go to Checkout</Button>
@@ -272,7 +249,7 @@ const RegisterPage = () => {
     );
   }
 
-  // Open — registration + dinner form
+  // Open — unified form
   return (
     <div>
       <section className="section-dark relative overflow-hidden">
@@ -282,7 +259,7 @@ const RegisterPage = () => {
           <h1 className="font-heading font-extrabold text-4xl md:text-6xl text-white leading-[0.95] mb-4">
             Join Us
           </h1>
-          <p className="text-white/60 text-lg">Register your team or grab dinner-only tickets</p>
+          <p className="text-white/60 text-lg">Register your team, grab dinner tickets, or both — add everything to your cart at once.</p>
           {spotsAvailable !== null && (
             <div className="flex items-center gap-2 text-primary font-heading font-bold mt-4">
               <Users className="h-5 w-5" />
@@ -292,83 +269,159 @@ const RegisterPage = () => {
         </div>
       </section>
 
-      {/* Section 1: Team Registration */}
-      <section className="section-light">
-        <div className="container py-16 md:py-20 max-w-2xl animate-fade-in">
-          <h2 className="font-heading font-extrabold text-2xl md:text-3xl text-[#1A1A1A] mb-2">Register Your Team</h2>
-          <p className="text-[#1A1A1A]/60 mb-6">$600 per team of 4 golfers</p>
-          <p className="text-sm text-primary font-medium bg-primary/10 border border-primary/20 rounded px-4 py-3 mb-6">
-            Team registration includes dinner on Thursday evening for all 4 golfers.
-          </p>
-          <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 md:p-10 border border-[#1A1A1A]/10 rounded">
-            <div>
-              <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40 mb-4">Team Details</p>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="teamName" className="text-[#1A1A1A] font-medium">Business / Team Name</Label>
-                  <Input id="teamName" name="teamName" value={form.teamName} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="captainName" className="text-[#1A1A1A] font-medium">Captain Full Name</Label>
-                    <Input id="captainName" name="captainName" value={form.captainName} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="captainEmail" className="text-[#1A1A1A] font-medium">Email</Label>
-                    <Input id="captainEmail" name="captainEmail" type="email" value={form.captainEmail} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="captainPhone" className="text-[#1A1A1A] font-medium">Phone</Label>
-                  <Input id="captainPhone" name="captainPhone" type="tel" value={form.captainPhone} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
-                </div>
+      <form onSubmit={handleAddAllToCart}>
+        {/* Section 1: Team Registration */}
+        <section className="section-light">
+          <div className="container py-16 md:py-20 max-w-2xl animate-fade-in">
+            <div className="flex items-start gap-3 mb-6">
+              <Checkbox
+                id="wants-team"
+                checked={wantsTeam}
+                onCheckedChange={(checked) => setWantsTeam(checked === true)}
+                className="mt-1 h-5 w-5"
+              />
+              <div>
+                <label htmlFor="wants-team" className="cursor-pointer">
+                  <h2 className="font-heading font-extrabold text-2xl md:text-3xl text-[#1A1A1A]">Register Your Team</h2>
+                  <p className="text-[#1A1A1A]/60">$600 per team of 4 golfers</p>
+                </label>
               </div>
             </div>
 
-            <div>
-              <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40 mb-4">Mailing Address</p>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="street" className="text-[#1A1A1A] font-medium">Street Address</Label>
-                  <Input id="street" name="street" value={form.street} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
+            {wantsTeam && (
+              <>
+                <p className="text-sm text-primary font-medium bg-primary/10 border border-primary/20 rounded px-4 py-3 mb-6">
+                  Team registration includes dinner on Thursday evening for all 4 golfers.
+                </p>
+                <div className="space-y-6 bg-white p-8 md:p-10 border border-[#1A1A1A]/10 rounded">
+                  <div>
+                    <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40 mb-4">Team Details</p>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="teamName" className="text-[#1A1A1A] font-medium">Business / Team Name</Label>
+                        <Input id="teamName" name="teamName" value={teamForm.teamName} onChange={handleTeamChange} required className="rounded border-[#1A1A1A]/15" />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="captainName" className="text-[#1A1A1A] font-medium">Captain Full Name</Label>
+                          <Input id="captainName" name="captainName" value={teamForm.captainName} onChange={handleTeamChange} required className="rounded border-[#1A1A1A]/15" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="captainEmail" className="text-[#1A1A1A] font-medium">Email</Label>
+                          <Input id="captainEmail" name="captainEmail" type="email" value={teamForm.captainEmail} onChange={handleTeamChange} required className="rounded border-[#1A1A1A]/15" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="captainPhone" className="text-[#1A1A1A] font-medium">Phone</Label>
+                        <Input id="captainPhone" name="captainPhone" type="tel" value={teamForm.captainPhone} onChange={handleTeamChange} required className="rounded border-[#1A1A1A]/15" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40 mb-4">Mailing Address</p>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="street" className="text-[#1A1A1A] font-medium">Street Address</Label>
+                        <Input id="street" name="street" value={teamForm.street} onChange={handleTeamChange} required className="rounded border-[#1A1A1A]/15" />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="city" className="text-[#1A1A1A] font-medium">City</Label>
+                          <Input id="city" name="city" value={teamForm.city} onChange={handleTeamChange} required className="rounded border-[#1A1A1A]/15" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="province" className="text-[#1A1A1A] font-medium">Province</Label>
+                          <Input id="province" name="province" value={teamForm.province} onChange={handleTeamChange} required className="rounded border-[#1A1A1A]/15" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="postalCode" className="text-[#1A1A1A] font-medium">Postal Code</Label>
+                          <Input id="postalCode" name="postalCode" value={teamForm.postalCode} onChange={handleTeamChange} required className="rounded border-[#1A1A1A]/15" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="city" className="text-[#1A1A1A] font-medium">City</Label>
-                    <Input id="city" name="city" value={form.city} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="province" className="text-[#1A1A1A] font-medium">Province</Label>
-                    <Input id="province" name="province" value={form.province} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="postalCode" className="text-[#1A1A1A] font-medium">Postal Code</Label>
-                    <Input id="postalCode" name="postalCode" value={form.postalCode} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
-                  </div>
-                </div>
+              </>
+            )}
+          </div>
+        </section>
+
+        {/* Separator */}
+        <div className="container max-w-2xl">
+          <hr className="border-[#1A1A1A]/10" />
+        </div>
+
+        {/* Section 2: Dinner Only */}
+        <section className="bg-[#F8F6F3]">
+          <div className="container py-16 md:py-20 max-w-2xl animate-fade-in">
+            <div className="flex items-start gap-3 mb-6">
+              <Checkbox
+                id="wants-dinner"
+                checked={wantsDinner}
+                onCheckedChange={(checked) => setWantsDinner(checked === true)}
+                className="mt-1 h-5 w-5"
+              />
+              <div>
+                <label htmlFor="wants-dinner" className="cursor-pointer">
+                  <h2 className="font-heading font-extrabold text-2xl md:text-3xl text-[#1A1A1A]">Dinner Only</h2>
+                  <p className="text-[#1A1A1A]/60">$45 per person — join us for the Thursday evening dinner without golfing</p>
+                </label>
               </div>
             </div>
 
-            <Button type="submit" className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider" size="lg">
-              Add to Cart — $600
-            </Button>
-          </form>
-        </div>
-      </section>
+            {wantsDinner && (
+              <div className="space-y-6 bg-white p-8 md:p-10 border border-[#1A1A1A]/10 rounded">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <UtensilsCrossed className="h-5 w-5 text-primary" />
+                    <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40">Guest Details</p>
+                  </div>
+                  <div className="space-y-4 mt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="d-name" className="text-[#1A1A1A] font-medium">Full Name</Label>
+                      <Input id="d-name" name="name" value={dinnerForm.name} onChange={handleDinnerChange} required className="rounded border-[#1A1A1A]/15" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="d-email" className="text-[#1A1A1A] font-medium">Email</Label>
+                        <Input id="d-email" name="email" type="email" value={dinnerForm.email} onChange={handleDinnerChange} required className="rounded border-[#1A1A1A]/15" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="d-phone" className="text-[#1A1A1A] font-medium">Phone</Label>
+                        <Input id="d-phone" name="phone" type="tel" value={dinnerForm.phone} onChange={handleDinnerChange} required className="rounded border-[#1A1A1A]/15" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="d-quantity" className="text-[#1A1A1A] font-medium">Number of Tickets</Label>
+                      <Input id="d-quantity" name="quantity" type="number" min={1} value={dinnerForm.quantity} onChange={handleDinnerChange} required className="rounded border-[#1A1A1A]/15 w-32" />
+                    </div>
+                    <p className="text-[#1A1A1A]/60 font-medium">
+                      {dinnerForm.quantity} ticket{dinnerForm.quantity !== 1 ? "s" : ""} × ${DINNER_PRICE} = <span className="text-[#1A1A1A] font-bold">${dinnerTotal}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
 
-      {/* Separator */}
-      <div className="container max-w-2xl">
-        <hr className="border-[#1A1A1A]/10" />
-      </div>
-
-      {/* Section 2: Dinner Only */}
-      <section className="bg-[#F8F6F3]">
-        <div className="container py-16 md:py-20 max-w-2xl animate-fade-in">
-          <h2 className="font-heading font-extrabold text-2xl md:text-3xl text-[#1A1A1A] mb-2">Dinner Only</h2>
-          <p className="text-[#1A1A1A]/60 mb-6">$45 per person — join us for the Thursday evening dinner without golfing</p>
-          <DinnerSection />
-        </div>
-      </section>
+        {/* Sticky Add to Cart bar */}
+        {(wantsTeam || wantsDinner) && (
+          <div className="sticky bottom-0 z-30 bg-[#1A1A1A] border-t border-white/10 shadow-lg">
+            <div className="container max-w-2xl py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="text-white text-sm">
+                <span className="text-white/60">Your selections: </span>
+                {[wantsTeam && `Team ($${TEAM_PRICE})`, wantsDinner && `Dinner ($${dinnerTotal})`].filter(Boolean).join(" + ")}
+              </div>
+              <Button type="submit" className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider px-8" size="lg">
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Add to Cart — ${cartTotal}
+              </Button>
+            </div>
+          </div>
+        )}
+      </form>
     </div>
   );
 };
