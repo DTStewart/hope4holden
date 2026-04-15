@@ -19,6 +19,22 @@ type RegistrationStatus = "coming_soon" | "open" | "sold_out";
 
 const DINNER_PRICE = 45;
 const TEAM_PRICE = 600;
+const REGISTRATION_STATUS_VALUES: RegistrationStatus[] = ["coming_soon", "open", "sold_out"];
+
+const parseRegistrationStatus = (value: unknown): RegistrationStatus => {
+  if (typeof value === "string") {
+    const normalized = value.replace(/^"|"$/g, "").trim().toLowerCase();
+    if (REGISTRATION_STATUS_VALUES.includes(normalized as RegistrationStatus)) {
+      return normalized as RegistrationStatus;
+    }
+  }
+
+  if (value && typeof value === "object" && "status" in value) {
+    return parseRegistrationStatus((value as { status?: unknown }).status);
+  }
+
+  return "coming_soon";
+};
 
 const tierIcons: Record<string, any> = {
   "Presenting Sponsor": Star,
@@ -52,7 +68,7 @@ const ParticipatePage = () => {
   const navigate = useNavigate();
 
   const [spotsAvailable, setSpotsAvailable] = useState<number | null>(null);
-  const [regStatus, setRegStatus] = useState<RegistrationStatus>("open");
+  const [regStatus, setRegStatus] = useState<RegistrationStatus>("coming_soon");
   const [dinnerQty, setDinnerQty] = useState(1);
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [tiersLoading, setTiersLoading] = useState(true);
@@ -74,8 +90,7 @@ const ParticipatePage = () => {
       if (settings) {
         for (const s of settings) {
           if (s.key === "registration_status") {
-            const val = typeof s.value === "string" ? s.value : String(s.value);
-            if (["coming_soon", "open", "sold_out"].includes(val)) setRegStatus(val as RegistrationStatus);
+            setRegStatus(parseRegistrationStatus(s.value));
           }
           if (s.key === "spots_remaining") setSpotsAvailable(Number(s.value));
         }
