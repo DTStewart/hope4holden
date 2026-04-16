@@ -27,7 +27,7 @@ const FAQPage = () => {
   return (
     <div>
       <section className="section-dark relative overflow-hidden">
-        <img src={faqHero} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+        <img src={faqHero} alt="" className="absolute inset-0 w-full h-full object-cover object-top opacity-30" />
         <div className="container py-20 md:py-28 animate-fade-in relative z-10">
           <p className="section-label">Questions</p>
           <h1 className="font-heading font-extrabold text-4xl md:text-6xl text-white leading-[0.95]">
