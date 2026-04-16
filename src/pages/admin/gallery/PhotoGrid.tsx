@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
-import { Image as ImageIcon } from "lucide-react";
+import { Image as ImageIcon, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import SortablePhoto from "./SortablePhoto";
@@ -15,6 +18,52 @@ interface PhotoGridProps {
 
 export default function PhotoGrid({ photos, setPhotos, loading, fetchPhotos }: PhotoGridProps) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
+  const selectMode = selected.size > 0;
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    if (selected.size === photos.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(photos.map((p) => p.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selected.size === 0) return;
+    setDeleting(true);
+
+    const toDelete = photos.filter((p) => selected.has(p.id));
+    const storagePaths = toDelete
+      .map((p) => { const parts = p.photo_url.split("/gallery-photos/"); return parts[1]; })
+      .filter(Boolean);
+
+    if (storagePaths.length > 0) {
+      await supabase.storage.from("gallery-photos").remove(storagePaths);
+    }
+
+    const ids = toDelete.map((p) => p.id);
+    const { error } = await supabase.from("gallery_photos").delete().in("id", ids);
+
+    if (error) {
+      toast({ title: "Error deleting photos", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: `${ids.length} photo(s) deleted` });
+    }
+
+    setSelected(new Set());
+    setDeleting(false);
+    fetchPhotos();
+  };
 
   const handleDelete = async (photo: GalleryPhoto) => {
     const urlParts = photo.photo_url.split("/gallery-photos/");
@@ -50,15 +99,11 @@ export default function PhotoGrid({ photos, setPhotos, loading, fetchPhotos }: P
     const reordered = [...photos];
     const [moved] = reordered.splice(oldIndex, 1);
     reordered.splice(newIndex, 0, moved);
-
-    // Optimistic update
     setPhotos(reordered);
 
-    // Persist new sort orders
     const updates = reordered.map((p, i) => supabase.from("gallery_photos").update({ sort_order: i }).eq("id", p.id));
     const results = await Promise.all(updates);
-    const failed = results.filter((r) => r.error);
-    if (failed.length > 0) {
+    if (results.some((r) => r.error)) {
       toast({ title: "Error saving order", variant: "destructive" });
       fetchPhotos();
     }
@@ -76,14 +121,43 @@ export default function PhotoGrid({ photos, setPhotos, loading, fetchPhotos }: P
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={photos.map((p) => p.id)} strategy={rectSortingStrategy}>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {photos.map((photo) => (
-            <SortablePhoto key={photo.id} photo={photo} onDelete={handleDelete} onCaptionUpdate={handleCaptionUpdate} />
-          ))}
+    <div className="space-y-3">
+      {/* Bulk actions bar */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            checked={selected.size === photos.length}
+            onCheckedChange={selectAll}
+            aria-label="Select all"
+          />
+          <span className="text-sm text-muted-foreground">
+            {selectMode ? `${selected.size} selected` : "Select"}
+          </span>
         </div>
-      </SortableContext>
-    </DndContext>
+        {selectMode && (
+          <Button variant="destructive" size="sm" onClick={handleBulkDelete} disabled={deleting}>
+            <Trash2 className="h-4 w-4 mr-1" />
+            {deleting ? "Deleting..." : `Delete ${selected.size}`}
+          </Button>
+        )}
+      </div>
+
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={photos.map((p) => p.id)} strategy={rectSortingStrategy}>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {photos.map((photo) => (
+              <SortablePhoto
+                key={photo.id}
+                photo={photo}
+                onDelete={handleDelete}
+                onCaptionUpdate={handleCaptionUpdate}
+                selected={selected.has(photo.id)}
+                onToggleSelect={toggleSelect}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </div>
   );
 }
