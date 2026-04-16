@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Camera, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import galleryHero from "@/assets/GALLERY-Tournament_Group.jpg";
 
 interface GalleryPhoto {
   id: string;
@@ -41,7 +42,6 @@ const GalleryPage = () => {
     fetchPhotos();
   }, []);
 
-  // Keyboard navigation for lightbox
   useEffect(() => {
     if (lightbox === null) return;
     const handler = (e: KeyboardEvent) => {
@@ -62,14 +62,14 @@ const GalleryPage = () => {
     photos: photos.filter((p) => p.year === year),
   }));
 
-  // Flat index for lightbox navigation
   const allPhotos = photosByYear.flatMap(({ photos: yp }) => yp);
   const getLightboxIndex = (photo: GalleryPhoto) => allPhotos.findIndex((p) => p.id === photo.id);
 
   return (
     <div>
-      <section className="section-dark">
-        <div className="container py-20 md:py-28 animate-fade-in">
+      <section className="section-dark relative overflow-hidden">
+        <img src={galleryHero} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+        <div className="container py-20 md:py-28 animate-fade-in relative z-10">
           <p className="section-label">Memories</p>
           <h1 className="font-heading font-extrabold text-4xl md:text-6xl text-white leading-[0.95]">
             Past Tournaments
@@ -125,7 +125,6 @@ const GalleryPage = () => {
           className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center"
           onClick={() => setLightbox(null)}
         >
-          {/* Close */}
           <button
             className="absolute top-4 right-4 text-white/70 hover:text-white p-2 z-10"
             onClick={() => setLightbox(null)}
@@ -134,7 +133,6 @@ const GalleryPage = () => {
             <X className="h-7 w-7" />
           </button>
 
-          {/* Prev */}
           {lightbox > 0 && (
             <button
               className="absolute left-2 md:left-6 text-white/60 hover:text-white p-2 z-10"
@@ -145,7 +143,6 @@ const GalleryPage = () => {
             </button>
           )}
 
-          {/* Next */}
           {lightbox < allPhotos.length - 1 && (
             <button
               className="absolute right-2 md:right-6 text-white/60 hover:text-white p-2 z-10"
@@ -156,7 +153,6 @@ const GalleryPage = () => {
             </button>
           )}
 
-          {/* Image */}
           <div
             className="max-w-[90vw] max-h-[85vh] flex flex-col items-center"
             onClick={(e) => e.stopPropagation()}

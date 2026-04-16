@@ -1,16 +1,26 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Mail, Phone, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import contactHero from "@/assets/CONTACT-H4H_Bar.jpg";
+
+const SUBJECTS = [
+  "Register a Team",
+  "Sponsorship Inquiry",
+  "General Question",
+  "Other",
+];
 
 const ContactPage = () => {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,8 +28,9 @@ const ContactPage = () => {
     const { error } = await supabase.from("messages").insert({
       sender_name: form.name,
       sender_email: form.email,
+      subject: form.subject,
       message: form.message,
-    });
+    } as any);
     setLoading(false);
     if (error) {
       toast({ title: "Something went wrong", description: error.message, variant: "destructive" });
@@ -31,8 +42,9 @@ const ContactPage = () => {
 
   return (
     <div>
-      <section className="section-dark">
-        <div className="container py-20 md:py-28 animate-fade-in">
+      <section className="section-dark relative overflow-hidden">
+        <img src={contactHero} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+        <div className="container py-20 md:py-28 animate-fade-in relative z-10">
           <p className="section-label">Reach Out</p>
           <h1 className="font-heading font-extrabold text-4xl md:text-6xl text-white leading-[0.95]">
             Contact Us
@@ -74,12 +86,15 @@ const ContactPage = () => {
                 <div className="text-center space-y-4 py-8">
                   <CheckCircle className="h-12 w-12 text-primary mx-auto" />
                   <p className="font-heading font-bold text-[#1A1A1A]">Thank you for your message!</p>
-                  <Button variant="outline" className="rounded border-[#1A1A1A]/20" onClick={() => { setSubmitted(false); setForm({ name: "", email: "", message: "" }); }}>
+                  <Button variant="outline" className="rounded border-[#1A1A1A]/20" onClick={() => { setSubmitted(false); setForm({ name: "", email: "", subject: "", message: "" }); }}>
                     Send Another
                   </Button>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  <p className="text-sm text-[#1A1A1A]/60">
+                    For common questions, check our <Link to="/faq" className="text-primary hover:underline font-medium">FAQ</Link> first.
+                  </p>
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-[#1A1A1A] font-medium">Name</Label>
                     <Input id="name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} required className="rounded border-[#1A1A1A]/15" />
@@ -87,6 +102,19 @@ const ContactPage = () => {
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-[#1A1A1A] font-medium">Email</Label>
                     <Input id="email" type="email" value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} required className="rounded border-[#1A1A1A]/15" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="subject" className="text-[#1A1A1A] font-medium">Subject</Label>
+                    <Select value={form.subject} onValueChange={(val) => setForm((p) => ({ ...p, subject: val }))}>
+                      <SelectTrigger className="rounded border-[#1A1A1A]/15">
+                        <SelectValue placeholder="Select a subject" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SUBJECTS.map((s) => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="message" className="text-[#1A1A1A] font-medium">Message</Label>

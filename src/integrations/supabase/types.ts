@@ -235,6 +235,7 @@ export type Database = {
           read: boolean
           sender_email: string
           sender_name: string
+          subject: string | null
         }
         Insert: {
           created_at?: string
@@ -243,6 +244,7 @@ export type Database = {
           read?: boolean
           sender_email: string
           sender_name: string
+          subject?: string | null
         }
         Update: {
           created_at?: string
@@ -251,6 +253,7 @@ export type Database = {
           read?: boolean
           sender_email?: string
           sender_name?: string
+          subject?: string | null
         }
         Relationships: []
       }
