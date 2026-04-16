@@ -1,5 +1,7 @@
 import { MapPin, Clock, Calendar, Users, Utensils, Trophy } from "lucide-react";
-import tournamentHero from "@/assets/tournament-hero.jpg";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import tournamentHero from "@/assets/TOURNAMENT-Cart_On_Fairway.jpg";
 
 const TournamentPage = () => {
   return (
@@ -124,7 +126,7 @@ const TournamentPage = () => {
                 <MapPin className="h-4 w-4" />
                 <h3 className="font-heading font-bold text-[#1A1A1A]">Victoria Inn, Brandon</h3>
               </div>
-              <p className="text-sm text-[#1A1A1A]/50">3550 Victoria Ave, Brandon, MB R7B 2R4</p>
+              <a href="https://www.google.com/maps/search/?api=1&query=3550+Victoria+Ave+Brandon+MB+R7B+2R4" target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">3550 Victoria Ave, Brandon, MB R7B 2R4</a>
               <p className="text-sm text-[#1A1A1A]/50">Thursday dinner, speeches, and party</p>
             </div>
             <div className="bg-white p-8 md:p-10 space-y-2">
@@ -132,10 +134,19 @@ const TournamentPage = () => {
                 <MapPin className="h-4 w-4" />
                 <h3 className="font-heading font-bold text-[#1A1A1A]">Glen Lea Golf Course</h3>
               </div>
-              <p className="text-sm text-[#1A1A1A]/50">1000 Lori Rd, Brandon, MB</p>
+              <a href="https://www.google.com/maps/search/?api=1&query=Glen+Lea+Golf+Course+Brandon+MB" target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">1000 Lori Rd, Brandon, MB</a>
               <p className="text-sm text-[#1A1A1A]/50">Friday golf tournament</p>
             </div>
           </div>
+        </div>
+      </section>
+      {/* CTA */}
+      <section className="section-dark">
+        <div className="container py-16 md:py-20 text-center animate-fade-in">
+          <h2 className="font-heading font-extrabold text-3xl md:text-4xl text-white mb-6">Ready to play?</h2>
+          <Button asChild size="lg" className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider px-8">
+            <Link to="/register">Register Your Team</Link>
+          </Button>
         </div>
       </section>
     </div>

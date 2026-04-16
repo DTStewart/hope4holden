@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import heroBg from "@/assets/hero-bg.jpg";
+import heroBg from "@/assets/HOME-1C5A0642.jpg";
 import h4hLogo from "@/assets/h4h-logo.png";
 
 const HomePage = () => {
@@ -124,12 +124,6 @@ const HomePage = () => {
                   Read Holden's Full Story <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
-            </div>
-            <div className="bg-white/5 border border-white/10 p-10 rounded">
-              <blockquote className="font-heading font-extrabold text-3xl md:text-4xl text-primary leading-tight mb-4">
-                "Beat Disease"
-              </blockquote>
-              <p className="text-white/40 text-sm font-heading uppercase tracking-wider">— Holden Stewart</p>
             </div>
           </div>
         </div>

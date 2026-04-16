@@ -4,14 +4,17 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import faqHero from "@/assets/FAQ-Holden_On_H4H_Grass.jpg";
 
 const faqs = [
   { q: "What is Ataxia Telangiectasia?", a: "A-T is a rare genetic condition that affects the nervous system, immune system, and other body systems. It typically appears in early childhood and progressively affects coordination and movement. Learn more at atcp.org." },
   { q: "Can I register as an individual golfer?", a: "We only accept full team registrations of 4 golfers. If you need help finding a team, contact us and we will do our best to connect you with other golfers." },
-  { q: "What does the registration fee include?", a: "The $600 team registration fee includes dinner on Thursday evening at the Victoria Inn and golf on Friday at Glendale Golf Course for all 4 team members." },
+  { q: "What does the registration fee include?", a: "The $600 team registration fee includes dinner on Thursday evening at the Victoria Inn and golf on Friday at Glen Lea Golf Course for all 4 team members." },
   { q: "Are donations tax-deductible?", a: "Yes. Donations are processed through the Ataxia Telangiectasia Children's Project (ATCP), a registered charity, which issues tax receipts on behalf of Hope 4 Holden." },
   { q: "How can I contact the organizers?", a: "Email us at hello@hope4holden.com, or call Jill at 204-761-3880 or Derrick at 204-761-6955." },
-  { q: "When and where is the tournament?", a: "The 2026 tournament takes place June 18-19 in Brandon, Manitoba. Thursday dinner is at the Victoria Inn and Friday golf is at Glendale Golf Course." },
+  { q: "When and where is the tournament?", a: "The 2026 tournament takes place June 18-19 in Brandon, Manitoba. Thursday dinner is at the Victoria Inn and Friday golf is at Glen Lea Golf Course." },
   { q: "What is the tournament format?", a: "The tournament is a 4-person team scramble format, making it fun and accessible for golfers of all skill levels." },
   { q: "Can I sponsor the event without playing golf?", a: "Absolutely! You can become a sponsor at any tier without registering a team. Visit our Sponsor page to see available sponsorship packages." },
   { q: "What happens if it rains?", a: "The tournament will proceed rain or shine. In the event of severe weather, we will communicate any schedule changes via email to all registered participants." },
@@ -23,8 +26,9 @@ const faqs = [
 const FAQPage = () => {
   return (
     <div>
-      <section className="section-dark">
-        <div className="container py-20 md:py-28 animate-fade-in">
+      <section className="section-dark relative overflow-hidden">
+        <img src={faqHero} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+        <div className="container py-20 md:py-28 animate-fade-in relative z-10">
           <p className="section-label">Questions</p>
           <h1 className="font-heading font-extrabold text-4xl md:text-6xl text-white leading-[0.95]">
             FAQ
@@ -47,6 +51,15 @@ const FAQPage = () => {
               </AccordionItem>
             ))}
           </Accordion>
+        </div>
+      </section>
+      {/* CTA */}
+      <section className="section-dark">
+        <div className="container py-16 md:py-20 text-center animate-fade-in">
+          <h2 className="font-heading font-extrabold text-3xl md:text-4xl text-white mb-6">Ready to play?</h2>
+          <Button asChild size="lg" className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider px-8">
+            <Link to="/register">Register Your Team</Link>
+          </Button>
         </div>
       </section>
     </div>
