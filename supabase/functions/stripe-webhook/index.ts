@@ -35,21 +35,46 @@ async function notifyAdmins(
   templateData: Record<string, any>
 ) {
   try {
+    const adminEmails = new Set<string>();
+
+    // Collect admin emails from user_roles
     const { data: adminRoles } = await supabase
       .from("user_roles")
       .select("user_id")
       .eq("role", "admin");
 
-    if (!adminRoles || adminRoles.length === 0) return;
+    if (adminRoles) {
+      for (const role of adminRoles) {
+        const { data: userData } = await supabase.auth.admin.getUserById(role.user_id);
+        if (userData?.user?.email) {
+          adminEmails.add(userData.user.email);
+        }
+      }
+    }
 
-    for (const role of adminRoles) {
-      const { data: userData } = await supabase.auth.admin.getUserById(role.user_id);
-      if (!userData?.user?.email) continue;
-
+    // Send to each admin user
+    for (const email of adminEmails) {
       await sendTransactionalEmail(functionsBaseUrl, serviceRoleKey, {
         templateName,
-        recipientEmail: userData.user.email,
-        idempotencyKey: `${templateName}-${Date.now()}-${role.user_id}`,
+        recipientEmail: email,
+        idempotencyKey: `${templateName}-${Date.now()}-${email}`,
+        templateData,
+      });
+    }
+
+    // Also send to shared admin email from settings
+    const { data: setting } = await supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "shared_admin_email")
+      .single();
+
+    const sharedEmail = setting?.value as string | null;
+    if (sharedEmail && !adminEmails.has(sharedEmail)) {
+      await sendTransactionalEmail(functionsBaseUrl, serviceRoleKey, {
+        templateName,
+        recipientEmail: sharedEmail,
+        idempotencyKey: `${templateName}-${Date.now()}-shared`,
         templateData,
       });
     }
