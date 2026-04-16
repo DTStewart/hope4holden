@@ -162,6 +162,8 @@ Deno.serve(async (req) => {
 
           case "sponsorship": {
             const uploadToken = crypto.randomUUID();
+            const hasInviteToken = !!formData.inviteToken;
+
             const { data: sponsorRow } = await supabase
               .from("sponsors")
               .insert({
@@ -181,8 +183,17 @@ Deno.serve(async (req) => {
               .select("id")
               .single();
 
-            if (formData.tierId) {
+            // Only decrement slots for non-invite purchases
+            if (!hasInviteToken && formData.tierId) {
               await supabase.rpc("decrement_sponsor_slots", { _tier_id: formData.tierId });
+            }
+
+            // Mark invite as used
+            if (hasInviteToken) {
+              await supabase
+                .from("sponsor_invites")
+                .update({ used: true })
+                .eq("token", formData.inviteToken);
             }
 
             // Send receipt email to sponsor

@@ -37,16 +37,16 @@ Deno.serve(async (req) => {
 
     // Only fetch tiers if there's a sponsorship item
     const hasSponsorships = items.some((i: any) => i.type === "sponsorship");
-    let tierMap = new Map<string, { price: number; name: string }>();
+    let tierMap = new Map<string, { price: number; name: string; max_slots: number | null }>();
 
     if (hasSponsorships) {
       const { data: allTiers } = await supabase
         .from("sponsorship_tiers")
-        .select("id, price, name")
+        .select("id, price, name, max_slots")
         .eq("active", true);
 
       for (const t of allTiers || []) {
-        tierMap.set(t.id, { price: t.price, name: t.name });
+        tierMap.set(t.id, { price: t.price, name: t.name, max_slots: t.max_slots });
       }
     }
 
@@ -74,7 +74,19 @@ Deno.serve(async (req) => {
               { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
           }
-          serverAmount = tierMap.get(tierId)!.price;
+          const tier = tierMap.get(tierId)!;
+          const hasInviteToken = !!item.formData?.inviteToken;
+
+          // If no invite token, block sold-out tiers (max_slots === 0)
+          if (!hasInviteToken && tier.max_slots !== null && tier.max_slots <= 0) {
+            return new Response(
+              JSON.stringify({ error: `The ${tier.name} tier is sold out.` }),
+              { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+
+          // For invite-based purchases, use the amount from formData (already validated by invite)
+          serverAmount = hasInviteToken ? Number(item.amount) || tier.price : tier.price;
           break;
         }
 

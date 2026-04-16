@@ -5,10 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, Save, Download, ImageIcon, Mail, Loader2, Trash2 } from "lucide-react";
+import { Check, X, Save, Download, ImageIcon, Mail, Loader2, Trash2, LinkIcon, Copy } from "lucide-react";
 import { exportToCsv } from "@/lib/exportCsv";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
@@ -138,11 +140,141 @@ interface BrandAsset {
   label?: string;
 }
 
+function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const { toast } = useToast();
+  const [selectedTierId, setSelectedTierId] = useState("");
+  const [customAmount, setCustomAmount] = useState("");
+  const [expiryDays, setExpiryDays] = useState("14");
+  const [generatedUrl, setGeneratedUrl] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  const { data: tiers } = useQuery({
+    queryKey: ["admin-tiers-all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sponsorship_tiers")
+        .select("*")
+        .eq("active", true)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const selectedTier = tiers?.find((t) => t.id === selectedTierId);
+
+  const handleCreate = async () => {
+    if (!selectedTier) return;
+    setCreating(true);
+    try {
+      const amount = customAmount ? parseInt(customAmount) : selectedTier.price;
+      const days = parseInt(expiryDays) || 14;
+      const expiresAt = new Date(Date.now() + days * 86400000).toISOString();
+
+      const { data, error } = await supabase
+        .from("sponsor_invites")
+        .insert({
+          tier_id: selectedTier.id,
+          tier_name: selectedTier.name,
+          amount,
+          expires_at: expiresAt,
+        } as any)
+        .select("token")
+        .single();
+
+      if (error) throw error;
+      const url = `https://hope4holden.com/sponsor-invite/${data.token}`;
+      setGeneratedUrl(url);
+      toast({ title: "Invite link created!" });
+    } catch (err: any) {
+      toast({ title: "Failed to create invite", description: err.message, variant: "destructive" });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(generatedUrl);
+    toast({ title: "Copied to clipboard!" });
+  };
+
+  const handleClose = (o: boolean) => {
+    if (!o) {
+      setSelectedTierId("");
+      setCustomAmount("");
+      setExpiryDays("14");
+      setGeneratedUrl("");
+    }
+    onOpenChange(o);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Generate Sponsor Invite Link</DialogTitle>
+        </DialogHeader>
+        {generatedUrl ? (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">Share this link with your sponsor:</p>
+            <div className="flex gap-2">
+              <Input readOnly value={generatedUrl} className="text-xs" />
+              <Button size="sm" variant="outline" onClick={handleCopy}>
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button className="w-full" variant="outline" onClick={() => setGeneratedUrl("")}>
+              Create Another
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Tier *</Label>
+              <Select value={selectedTierId} onValueChange={setSelectedTierId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a tier" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tiers?.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name} — ${t.price}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Custom Amount (optional)</Label>
+              <Input
+                type="number"
+                min="1"
+                placeholder={selectedTier ? `Default: $${selectedTier.price}` : "Select tier first"}
+                value={customAmount}
+                onChange={(e) => setCustomAmount(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Expiry (days)</Label>
+              <Input type="number" min="1" value={expiryDays} onChange={(e) => setExpiryDays(e.target.value)} />
+            </div>
+            <Button className="w-full" disabled={!selectedTierId || creating} onClick={handleCreate}>
+              {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <LinkIcon className="h-4 w-4 mr-2" />}
+              Generate Invite Link
+            </Button>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function SponsorsTab() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [assetsDialog, setAssetsDialog] = useState<{ sponsor: any; assets: BrandAsset[] } | null>(null);
   const [sendingEmailFor, setSendingEmailFor] = useState<string | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const handleResendUploadEmail = async (sponsor: any) => {
     if (!sponsor.logo_upload_token) {
@@ -235,6 +367,9 @@ export default function SponsorsTab() {
           <CardTitle className="flex items-center justify-between">
             <span>Sponsors ({sponsors?.length ?? 0})</span>
             <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => setInviteOpen(true)}>
+                <LinkIcon className="h-4 w-4 mr-1" /> Generate Invite Link
+              </Button>
               {sponsors && sponsors.length > 0 && (
                 <>
                   <Button
@@ -386,6 +521,8 @@ export default function SponsorsTab() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <InviteDialog open={inviteOpen} onOpenChange={setInviteOpen} />
     </div>
   );
 }
