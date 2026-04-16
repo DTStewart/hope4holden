@@ -19,7 +19,8 @@ const RegistrationReceiptEmail = ({ teamName, captainName, captainEmail }: Props
     <Body style={main}>
       <Container style={container}>
         <Section style={header}>
-          <Heading style={headerTitle}>⛳ {SITE_NAME}</Heading>
+          <Img src="https://rhksslzpdzpyrixkfmhb.supabase.co/storage/v1/object/public/email-assets/h4h-logo.png" alt={SITE_NAME} width="120" height="auto" style={{ margin: '0 auto 8px' }} />
+          <Heading style={headerTitle}>{SITE_NAME}</Heading>
           <Text style={headerSubtitle}>Annual Charity Golf Tournament</Text>
         </Section>
 
