@@ -1,6 +1,6 @@
 import * as React from 'npm:react@18.3.1'
 import {
-  Body, Container, Head, Heading, Html, Preview, Text, Button, Hr, Section, Img,
+  Body, Container, Head, Heading, Html, Preview, Text, Hr, Section, Img,
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
@@ -16,22 +16,20 @@ interface Props {
   recipientName?: string
   lineItems?: LineItem[]
   totalAmount?: number
-  hasDonation?: boolean
-  sponsorUploadUrl?: string
-  sponsorBusinessName?: string
-  sponsorTierName?: string
-  registrationTeamName?: string
+  hasRegistration?: boolean
+  hasSponsorship?: boolean
+  hasDinner?: boolean
+  isDinnerOnly?: boolean
 }
 
 const OrderConfirmationEmail = ({
   recipientName,
   lineItems = [],
   totalAmount = 0,
-  hasDonation,
-  sponsorUploadUrl,
-  sponsorBusinessName,
-  sponsorTierName,
-  registrationTeamName,
+  hasRegistration,
+  hasSponsorship,
+  hasDinner,
+  isDinnerOnly,
 }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
@@ -75,47 +73,70 @@ const OrderConfirmationEmail = ({
           </table>
         </Section>
 
-        {/* Registration info */}
-        {registrationTeamName && (
+        {/* Registration: Tournament Day Information */}
+        {hasRegistration && (
           <Section style={infoBox}>
-            <Text style={infoTitle}>🏌️ Tournament Registration</Text>
+            <Text style={infoTitle}>🏌️ Tournament Day Information</Text>
             <Text style={infoText}>
-              Team <strong>{registrationTeamName}</strong> is confirmed! We'll send you more details about tee times and course information as the date approaches.
+              <strong>Date:</strong> Thursday, June 19, 2026
+            </Text>
+            <Text style={infoText}>
+              <strong>Shotgun Start:</strong> 11:00 AM
+            </Text>
+            <Text style={infoText}>
+              <strong>Location:</strong> Glendale Golf Course
+            </Text>
+            <Text style={infoText}>
+              <strong>Dinner:</strong> Thursday, June 18 at Victoria Inn Brandon
+            </Text>
+            <Text style={infoTextNote}>
+              We'll send you more details about tee times and course information as the date approaches.
             </Text>
           </Section>
         )}
 
-        {/* Sponsor logo upload — prominent action item */}
-        {sponsorUploadUrl && (
-          <Section style={uploadBox}>
-            <Text style={uploadTitle}>📤 Upload Your Logo</Text>
-            <Text style={uploadText}>
-              {sponsorBusinessName ? `As a ${sponsorTierName || ''} sponsor, ${sponsorBusinessName} ` : 'You '}
-              can upload your logo and brand assets for display on our website and tournament materials.
-            </Text>
-            <Text style={uploadTips}>
-              <strong>Tips:</strong> PNG or SVG with transparent background • Max 10 MB • Upload multiple files
-            </Text>
-            <Section style={buttonContainer}>
-              <Button style={button} href={sponsorUploadUrl}>
-                Upload Brand Assets
-              </Button>
-            </Section>
-            <Text style={uploadFootnote}>
-              This link is unique to your sponsorship. You can use it multiple times.
+        {/* Sponsorship: Next Steps */}
+        {hasSponsorship && (
+          <Section style={infoBox}>
+            <Text style={infoTitle}>📤 Next Steps for Sponsors</Text>
+            <Text style={infoText}>
+              You'll receive a separate email shortly to collect your marketing materials (logo and social media handles). That email can be forwarded to your marketing or design team if they handle brand assets on your behalf.
             </Text>
           </Section>
         )}
 
-        {/* Donation CRA note */}
-        {hasDonation && (
+        {/* Dinner Only: Simple confirmation */}
+        {isDinnerOnly && (
           <Section style={infoBox}>
-            <Text style={infoTitle}>🧾 Tax Receipt</Text>
+            <Text style={infoTitle}>🍽️ Dinner Details</Text>
             <Text style={infoText}>
-              CRA tax receipts for your donation are issued separately by ATCP, a registered charity. You will receive your official receipt directly from them.
+              <strong>Date:</strong> Thursday, June 18, 2026
+            </Text>
+            <Text style={infoText}>
+              <strong>Location:</strong> Victoria Inn Brandon
+            </Text>
+            <Text style={infoTextNote}>
+              We'll share more details about the evening closer to the event.
             </Text>
           </Section>
         )}
+
+        {/* Dinner info for non-dinner-only orders that include dinner */}
+        {hasDinner && !isDinnerOnly && !hasRegistration && (
+          <Section style={infoBox}>
+            <Text style={infoTitle}>🍽️ Dinner Information</Text>
+            <Text style={infoText}>
+              <strong>Date:</strong> Thursday, June 18, 2026
+            </Text>
+            <Text style={infoText}>
+              <strong>Location:</strong> Victoria Inn Brandon
+            </Text>
+          </Section>
+        )}
+
+        <Text style={closingText}>
+          We truly appreciate your support. Every contribution helps make the {SITE_NAME} Golf Tournament a success and supports our mission to make a difference. We look forward to seeing you!
+        </Text>
 
         <Hr style={hr} />
         <Text style={footer}>
@@ -143,11 +164,10 @@ export const template = {
       { type: 'donation', description: 'Donation', amount: 50 },
     ],
     totalAmount: 3450,
-    hasDonation: true,
-    sponsorUploadUrl: 'https://hope4holden.com/sponsor-upload/abc123',
-    sponsorBusinessName: 'Acme Corp',
-    sponsorTierName: 'Gold',
-    registrationTeamName: 'The Birdie Brigade',
+    hasRegistration: true,
+    hasSponsorship: true,
+    hasDinner: true,
+    isDinnerOnly: false,
   },
 } satisfies TemplateEntry
 
@@ -171,16 +191,11 @@ const totalLabel = { textAlign: 'left' as const, padding: '14px 12px', fontSize:
 const totalValue = { textAlign: 'right' as const, padding: '14px 12px', fontSize: '18px', fontWeight: 'bold' as const, color: '#7ab40d', borderTop: '2px solid #1A1A1A', fontFamily: "'Montserrat', Arial, sans-serif" }
 
 const infoBox = { backgroundColor: '#f8f8f8', padding: '16px 20px', margin: '0 28px 16px', borderRadius: '6px', border: '1px solid #e5e5e5' }
-const infoTitle = { fontSize: '14px', fontWeight: 'bold' as const, color: '#1A1A1A', margin: '0 0 6px', fontFamily: "'Montserrat', Arial, sans-serif" }
-const infoText = { fontSize: '13px', color: '#555', lineHeight: '1.5', margin: '0' }
+const infoTitle = { fontSize: '14px', fontWeight: 'bold' as const, color: '#1A1A1A', margin: '0 0 8px', fontFamily: "'Montserrat', Arial, sans-serif" }
+const infoText = { fontSize: '13px', color: '#555', lineHeight: '1.5', margin: '0 0 4px' }
+const infoTextNote = { fontSize: '13px', color: '#777', lineHeight: '1.5', margin: '8px 0 0', fontStyle: 'italic' as const }
 
-const uploadBox = { backgroundColor: '#f0f7e4', padding: '20px 24px', margin: '0 28px 16px', borderRadius: '6px', border: '2px solid #7ab40d' }
-const uploadTitle = { fontSize: '16px', fontWeight: 'bold' as const, color: '#4A7C09', margin: '0 0 8px', fontFamily: "'Montserrat', Arial, sans-serif" }
-const uploadText = { fontSize: '13px', color: '#555', lineHeight: '1.5', margin: '0 0 10px' }
-const uploadTips = { fontSize: '12px', color: '#777', lineHeight: '1.5', margin: '0 0 14px' }
-const buttonContainer = { padding: '0 0 8px' }
-const button = { backgroundColor: '#7ab40d', color: '#ffffff', padding: '12px 24px', borderRadius: '4px', fontFamily: "'Montserrat', Arial, sans-serif", fontWeight: 'bold' as const, fontSize: '14px', textTransform: 'uppercase' as const, letterSpacing: '0.5px', textDecoration: 'none', display: 'inline-block' }
-const uploadFootnote = { fontSize: '11px', color: '#999', margin: '0' }
+const closingText = { fontSize: '14px', color: '#555', lineHeight: '1.6', margin: '8px 28px 16px' }
 
 const hr = { borderColor: '#e5e5e5', margin: '8px 28px 16px' }
 const footer = { fontSize: '12px', color: '#999', margin: '0 28px 8px' }
