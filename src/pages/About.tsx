@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
-import aboutHero from "@/assets/about-hero.jpg";
+import aboutHero from "@/assets/ABOUT-Kids_Golf_Cart_Edited.jpg";
 
 const AboutPage = () => {
   return (
@@ -49,14 +49,6 @@ const AboutPage = () => {
       </section>
 
       {/* Quote — dark section */}
-      <section className="section-dark">
-        <div className="container py-20 md:py-28 text-center animate-fade-in">
-          <blockquote className="font-heading font-extrabold text-4xl md:text-6xl text-primary leading-tight mb-6">
-            "Beat Disease"
-          </blockquote>
-          <p className="text-white/40 font-heading uppercase tracking-[0.2em] text-sm">— Holden Stewart</p>
-        </div>
-      </section>
 
       {/* What is A-T */}
       <section className="section-light">

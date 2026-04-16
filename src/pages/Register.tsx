@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import registrationHero from "@/assets/registration-hero.jpg";
+import registrationHero from "@/assets/PARTICIPATE-1C5A0955.jpg";
 import atcpLogo from "@/assets/atcp-logo.svg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -231,7 +231,7 @@ const ParticipatePage = () => {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-[#1A1A1A]/60 text-sm">
                     <Clock className="h-4 w-4 text-primary" />
-                    <span className="font-heading font-bold">Registration opens soon</span>
+                    <span className="font-heading font-bold">Registration opens Monday, April 20, 2026.</span>
                   </div>
                   {waitlistSubmitted ? (
                     <div className="flex items-center gap-2 text-primary text-sm">

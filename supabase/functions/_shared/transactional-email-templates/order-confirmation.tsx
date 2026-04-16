@@ -84,7 +84,7 @@ const OrderConfirmationEmail = ({
               <strong>Shotgun Start:</strong> 11:00 AM
             </Text>
             <Text style={infoText}>
-              <strong>Location:</strong> Glendale Golf Course
+              <strong>Location:</strong> Glen Lea Golf Course
             </Text>
             <Text style={infoText}>
               <strong>Dinner:</strong> Thursday, June 18 at Victoria Inn Brandon

@@ -98,6 +98,7 @@ export default function MessagesTab() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Subject</TableHead>
                   <TableHead>Message</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
@@ -109,6 +110,7 @@ export default function MessagesTab() {
                   <TableRow key={m.id} className={!m.read ? "bg-primary/5" : ""}>
                     <TableCell className="font-medium">{m.sender_name}</TableCell>
                     <TableCell>{m.sender_email}</TableCell>
+                    <TableCell className="text-muted-foreground">{(m as any).subject || "—"}</TableCell>
                     <TableCell className="max-w-xs truncate">{m.message}</TableCell>
                     <TableCell>
                       <Badge variant={m.read ? "secondary" : "default"}>{m.read ? "Read" : "New"}</Badge>
