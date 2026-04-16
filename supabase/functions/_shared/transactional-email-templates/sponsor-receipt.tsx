@@ -53,7 +53,7 @@ const SponsorReceiptEmail = ({ businessName, contactName, contactEmail, tierName
 
         <Hr style={hr} />
         <Text style={footer}>
-          {SITE_NAME} is a registered charity. Please retain this email for your records.
+          Tax receipts are issued by ATCP, a registered charity. Please retain this email for your records.
         </Text>
         <Text style={footer}>
           Questions? Contact us at hello@hope4holden.com
