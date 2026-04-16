@@ -90,7 +90,10 @@ const ParticipatePage = () => {
       if (settings) {
         for (const s of settings) {
           if (s.key === "registration_status") {
-            setRegStatus(parseRegistrationStatus(s.value));
+            console.log("[Register] raw registration_status value:", JSON.stringify(s.value), "typeof:", typeof s.value);
+            const parsed = parseRegistrationStatus(s.value);
+            console.log("[Register] parsed registration_status:", parsed);
+            setRegStatus(parsed);
           }
           if (s.key === "spots_remaining") setSpotsAvailable(Number(s.value));
         }
