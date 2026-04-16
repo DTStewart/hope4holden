@@ -136,11 +136,10 @@ Deno.serve(async (req) => {
       const lineItems: { type: string; description: string; amount: number }[] = [];
       let recipientEmail = "";
       let recipientName = "";
+      let hasRegistration = false;
+      let hasSponsorship = false;
+      let hasDinner = false;
       let hasDonation = false;
-      let sponsorUploadUrl = "";
-      let sponsorBusinessName = "";
-      let sponsorTierName = "";
-      let registrationTeamName = "";
 
       for (const item of items) {
         const formData = item.formData || {};
@@ -168,7 +167,7 @@ Deno.serve(async (req) => {
               description: `Team Registration — ${formData.teamName || "Unknown Team"}`,
               amount: item.amount,
             });
-            registrationTeamName = formData.teamName || "Unknown Team";
+            hasRegistration = true;
             if (!recipientEmail && formData.captainEmail) {
               recipientEmail = formData.captainEmail;
               recipientName = formData.captainName || "";
@@ -226,9 +225,7 @@ Deno.serve(async (req) => {
               description: `${formData.tier || ""} Sponsorship — ${formData.businessName || ""}`,
               amount: item.amount,
             });
-            sponsorUploadUrl = `${siteUrl}/sponsor-upload/${uploadToken}`;
-            sponsorBusinessName = formData.businessName || "";
-            sponsorTierName = formData.tier || "";
+            hasSponsorship = true;
             if (!recipientEmail && formData.contactEmail) {
               recipientEmail = formData.contactEmail;
               recipientName = formData.contactName || "";
@@ -305,6 +302,7 @@ Deno.serve(async (req) => {
               description: `Dinner Ticket${qty > 1 ? `s × ${qty}` : ""}`,
               amount: item.amount,
             });
+            hasDinner = true;
             if (!recipientEmail && formData.guestEmail) {
               recipientEmail = formData.guestEmail;
               recipientName = formData.guestName || "";
@@ -325,11 +323,10 @@ Deno.serve(async (req) => {
               recipientName,
               lineItems,
               totalAmount,
-              hasDonation,
-              sponsorUploadUrl: sponsorUploadUrl || undefined,
-              sponsorBusinessName: sponsorBusinessName || undefined,
-              sponsorTierName: sponsorTierName || undefined,
-              registrationTeamName: registrationTeamName || undefined,
+              hasRegistration,
+              hasSponsorship,
+              hasDinner,
+              isDinnerOnly: hasDinner && !hasRegistration && !hasSponsorship && !hasDonation,
             },
           });
         } catch (err) {
