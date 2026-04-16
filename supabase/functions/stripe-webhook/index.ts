@@ -307,6 +307,19 @@ Deno.serve(async (req) => {
               recipientEmail = formData.guestEmail;
               recipientName = formData.guestName || "";
             }
+
+            await notifyAdmins(
+              supabase,
+              SUPABASE_URL,
+              SUPABASE_SERVICE_ROLE_KEY,
+              "admin-new-dinner",
+              {
+                guestName: formData.guestName || "Unknown",
+                guestEmail: formData.guestEmail || "",
+                quantity: formData.quantity || 1,
+                amount: item.amount,
+              }
+            );
             break;
         }
       }
