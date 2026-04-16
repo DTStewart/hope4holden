@@ -242,9 +242,10 @@ export default function SponsorsTab() {
                     variant="outline"
                     onClick={() =>
                       exportToCsv("sponsors.csv",
-                        ["Business", "Contact", "Email", "Phone", "Tier", "Amount", "Paid", "Approved", "Assets", "Date"],
-                        sponsors.map((s) => [
+                        ["Business", "Contact", "Email", "Phone", "Facebook", "Instagram", "Tier", "Amount", "Paid", "Approved", "Assets", "Date"],
+                        sponsors.map((s: any) => [
                           s.business_name, s.contact_name, s.contact_email, s.contact_phone || "",
+                          s.facebook_handle || "", s.instagram_handle || "",
                           s.tier_name, String(s.amount), s.paid ? "Yes" : "No", s.approved ? "Yes" : "No",
                           String(getAssets(s).length),
                           new Date(s.created_at).toLocaleDateString(),
@@ -285,6 +286,8 @@ export default function SponsorsTab() {
                     <TableHead>Business</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Facebook</TableHead>
+                    <TableHead>Instagram</TableHead>
                     <TableHead>Tier</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Paid</TableHead>
@@ -301,6 +304,8 @@ export default function SponsorsTab() {
                         <TableCell className="font-medium">{s.business_name}</TableCell>
                         <TableCell>{s.contact_name}</TableCell>
                         <TableCell>{s.contact_email}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm">{(s as any).facebook_handle || "—"}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm">{(s as any).instagram_handle || "—"}</TableCell>
                         <TableCell>{s.tier_name}</TableCell>
                         <TableCell>${s.amount}</TableCell>
                         <TableCell>
