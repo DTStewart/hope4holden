@@ -359,6 +359,47 @@ export type Database = {
         }
         Relationships: []
       }
+      sponsor_invites: {
+        Row: {
+          amount: number
+          created_at: string
+          expires_at: string
+          id: string
+          tier_id: string
+          tier_name: string
+          token: string
+          used: boolean
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          tier_id: string
+          tier_name: string
+          token?: string
+          used?: boolean
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          tier_id?: string
+          tier_name?: string
+          token?: string
+          used?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_invites_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "sponsorship_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sponsors: {
         Row: {
           amount: number
