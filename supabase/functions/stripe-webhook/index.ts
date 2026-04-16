@@ -175,6 +175,8 @@ Deno.serve(async (req) => {
                 stripe_session_id: session.id,
                 paid: true,
                 logo_upload_token: uploadToken,
+                facebook_handle: formData.facebookHandle || null,
+                instagram_handle: formData.instagramHandle || null,
               })
               .select("id")
               .single();

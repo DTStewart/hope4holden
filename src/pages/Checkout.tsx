@@ -32,6 +32,8 @@ const CheckoutPage = () => {
     phone: "",
     teamName: "",
     sponsorBusinessName: "",
+    facebookHandle: "",
+    instagramHandle: "",
     street: "",
     city: "",
     province: "",
@@ -86,6 +88,8 @@ const CheckoutPage = () => {
             contactName: form.fullName,
             contactEmail: form.email,
             contactPhone: form.phone,
+            facebookHandle: form.facebookHandle || undefined,
+            instagramHandle: form.instagramHandle || undefined,
           };
           break;
         case "donation":
@@ -241,6 +245,16 @@ const CheckoutPage = () => {
               <div className="space-y-2">
                 <Label htmlFor="sponsorBusinessName" className="text-[#1A1A1A] font-medium">Sponsor Business Name *</Label>
                 <Input id="sponsorBusinessName" name="sponsorBusinessName" value={form.sponsorBusinessName} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="facebookHandle" className="text-[#1A1A1A] font-medium">Facebook Handle</Label>
+                  <Input id="facebookHandle" name="facebookHandle" value={form.facebookHandle} onChange={handleChange} placeholder="@yourhandle" className="rounded border-[#1A1A1A]/15" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="instagramHandle" className="text-[#1A1A1A] font-medium">Instagram Handle</Label>
+                  <Input id="instagramHandle" name="instagramHandle" value={form.instagramHandle} onChange={handleChange} placeholder="@yourhandle" className="rounded border-[#1A1A1A]/15" />
+                </div>
               </div>
             </div>
           )}
