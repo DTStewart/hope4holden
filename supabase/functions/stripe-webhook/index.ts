@@ -37,7 +37,6 @@ async function notifyAdmins(
   try {
     const adminEmails = new Set<string>();
 
-    // Collect admin emails from user_roles
     const { data: adminRoles } = await supabase
       .from("user_roles")
       .select("user_id")
@@ -52,7 +51,6 @@ async function notifyAdmins(
       }
     }
 
-    // Send to each admin user
     for (const email of adminEmails) {
       await sendTransactionalEmail(functionsBaseUrl, serviceRoleKey, {
         templateName,
@@ -62,7 +60,6 @@ async function notifyAdmins(
       });
     }
 
-    // Also send to shared admin email from settings
     const { data: setting } = await supabase
       .from("settings")
       .select("value")
@@ -133,6 +130,18 @@ Deno.serve(async (req) => {
       }
 
       const items = order.items as any[];
+      const siteUrl = Deno.env.get("SITE_URL") || "https://hope4holden.lovable.app";
+
+      // Collect data for the unified order confirmation email
+      const lineItems: { type: string; description: string; amount: number }[] = [];
+      let recipientEmail = "";
+      let recipientName = "";
+      let hasDonation = false;
+      let sponsorUploadUrl = "";
+      let sponsorBusinessName = "";
+      let sponsorTierName = "";
+      let registrationTeamName = "";
+
       for (const item of items) {
         const formData = item.formData || {};
 
@@ -154,22 +163,15 @@ Deno.serve(async (req) => {
             });
             await supabase.rpc("decrement_spots");
 
-            // Send receipt to captain
-            if (formData.captainEmail) {
-              try {
-                await sendTransactionalEmail(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-                  templateName: "registration-receipt",
-                  recipientEmail: formData.captainEmail,
-                  idempotencyKey: `reg-receipt-${session.id}`,
-                  templateData: {
-                    teamName: formData.teamName || "Unknown Team",
-                    captainName: formData.captainName || "",
-                    captainEmail: formData.captainEmail || "",
-                  },
-                });
-              } catch (err) {
-                console.error("Failed to send registration receipt:", err);
-              }
+            lineItems.push({
+              type: "registration",
+              description: `Team Registration — ${formData.teamName || "Unknown Team"}`,
+              amount: item.amount,
+            });
+            registrationTeamName = formData.teamName || "Unknown Team";
+            if (!recipientEmail && formData.captainEmail) {
+              recipientEmail = formData.captainEmail;
+              recipientName = formData.captainName || "";
             }
 
             await notifyAdmins(
@@ -208,12 +210,10 @@ Deno.serve(async (req) => {
               .select("id")
               .single();
 
-            // Only decrement slots for non-invite purchases
             if (!hasInviteToken && formData.tierId) {
               await supabase.rpc("decrement_sponsor_slots", { _tier_id: formData.tierId });
             }
 
-            // Mark invite as used
             if (hasInviteToken) {
               await supabase
                 .from("sponsor_invites")
@@ -221,44 +221,17 @@ Deno.serve(async (req) => {
                 .eq("token", formData.inviteToken);
             }
 
-            // Send receipt email to sponsor
-            if (formData.contactEmail) {
-              try {
-                await sendTransactionalEmail(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-                  templateName: "sponsor-receipt",
-                  recipientEmail: formData.contactEmail,
-                  idempotencyKey: `sponsor-receipt-${sponsorRow?.id || uploadToken}`,
-                  templateData: {
-                    businessName: formData.businessName || "",
-                    contactName: formData.contactName || "",
-                    contactEmail: formData.contactEmail || "",
-                    tierName: formData.tier || "",
-                    amount: item.amount,
-                  },
-                });
-              } catch (err) {
-                console.error("Failed to send sponsor receipt email:", err);
-              }
-            }
-
-            // Send logo upload request email to sponsor
-            const siteUrl = Deno.env.get("SITE_URL") || "https://hope4holden.lovable.app";
-            const uploadUrl = `${siteUrl}/sponsor-upload/${uploadToken}`;
-            if (formData.contactEmail) {
-              try {
-                await sendTransactionalEmail(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-                  templateName: "sponsor-logo-upload",
-                  recipientEmail: formData.contactEmail,
-                  idempotencyKey: `sponsor-upload-${sponsorRow?.id || uploadToken}`,
-                  templateData: {
-                    businessName: formData.businessName || "",
-                    tierName: formData.tier || "",
-                    uploadUrl,
-                  },
-                });
-              } catch (err) {
-                console.error("Failed to send sponsor logo upload email:", err);
-              }
+            lineItems.push({
+              type: "sponsorship",
+              description: `${formData.tier || ""} Sponsorship — ${formData.businessName || ""}`,
+              amount: item.amount,
+            });
+            sponsorUploadUrl = `${siteUrl}/sponsor-upload/${uploadToken}`;
+            sponsorBusinessName = formData.businessName || "";
+            sponsorTierName = formData.tier || "";
+            if (!recipientEmail && formData.contactEmail) {
+              recipientEmail = formData.contactEmail;
+              recipientName = formData.contactName || "";
             }
 
             await notifyAdmins(
@@ -291,22 +264,15 @@ Deno.serve(async (req) => {
               donor_postal_code: formData.postalCode || null,
             });
 
-            // Send receipt to donor
-            if (formData.donorEmail) {
-              try {
-                await sendTransactionalEmail(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-                  templateName: "donation-receipt",
-                  recipientEmail: formData.donorEmail,
-                  idempotencyKey: `donation-receipt-${session.id}`,
-                  templateData: {
-                    donorName: formData.donorName || "Anonymous",
-                    donorEmail: formData.donorEmail || "",
-                    amount: item.amount,
-                  },
-                });
-              } catch (err) {
-                console.error("Failed to send donation receipt:", err);
-              }
+            lineItems.push({
+              type: "donation",
+              description: "Donation",
+              amount: item.amount,
+            });
+            hasDonation = true;
+            if (!recipientEmail && formData.donorEmail) {
+              recipientEmail = formData.donorEmail;
+              recipientName = formData.donorName || "";
             }
 
             await notifyAdmins(
@@ -333,25 +299,41 @@ Deno.serve(async (req) => {
               paid: true,
             });
 
-            // Send receipt to dinner guest
-            if (formData.guestEmail) {
-              try {
-                await sendTransactionalEmail(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-                  templateName: "dinner-receipt",
-                  recipientEmail: formData.guestEmail,
-                  idempotencyKey: `dinner-receipt-${session.id}`,
-                  templateData: {
-                    guestName: formData.guestName || "Unknown",
-                    guestEmail: formData.guestEmail || "",
-                    quantity: formData.quantity || 1,
-                    amount: item.amount,
-                  },
-                });
-              } catch (err) {
-                console.error("Failed to send dinner receipt:", err);
-              }
+            const qty = formData.quantity || 1;
+            lineItems.push({
+              type: "dinner",
+              description: `Dinner Ticket${qty > 1 ? `s × ${qty}` : ""}`,
+              amount: item.amount,
+            });
+            if (!recipientEmail && formData.guestEmail) {
+              recipientEmail = formData.guestEmail;
+              recipientName = formData.guestName || "";
             }
             break;
+        }
+      }
+
+      // Send ONE unified order confirmation email
+      const totalAmount = lineItems.reduce((sum, li) => sum + li.amount, 0);
+      if (recipientEmail) {
+        try {
+          await sendTransactionalEmail(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+            templateName: "order-confirmation",
+            recipientEmail,
+            idempotencyKey: `order-confirm-${session.id}`,
+            templateData: {
+              recipientName,
+              lineItems,
+              totalAmount,
+              hasDonation,
+              sponsorUploadUrl: sponsorUploadUrl || undefined,
+              sponsorBusinessName: sponsorBusinessName || undefined,
+              sponsorTierName: sponsorTierName || undefined,
+              registrationTeamName: registrationTeamName || undefined,
+            },
+          });
+        } catch (err) {
+          console.error("Failed to send order confirmation:", err);
         }
       }
 
