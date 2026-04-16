@@ -63,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setIsAdmin(false);
+    window.location.href = "/admin/login";
   };
 
   return (
