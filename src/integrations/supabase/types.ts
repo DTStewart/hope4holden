@@ -369,7 +369,9 @@ export type Database = {
           contact_name: string
           contact_phone: string | null
           created_at: string
+          facebook_handle: string | null
           id: string
+          instagram_handle: string | null
           logo_upload_token: string | null
           logo_url: string | null
           paid: boolean
@@ -387,7 +389,9 @@ export type Database = {
           contact_name: string
           contact_phone?: string | null
           created_at?: string
+          facebook_handle?: string | null
           id?: string
+          instagram_handle?: string | null
           logo_upload_token?: string | null
           logo_url?: string | null
           paid?: boolean
@@ -405,7 +409,9 @@ export type Database = {
           contact_name?: string
           contact_phone?: string | null
           created_at?: string
+          facebook_handle?: string | null
           id?: string
+          instagram_handle?: string | null
           logo_upload_token?: string | null
           logo_url?: string | null
           paid?: boolean
