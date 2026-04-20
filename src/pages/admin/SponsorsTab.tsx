@@ -311,8 +311,9 @@ export default function SponsorsTab() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("sponsors")
-        .select("*")
+        .select("id, business_name, contact_name, contact_email, contact_phone, facebook_handle, instagram_handle, tier_id, tier_name, amount, paid, approved, brand_assets, logo_url, logo_upload_token, stripe_session_id, created_at, updated_at")
         .order("created_at", { ascending: false });
+      console.log("[SponsorsTab] sponsors query result:", { data, error, count: data?.length });
       if (error) throw error;
       return data;
     },
