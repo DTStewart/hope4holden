@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,7 @@ export default function OrdersTab() {
   const { data: orders, isLoading } = useQuery({
     queryKey: ["admin-orders"],
     queryFn: async () => {
+      await ensureAdminSession();
       const { data, error } = await supabase
         .from("pending_orders")
         .select("*")
