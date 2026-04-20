@@ -1,7 +1,11 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image, ShoppingCart, ClipboardList, UtensilsCrossed, Send } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import RegistrationsTab from "./RegistrationsTab";
 import SponsorsTab from "./SponsorsTab";
 import DonationsTab from "./DonationsTab";
@@ -16,6 +20,42 @@ import EmailsTab from "./EmailsTab";
 
 export default function AdminDashboard() {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // Session-expiry guard: verify the auth session before any tab loads,
+  // and re-check periodically. If expired/missing, toast + redirect.
+  useEffect(() => {
+    let cancelled = false;
+
+    const check = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      let session = data?.session ?? null;
+      const now = Math.floor(Date.now() / 1000);
+
+      if (session?.expires_at && session.expires_at - now < 30) {
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        session = refreshed?.session ?? null;
+      }
+
+      if (cancelled) return;
+      if (error || !session) {
+        toast({
+          title: "Session expired",
+          description: "Please sign in again to continue.",
+          variant: "destructive",
+        });
+        navigate("/admin/login", { replace: true });
+      }
+    };
+
+    check();
+    const id = setInterval(check, 60_000); // re-check every minute
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [navigate, toast]);
 
   return (
     <div className="min-h-screen bg-muted/30">
