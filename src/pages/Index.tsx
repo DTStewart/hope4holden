@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { anonSupabase } from "@/integrations/supabase/anonClient";
 import heroBg from "@/assets/HOME-1C5A0642.jpg";
 import h4hLogo from "@/assets/h4h-logo.png";
 
@@ -10,7 +10,7 @@ const HomePage = () => {
   const [sponsors, setSponsors] = useState<{ id: string; business_name: string; tier_name: string; logo_url: string | null }[]>([]);
 
   useEffect(() => {
-    supabase
+    anonSupabase
       .from("sponsors_public" as any)
       .select("id, business_name, tier_name, logo_url")
       .then(({ data }: any) => {

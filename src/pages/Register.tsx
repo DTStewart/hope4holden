@@ -14,6 +14,7 @@ import {
   Star, Award, Flag, Utensils, CreditCard, Droplets, Gift, Heart, Trophy, Package,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { anonSupabase } from "@/integrations/supabase/anonClient";
 
 type RegistrationStatus = "coming_soon" | "open" | "sold_out";
 
@@ -83,7 +84,7 @@ const ParticipatePage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: settings } = await supabase
+      const { data: settings } = await anonSupabase
         .from("settings")
         .select("key, value")
         .in("key", ["registration_status", "spots_remaining"]);
@@ -96,7 +97,7 @@ const ParticipatePage = () => {
         }
       }
       setTiersLoading(true);
-      const { data: tiersData } = await supabase.from("sponsorship_tiers").select("*").eq("active", true).order("sort_order");
+      const { data: tiersData } = await anonSupabase.from("sponsorship_tiers").select("*").eq("active", true).order("sort_order");
       if (tiersData) {
         setTiers(tiersData.map((t: any) => ({ ...t, benefits: t.benefits as string[], max_slots: t.max_slots })));
       }

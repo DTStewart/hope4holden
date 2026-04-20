@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Camera, ChevronLeft, ChevronRight, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { anonSupabase } from "@/integrations/supabase/anonClient";
 import galleryHero from "@/assets/GALLERY-Tournament_Group.jpg";
 
 interface GalleryPhoto {
@@ -20,7 +20,7 @@ const GalleryPage = () => {
   useEffect(() => {
     const fetchPhotos = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await anonSupabase
           .from("gallery_photos")
           .select("id, year, caption, photo_url")
           .order("year", { ascending: false })
