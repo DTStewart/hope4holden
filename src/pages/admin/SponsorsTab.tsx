@@ -11,9 +11,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, Save, Download, ImageIcon, Mail, Loader2, Trash2, LinkIcon, Copy } from "lucide-react";
+import { Check, X, Save, Download, ImageIcon, Mail, MailCheck, Loader2, Trash2, LinkIcon, Copy } from "lucide-react";
 import { exportToCsv } from "@/lib/exportCsv";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { EditableEmail } from "@/components/admin/EditableEmail";
+import { resendForSponsor } from "@/lib/resendOrderConfirmation";
 
 function TiersCard() {
   const queryClient = useQueryClient();
@@ -278,7 +280,20 @@ export default function SponsorsTab() {
   const { toast } = useToast();
   const [assetsDialog, setAssetsDialog] = useState<{ sponsor: any; assets: BrandAsset[] } | null>(null);
   const [sendingEmailFor, setSendingEmailFor] = useState<string | null>(null);
+  const [resendingOrderFor, setResendingOrderFor] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+
+  const handleResendOrder = async (sponsor: any) => {
+    setResendingOrderFor(sponsor.id);
+    try {
+      await resendForSponsor(sponsor);
+      toast({ title: "Confirmation email sent", description: `Sent to ${sponsor.contact_email}` });
+    } catch (err: any) {
+      toast({ title: "Failed to send email", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setResendingOrderFor(null);
+    }
+  };
 
   const handleResendUploadEmail = async (sponsor: any) => {
     if (!sponsor.logo_upload_token) {
@@ -444,7 +459,15 @@ export default function SponsorsTab() {
                       <TableRow key={s.id}>
                         <TableCell className="font-medium">{s.business_name}</TableCell>
                         <TableCell>{s.contact_name}</TableCell>
-                        <TableCell>{s.contact_email}</TableCell>
+                        <TableCell>
+                          <EditableEmail
+                            table="sponsors"
+                            id={s.id}
+                            column="contact_email"
+                            value={s.contact_email}
+                            invalidateKey={["admin-sponsors"]}
+                          />
+                        </TableCell>
                         <TableCell className="text-muted-foreground text-sm">{(s as any).facebook_handle || "—"}</TableCell>
                         <TableCell className="text-muted-foreground text-sm">{(s as any).instagram_handle || "—"}</TableCell>
                         <TableCell>{s.tier_name}</TableCell>
@@ -495,6 +518,15 @@ export default function SponsorsTab() {
                               {sendingEmailFor === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
                             </Button>
                           )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            title="Resend order confirmation"
+                            disabled={resendingOrderFor === s.id}
+                            onClick={() => handleResendOrder(s)}
+                          >
+                            {resendingOrderFor === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <MailCheck className="h-3 w-3" />}
+                          </Button>
                           <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteOne.mutate(s.id)}>
                             <Trash2 className="h-3 w-3" />
                           </Button>
