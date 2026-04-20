@@ -23,6 +23,7 @@ function TiersCard() {
   const { data: tiers, isLoading } = useQuery({
     queryKey: ["admin-tiers"],
     queryFn: async () => {
+      await ensureAdminSession();
       const { data, error } = await supabase
         .from("sponsorship_tiers")
         .select("*")
@@ -35,6 +36,7 @@ function TiersCard() {
   const { data: sponsors } = useQuery({
     queryKey: ["admin-sponsors"],
     queryFn: async () => {
+      await ensureAdminSession();
       const { data, error } = await supabase.from("sponsors").select("tier_id, approved");
       if (error) throw error;
       return data;
