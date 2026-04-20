@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,6 +15,7 @@ export default function SubscribersTab() {
   const { data: subscribers, isLoading } = useQuery({
     queryKey: ["admin-subscribers"],
     queryFn: async () => {
+      await ensureAdminSession();
       const { data, error } = await supabase
         .from("email_subscribers")
         .select("*")

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ function TiersCard() {
   const { data: tiers, isLoading } = useQuery({
     queryKey: ["admin-tiers"],
     queryFn: async () => {
+      await ensureAdminSession();
       const { data, error } = await supabase
         .from("sponsorship_tiers")
         .select("*")
@@ -34,6 +36,7 @@ function TiersCard() {
   const { data: sponsors } = useQuery({
     queryKey: ["admin-sponsors"],
     queryFn: async () => {
+      await ensureAdminSession();
       const { data, error } = await supabase.from("sponsors").select("tier_id, approved");
       if (error) throw error;
       return data;
@@ -151,6 +154,7 @@ function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
   const { data: tiers } = useQuery({
     queryKey: ["admin-tiers-all"],
     queryFn: async () => {
+      await ensureAdminSession();
       const { data, error } = await supabase
         .from("sponsorship_tiers")
         .select("*")
@@ -309,6 +313,7 @@ export default function SponsorsTab() {
   const { data: sponsors, isLoading } = useQuery({
     queryKey: ["admin-sponsors"],
     queryFn: async () => {
+      await ensureAdminSession();
       const { data, error } = await supabase
         .from("sponsors")
         .select("id, business_name, contact_name, contact_email, contact_phone, facebook_handle, instagram_handle, tier_id, tier_name, amount, paid, approved, brand_assets, logo_url, logo_upload_token, stripe_session_id, created_at, updated_at")

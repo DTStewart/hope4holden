@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ export default function EmailsTab() {
   const { data: rawLogs, isLoading } = useQuery({
     queryKey: ["admin-emails"],
     queryFn: async () => {
+      await ensureAdminSession();
       const { data, error } = await supabase
         .from("email_send_log")
         .select("*")

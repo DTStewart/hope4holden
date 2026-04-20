@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ export default function DonationsTab() {
   const { data: donations, isLoading } = useQuery({
     queryKey: ["admin-donations"],
     queryFn: async () => {
+      await ensureAdminSession();
       const { data, error } = await supabase
         .from("donations")
         .select("*")
