@@ -478,15 +478,17 @@ export default function SponsorsTab() {
                           >
                             {s.approved ? <X className="h-3 w-3" /> : <Check className="h-3 w-3" />}
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            title="Resend upload email"
-                            disabled={sendingEmailFor === s.id}
-                            onClick={() => handleResendUploadEmail(s)}
-                          >
-                            {sendingEmailFor === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
-                          </Button>
+                          {s.logo_upload_token && !s.logo_url && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              title="Resend logo upload email"
+                              disabled={sendingEmailFor === s.id}
+                              onClick={() => handleResendUploadEmail(s)}
+                            >
+                              {sendingEmailFor === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                            </Button>
+                          )}
                           <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteOne.mutate(s.id)}>
                             <Trash2 className="h-3 w-3" />
                           </Button>
