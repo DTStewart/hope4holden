@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,6 @@ function TiersCard() {
   const { data: tiers, isLoading } = useQuery({
     queryKey: ["admin-tiers"],
     queryFn: async () => {
-      await ensureAdminSession();
       const { data, error } = await supabase
         .from("sponsorship_tiers")
         .select("*")
@@ -33,16 +31,17 @@ function TiersCard() {
       if (error) throw error;
       return data;
     },
+    staleTime: 30_000,
   });
 
   const { data: sponsors } = useQuery({
-    queryKey: ["admin-sponsors"],
+    queryKey: ["admin-sponsors-tier-counts"],
     queryFn: async () => {
-      await ensureAdminSession();
       const { data, error } = await supabase.from("sponsors").select("tier_id, approved");
       if (error) throw error;
       return data;
     },
+    staleTime: 30_000,
   });
 
   const countForTier = (tierId: string) =>
@@ -156,7 +155,6 @@ function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
   const { data: tiers } = useQuery({
     queryKey: ["admin-tiers-all"],
     queryFn: async () => {
-      await ensureAdminSession();
       const { data, error } = await supabase
         .from("sponsorship_tiers")
         .select("*")
@@ -165,6 +163,7 @@ function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
       if (error) throw error;
       return data;
     },
+    staleTime: 30_000,
   });
 
   const selectedTier = tiers?.find((t) => t.id === selectedTierId);
@@ -325,18 +324,25 @@ export default function SponsorsTab() {
     }
   };
 
+  useEffect(() => {
+    console.log("[SponsorsTab] Mounted");
+    return () => console.log("[SponsorsTab] Unmounted");
+  }, []);
+
   const { data: sponsors, isLoading } = useQuery({
     queryKey: ["admin-sponsors"],
     queryFn: async () => {
-      await ensureAdminSession();
+      console.log("[SponsorsTab] Fetching sponsors...");
       const { data, error } = await supabase
         .from("sponsors")
         .select("id, business_name, contact_name, contact_email, contact_phone, facebook_handle, instagram_handle, tier_id, tier_name, amount, paid, approved, brand_assets, logo_url, logo_upload_token, stripe_session_id, created_at, updated_at")
         .order("created_at", { ascending: false });
-      console.log("[SponsorsTab] sponsors query result:", { data, error, count: data?.length });
+      console.log("[SponsorsTab] sponsors query result:", { count: data?.length, error, firstRow: data?.[0] });
       if (error) throw error;
       return data;
     },
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
   });
 
   const toggleApproval = useMutation({
