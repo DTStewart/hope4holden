@@ -5,14 +5,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Trash2 } from "lucide-react";
+import { Download, Trash2, Mail, Loader2 } from "lucide-react";
 import { exportToCsv } from "@/lib/exportCsv";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { EditableEmail } from "@/components/admin/EditableEmail";
+import { resendForRegistration } from "@/lib/resendOrderConfirmation";
+import { useState } from "react";
 
 export default function RegistrationsTab() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [resendingId, setResendingId] = useState<string | null>(null);
+
+  const handleResend = async (reg: any) => {
+    setResendingId(reg.id);
+    try {
+      await resendForRegistration(reg);
+      toast({ title: "Confirmation email sent", description: `Sent to ${reg.captain_email}` });
+    } catch (err: any) {
+      toast({ title: "Failed to send email", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setResendingId(null);
+    }
+  };
 
   const { data: registrations, isLoading } = useQuery({
     queryKey: ["admin-registrations"],
@@ -120,7 +136,15 @@ export default function RegistrationsTab() {
                   <TableRow key={reg.id}>
                     <TableCell className="font-medium">{reg.team_name}</TableCell>
                     <TableCell>{reg.captain_name}</TableCell>
-                    <TableCell>{reg.captain_email}</TableCell>
+                    <TableCell>
+                      <EditableEmail
+                        table="registrations"
+                        id={reg.id}
+                        column="captain_email"
+                        value={reg.captain_email}
+                        invalidateKey={["admin-registrations"]}
+                      />
+                    </TableCell>
                     <TableCell>{reg.captain_phone}</TableCell>
                     <TableCell>
                       <Badge variant={reg.status === "confirmed" ? "default" : "secondary"}>
@@ -133,7 +157,16 @@ export default function RegistrationsTab() {
                       </Badge>
                     </TableCell>
                     <TableCell>{new Date(reg.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell>
+                    <TableCell className="space-x-1 whitespace-nowrap">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        title="Resend order confirmation"
+                        disabled={resendingId === reg.id}
+                        onClick={() => handleResend(reg)}
+                      >
+                        {resendingId === reg.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                      </Button>
                       <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteOne.mutate(reg.id)}>
                         <Trash2 className="h-3 w-3" />
                       </Button>

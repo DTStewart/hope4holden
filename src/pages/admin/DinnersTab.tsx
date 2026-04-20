@@ -5,14 +5,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Trash2 } from "lucide-react";
+import { Download, Trash2, Mail, Loader2 } from "lucide-react";
 import { exportToCsv } from "@/lib/exportCsv";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { EditableEmail } from "@/components/admin/EditableEmail";
+import { resendForDinner } from "@/lib/resendOrderConfirmation";
+import { useState } from "react";
 
 export default function DinnersTab() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [resendingId, setResendingId] = useState<string | null>(null);
+
+  const handleResend = async (d: any) => {
+    setResendingId(d.id);
+    try {
+      await resendForDinner(d);
+      toast({ title: "Confirmation email sent", description: `Sent to ${d.guest_email}` });
+    } catch (err: any) {
+      toast({ title: "Failed to send email", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setResendingId(null);
+    }
+  };
 
   const { data: dinners, isLoading } = useQuery({
     queryKey: ["admin-dinners"],
@@ -112,7 +128,15 @@ export default function DinnersTab() {
                 {dinners?.map((d) => (
                   <TableRow key={d.id}>
                     <TableCell className="font-medium">{d.guest_name}</TableCell>
-                    <TableCell>{d.guest_email}</TableCell>
+                    <TableCell>
+                      <EditableEmail
+                        table="dinners"
+                        id={d.id}
+                        column="guest_email"
+                        value={d.guest_email}
+                        invalidateKey={["admin-dinners"]}
+                      />
+                    </TableCell>
                     <TableCell>{d.guest_phone}</TableCell>
                     <TableCell>{d.quantity}</TableCell>
                     <TableCell>${d.amount}</TableCell>
@@ -120,7 +144,16 @@ export default function DinnersTab() {
                       <Badge variant={d.paid ? "default" : "destructive"}>{d.paid ? "Yes" : "No"}</Badge>
                     </TableCell>
                     <TableCell>{new Date(d.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell>
+                    <TableCell className="space-x-1 whitespace-nowrap">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        title="Resend order confirmation"
+                        disabled={resendingId === d.id}
+                        onClick={() => handleResend(d)}
+                      >
+                        {resendingId === d.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                      </Button>
                       <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteOne.mutate(d.id)}>
                         <Trash2 className="h-3 w-3" />
                       </Button>
