@@ -283,7 +283,7 @@ export default function SponsorsTab() {
     }
     setSendingEmailFor(sponsor.id);
     try {
-      const siteUrl = window.location.origin;
+      const siteUrl = "https://hope4holden.com";
       const uploadUrl = `${siteUrl}/sponsor-upload/${sponsor.logo_upload_token}`;
       const { error } = await supabase.functions.invoke("send-transactional-email", {
         body: {
