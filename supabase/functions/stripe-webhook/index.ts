@@ -220,6 +220,23 @@ Deno.serve(async (req) => {
                 .eq("token", formData.inviteToken);
             }
 
+            // Send sponsor logo upload email (separate from order confirmation)
+            try {
+              const uploadUrl = `${siteUrl}/sponsor-upload/${uploadToken}`;
+              await sendTransactionalEmail(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+                templateName: "sponsor-logo-upload",
+                recipientEmail: formData.contactEmail || "",
+                idempotencyKey: `sponsor-upload-${sponsorRow?.id || session.id}`,
+                templateData: {
+                  businessName: formData.businessName || "",
+                  tierName: formData.tier || "",
+                  uploadUrl,
+                },
+              });
+            } catch (err) {
+              console.error("Failed to send sponsor logo upload email:", err);
+            }
+
             lineItems.push({
               type: "sponsorship",
               description: `${formData.tier || ""} Sponsorship — ${formData.businessName || ""}`,
