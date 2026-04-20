@@ -20,7 +20,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Mail, CheckCircle, XCircle, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Mail, CheckCircle, XCircle, AlertTriangle, ChevronLeft, ChevronRight, Loader2, RotateCw } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const STATUS_COLORS: Record<string, string> = {
   sent: "default",
@@ -46,6 +47,30 @@ export default function EmailsTab() {
   const [templateFilter, setTemplateFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(0);
+  const [resendingId, setResendingId] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const handleResend = async (row: any) => {
+    setResendingId(row.id);
+    try {
+      const templateData =
+        (row.metadata && typeof row.metadata === "object" && (row.metadata as any).templateData) || {};
+      const { error } = await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: row.template_name,
+          recipientEmail: row.recipient_email,
+          idempotencyKey: `manual-resend-${row.id}-${Date.now()}`,
+          templateData,
+        },
+      });
+      if (error) throw error;
+      toast({ title: "Email resent", description: `${row.template_name} → ${row.recipient_email}` });
+    } catch (err: any) {
+      toast({ title: "Failed to resend", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setResendingId(null);
+    }
+  };
 
   const { data: rawLogs, isLoading } = useQuery({
     queryKey: ["admin-emails"],
@@ -217,33 +242,50 @@ export default function EmailsTab() {
             <>
               <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader>
+                    <TableHeader>
                     <TableRow>
                       <TableHead>Template</TableHead>
                       <TableHead>Recipient</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Error</TableHead>
+                      <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pageData.map((l) => (
-                      <TableRow key={l.id}>
-                        <TableCell className="font-medium text-xs">{l.template_name}</TableCell>
-                        <TableCell className="text-xs">{l.recipient_email}</TableCell>
-                        <TableCell>
-                          <Badge variant={STATUS_COLORS[l.status] as any ?? "secondary"}>
-                            {l.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-xs whitespace-nowrap">
-                          {new Date(l.created_at).toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-xs text-destructive max-w-xs truncate">
-                          {l.error_message || "—"}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {pageData.map((l) => {
+                      const canResend = l.status === "pending" || l.status === "failed" || l.status === "dlq";
+                      return (
+                        <TableRow key={l.id}>
+                          <TableCell className="font-medium text-xs">{l.template_name}</TableCell>
+                          <TableCell className="text-xs">{l.recipient_email}</TableCell>
+                          <TableCell>
+                            <Badge variant={STATUS_COLORS[l.status] as any ?? "secondary"}>
+                              {l.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs whitespace-nowrap">
+                            {new Date(l.created_at).toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-xs text-destructive max-w-xs truncate">
+                            {l.error_message || "—"}
+                          </TableCell>
+                          <TableCell>
+                            {canResend && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                title="Resend this email"
+                                disabled={resendingId === l.id}
+                                onClick={() => handleResend(l)}
+                              >
+                                {resendingId === l.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCw className="h-3 w-3" />}
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
