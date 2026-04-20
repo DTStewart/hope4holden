@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureAdminSession } from "@/lib/ensureSession";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import UploadZone from "./gallery/UploadZone";
@@ -14,6 +15,7 @@ export default function GalleryTab() {
   const fetchPhotos = async () => {
     setLoading(true);
     try {
+      await ensureAdminSession();
       let query = supabase
         .from("gallery_photos")
         .select("*")
