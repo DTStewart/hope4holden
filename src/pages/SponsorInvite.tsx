@@ -55,9 +55,7 @@ export default function SponsorInvite() {
     (async () => {
       console.log("[SponsorInvite] Fetching invite for token:", token);
       const { data, error } = await anonSupabase
-        .from("sponsor_invites")
-        .select("*")
-        .eq("token", token)
+        .rpc("lookup_sponsor_invite", { invite_token: token })
         .maybeSingle();
 
       console.log("[SponsorInvite] Query result:", { data, error });

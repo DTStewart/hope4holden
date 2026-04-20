@@ -85,15 +85,22 @@ Deno.serve(async (req) => {
     }
 
     // Validate content type
-    const allowedTypes = ["image/png", "image/jpeg", "image/svg+xml"];
+    const allowedTypes = ["image/png", "image/jpeg"];
     if (!allowedTypes.includes(contentType)) {
-      return new Response(JSON.stringify({ error: "Invalid file type. Only PNG, JPG, SVG allowed." }), {
+      return new Response(JSON.stringify({ error: "Invalid file type. Only PNG and JPG allowed." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const ext = filename.split(".").pop() || "png";
+    const allowedExts = ["png", "jpg", "jpeg"];
+    const ext = filename.split(".").pop()?.toLowerCase() ?? "";
+    if (!allowedExts.includes(ext)) {
+      return new Response(JSON.stringify({ error: "Invalid file extension. Only .png, .jpg, .jpeg allowed." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const path = `${sponsor.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
     const { error: uploadError } = await supabase.storage

@@ -109,6 +109,12 @@ Deno.serve(async (req) => {
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
+
+      if (session.payment_status !== "paid") {
+        console.log(`Ignoring checkout.session.completed with payment_status=${session.payment_status}`);
+        return new Response("OK", { status: 200 });
+      }
+
       const pendingOrderId = session.metadata?.pending_order_id;
 
       if (!pendingOrderId) {
