@@ -52,13 +52,23 @@ export default function SponsorInvite() {
     }
 
     (async () => {
+      console.log("[SponsorInvite] Fetching invite for token:", token);
       const { data, error } = await supabase
         .from("sponsor_invites")
         .select("*")
         .eq("token", token)
-        .single();
+        .maybeSingle();
 
-      if (error || !data) {
+      console.log("[SponsorInvite] Query result:", { data, error });
+
+      if (error) {
+        console.error("[SponsorInvite] Query error:", error);
+        setStatus("error");
+        setErrorMsg(`Could not load invite: ${error.message}`);
+        return;
+      }
+
+      if (!data) {
         setStatus("error");
         setErrorMsg("This invite link is not valid.");
         return;
