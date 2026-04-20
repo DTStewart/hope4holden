@@ -20,7 +20,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Mail, CheckCircle, XCircle, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Mail, CheckCircle, XCircle, AlertTriangle, ChevronLeft, ChevronRight, Loader2, RotateCw } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const STATUS_COLORS: Record<string, string> = {
   sent: "default",
@@ -46,6 +47,30 @@ export default function EmailsTab() {
   const [templateFilter, setTemplateFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(0);
+  const [resendingId, setResendingId] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const handleResend = async (row: any) => {
+    setResendingId(row.id);
+    try {
+      const templateData =
+        (row.metadata && typeof row.metadata === "object" && (row.metadata as any).templateData) || {};
+      const { error } = await supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: row.template_name,
+          recipientEmail: row.recipient_email,
+          idempotencyKey: `manual-resend-${row.id}-${Date.now()}`,
+          templateData,
+        },
+      });
+      if (error) throw error;
+      toast({ title: "Email resent", description: `${row.template_name} → ${row.recipient_email}` });
+    } catch (err: any) {
+      toast({ title: "Failed to resend", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setResendingId(null);
+    }
+  };
 
   const { data: rawLogs, isLoading } = useQuery({
     queryKey: ["admin-emails"],
