@@ -626,19 +626,6 @@ export type Database = {
     Functions: {
       decrement_sponsor_slots: { Args: { _tier_id: string }; Returns: number }
       decrement_spots: { Args: never; Returns: number }
-      lookup_sponsor_invite: {
-        Args: { invite_token: string }
-        Returns: {
-          amount: number
-          created_at: string
-          expires_at: string
-          id: string
-          tier_id: string
-          tier_name: string
-          token: string
-          used: boolean
-        }[]
-      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -653,6 +640,25 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      lookup_sponsor_invite: {
+        Args: { invite_token: string }
+        Returns: {
+          amount: number
+          created_at: string
+          expires_at: string
+          id: string
+          tier_id: string
+          tier_name: string
+          token: string
+          used: boolean
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "sponsor_invites"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       move_to_dlq: {
         Args: {
