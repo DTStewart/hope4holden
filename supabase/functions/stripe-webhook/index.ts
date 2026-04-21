@@ -226,22 +226,12 @@ Deno.serve(async (req) => {
                 .eq("token", formData.inviteToken);
             }
 
-            // Send sponsor logo upload email (separate from order confirmation)
-            try {
-              const uploadUrl = `${siteUrl}/sponsor-upload/${uploadToken}`;
-              await sendTransactionalEmail(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-                templateName: "sponsor-logo-upload",
-                recipientEmail: formData.contactEmail || "",
-                idempotencyKey: `sponsor-upload-${sponsorRow?.id || session.id}`,
-                templateData: {
-                  businessName: formData.businessName || "",
-                  tierName: formData.tier || "",
-                  uploadUrl,
-                },
-              });
-            } catch (err) {
-              console.error("Failed to send sponsor logo upload email:", err);
-            }
+            // NOTE: We no longer auto-send the sponsor-logo-upload email.
+            // Sponsors choose to upload immediately on the success page,
+            // copy the upload link, or email it to themselves for later.
+            // The /sponsor-upload/:token page remains functional for
+            // shared links, and admins can resend from the dashboard.
+            void uploadToken; // upload token persisted on sponsor row above
 
             lineItems.push({
               type: "sponsorship",
