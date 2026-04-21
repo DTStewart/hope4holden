@@ -8,6 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle, XCircle, Loader2, ShoppingCart, ExternalLink, Trash2 } from "lucide-react";
+import { SponsorMaterialsSection } from "@/components/SponsorMaterialsSection";
+import { useSponsorsByOrderId } from "@/hooks/useSponsorsByOrderId";
 
 const CheckoutPage = () => {
   const { items, totalAmount, clearCart, removeItem } = useCart();
@@ -18,6 +20,8 @@ const CheckoutPage = () => {
 
   const success = searchParams.get("success") === "true";
   const canceled = searchParams.get("canceled") === "true";
+  const successOrderId = success ? searchParams.get("order_id") : null;
+  const { sponsors: paidSponsors, loading: loadingSponsors } = useSponsorsByOrderId(successOrderId);
 
   // Determine which sections to show based on cart contents
   const hasRegistration = useMemo(() => items.some(i => i.type === "registration"), [items]);
