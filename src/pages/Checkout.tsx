@@ -150,28 +150,39 @@ const CheckoutPage = () => {
   if (success) {
     return (
       <div className="section-light">
-        <div className="container py-20 md:py-28 text-center space-y-6 animate-fade-in max-w-lg mx-auto">
-          <CheckCircle className="h-20 w-20 text-primary mx-auto" />
-          <h1 className="font-heading font-extrabold text-4xl text-[#1A1A1A]">Thank You!</h1>
-          <p className="text-[#1A1A1A]/60 text-lg">
-            Your payment was successful. Thank you for supporting Hope 4 Holden.
-          </p>
-          <Button onClick={() => navigate("/")} size="lg" className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider">
-            Back to Home
-          </Button>
-          {hadRecurring && (
-            <div className="bg-accent/10 border border-accent/20 rounded p-6 text-left space-y-3">
-              <p className="text-[#1A1A1A]/80 text-sm">
-                To set up a recurring donation, please visit the ATCP website:
-              </p>
-              <Button asChild variant="outline" className="rounded border-primary text-primary hover:bg-primary/5">
-                <a href="https://atcp.org/ways-to-give/support-a-tcp-canada/" target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Set Up Recurring Donation
-                </a>
-              </Button>
+        <div className="container py-20 md:py-28 max-w-2xl mx-auto animate-fade-in">
+          <div className="text-center space-y-6">
+            <CheckCircle className="h-20 w-20 text-primary mx-auto" />
+            <h1 className="font-heading font-extrabold text-4xl text-[#1A1A1A]">Thank You!</h1>
+            <p className="text-[#1A1A1A]/60 text-lg">
+              Your payment was successful. Thank you for supporting Hope 4 Holden.
+            </p>
+            <Button onClick={() => navigate("/")} size="lg" className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider">
+              Back to Home
+            </Button>
+            {hadRecurring && (
+              <div className="bg-accent/10 border border-accent/20 rounded p-6 text-left space-y-3">
+                <p className="text-[#1A1A1A]/80 text-sm">
+                  To set up a recurring donation, please visit the ATCP website:
+                </p>
+                <Button asChild variant="outline" className="rounded border-primary text-primary hover:bg-primary/5">
+                  <a href="https://atcp.org/ways-to-give/support-a-tcp-canada/" target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Set Up Recurring Donation
+                  </a>
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {loadingSponsors && successOrderId && paidSponsors.length === 0 && (
+            <div className="text-center mt-8 text-sm text-[#1A1A1A]/50 flex items-center justify-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" /> Preparing sponsor materials...
             </div>
           )}
+          {paidSponsors.map((s) => (
+            <SponsorMaterialsSection key={s.id} sponsor={s} />
+          ))}
         </div>
       </div>
     );
