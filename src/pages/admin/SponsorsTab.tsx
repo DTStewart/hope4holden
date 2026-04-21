@@ -235,19 +235,20 @@ function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
         ) : (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Tier *</Label>
-              <Select value={selectedTierId} onValueChange={setSelectedTierId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a tier" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tiers?.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name} — ${t.price}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="invite-tier">Tier *</Label>
+              <select
+                id="invite-tier"
+                value={selectedTierId}
+                onChange={(e) => setSelectedTierId(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">Select a tier</option>
+                {tiers?.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} — ${t.price}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
               <Label>Custom Amount (optional)</Label>
