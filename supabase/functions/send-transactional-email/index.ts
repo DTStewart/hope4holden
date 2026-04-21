@@ -51,29 +51,6 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
-  // Defense in depth: only service-role callers (e.g. stripe-webhook,
-  // process-email-queue) can send emails. We check both JWT claims and
-  // direct key comparison since edge-to-edge calls may pass the raw key.
-  const authHeader = req.headers.get('Authorization')
-  if (!authHeader?.startsWith('Bearer ')) {
-    return new Response(
-      JSON.stringify({ error: 'Unauthorized' }),
-      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-  }
-
-  const token = authHeader.slice('Bearer '.length).trim()
-  const claims = parseJwtClaims(token)
-  const isServiceRole =
-    claims?.role === 'service_role' ||
-    token === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-  if (!isServiceRole) {
-    return new Response(
-      JSON.stringify({ error: 'Forbidden' }),
-      { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-  }
-
   const supabaseUrl = Deno.env.get('SUPABASE_URL')
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
@@ -85,6 +62,41 @@ Deno.serve(async (req) => {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
+    )
+  }
+
+  // Auth: service-role callers (stripe-webhook, queue processors) pass directly.
+  // Authenticated users pass only if they have the admin role.
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+
+  const token = authHeader.slice('Bearer '.length).trim()
+  const claims = parseJwtClaims(token)
+  let isAuthorized =
+    claims?.role === 'service_role' ||
+    token === supabaseServiceKey
+
+  if (!isAuthorized && claims?.role === 'authenticated' && typeof claims.sub === 'string') {
+    const authClient = createClient(supabaseUrl, supabaseServiceKey)
+    const { data: isAdmin, error: roleErr } = await authClient.rpc('has_role', {
+      _user_id: claims.sub,
+      _role: 'admin',
+    })
+    if (roleErr) {
+      console.error('has_role check failed:', roleErr.message)
+    }
+    isAuthorized = isAdmin === true
+  }
+
+  if (!isAuthorized) {
+    return new Response(
+      JSON.stringify({ error: 'Forbidden' }),
+      { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 
