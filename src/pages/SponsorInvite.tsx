@@ -190,7 +190,7 @@ export default function SponsorInvite() {
       <div className="container py-16 md:py-24 max-w-2xl mx-auto animate-fade-in">
         <h1 className="font-heading font-extrabold text-3xl md:text-4xl text-[#1A1A1A] mb-2">Complete Your Sponsorship</h1>
         <p className="text-[#1A1A1A]/60 mb-8">
-          You've been invited to sponsor as a <strong>{invite!.tier_name}</strong> sponsor for <strong>${invite!.amount.toLocaleString()} CAD</strong>.
+          Thank you for becoming a <strong>{invite!.tier_name}</strong>. Your contribution is <strong>${invite!.amount.toLocaleString()} CAD</strong>.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-8">
