@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { SponsorMaterialsSection } from "@/components/SponsorMaterialsSection";
+import { useSponsorsByOrderId } from "@/hooks/useSponsorsByOrderId";
 
 interface InviteData {
   id: string;
@@ -31,6 +33,8 @@ export default function SponsorInvite() {
 
   const success = searchParams.get("success") === "true";
   const canceled = searchParams.get("canceled") === "true";
+  const successOrderId = success ? searchParams.get("order_id") : null;
+  const { sponsors: paidSponsors, loading: loadingSponsors } = useSponsorsByOrderId(successOrderId);
 
   const [form, setForm] = useState({
     businessName: "",
@@ -137,15 +141,26 @@ export default function SponsorInvite() {
   if (success) {
     return (
       <div className="section-light">
-        <div className="container py-20 md:py-28 text-center space-y-6 animate-fade-in max-w-lg mx-auto">
-          <CheckCircle className="h-20 w-20 text-primary mx-auto" />
-          <h1 className="font-heading font-extrabold text-4xl text-[#1A1A1A]">Thank You!</h1>
-          <p className="text-[#1A1A1A]/60 text-lg">
-            Your sponsorship payment was successful. You'll receive a confirmation email shortly with a link to upload your logo.
-          </p>
-          <Button onClick={() => navigate("/")} size="lg" className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider">
-            Back to Home
-          </Button>
+        <div className="container py-20 md:py-28 max-w-2xl mx-auto animate-fade-in">
+          <div className="text-center space-y-6">
+            <CheckCircle className="h-20 w-20 text-primary mx-auto" />
+            <h1 className="font-heading font-extrabold text-4xl text-[#1A1A1A]">Thank You!</h1>
+            <p className="text-[#1A1A1A]/60 text-lg">
+              Your sponsorship payment was successful. You can upload your logo and confirm your social handles below — or save the link for later.
+            </p>
+            <Button onClick={() => navigate("/")} size="lg" className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider">
+              Back to Home
+            </Button>
+          </div>
+
+          {loadingSponsors && successOrderId && paidSponsors.length === 0 && (
+            <div className="text-center mt-8 text-sm text-[#1A1A1A]/50 flex items-center justify-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" /> Preparing sponsor materials...
+            </div>
+          )}
+          {paidSponsors.map((s) => (
+            <SponsorMaterialsSection key={s.id} sponsor={s} />
+          ))}
         </div>
       </div>
     );
