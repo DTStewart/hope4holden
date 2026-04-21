@@ -136,7 +136,6 @@ Deno.serve(async (req) => {
       }
 
       const items = order.items as any[];
-      const siteUrl = Deno.env.get("SITE_URL") || "https://hope4holden.lovable.app";
 
       // Collect data for the unified order confirmation email
       const lineItems: { type: string; description: string; amount: number }[] = [];
