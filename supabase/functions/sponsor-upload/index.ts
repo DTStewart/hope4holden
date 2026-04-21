@@ -148,9 +148,9 @@ Deno.serve(async (req) => {
     });
   }
 
-  // POST: save uploaded assets metadata to sponsor record
+  // POST: save uploaded assets metadata + social handles to sponsor record
   if (req.method === "POST") {
-    const { token, logoUrl, assets } = await req.json();
+    const { token, logoUrl, assets, facebookHandle, instagramHandle } = await req.json();
     if (!token) {
       return new Response(JSON.stringify({ error: "Missing token" }), {
         status: 400,
@@ -177,9 +177,16 @@ Deno.serve(async (req) => {
 
     const primaryLogo = logoUrl || (allAssets.length > 0 ? (allAssets[0] as any).url : null);
 
-    const updateData: Record<string, any> = { brand_assets: allAssets };
-    if (primaryLogo) {
-      updateData.logo_url = primaryLogo;
+    const updateData: Record<string, any> = {};
+    if (newAssets.length > 0) updateData.brand_assets = allAssets;
+    if (primaryLogo) updateData.logo_url = primaryLogo;
+    if (typeof facebookHandle === "string") updateData.facebook_handle = facebookHandle || null;
+    if (typeof instagramHandle === "string") updateData.instagram_handle = instagramHandle || null;
+
+    if (Object.keys(updateData).length === 0) {
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const { error: updateError } = await supabase
