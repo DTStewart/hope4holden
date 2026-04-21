@@ -166,7 +166,7 @@ Deno.serve(async (req) => {
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
-      success_url: `${returnUrl}?success=true`,
+      success_url: `${returnUrl}?success=true&order_id=${orderData.id}`,
       cancel_url: `${returnUrl}?canceled=true`,
       metadata: {
         pending_order_id: orderData.id,

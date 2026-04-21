@@ -16,10 +16,36 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  // GET: validate token
+  // GET: validate token OR look up sponsors by order_id
   if (req.method === "GET") {
     const url = new URL(req.url);
     const token = url.searchParams.get("token");
+    const orderId = url.searchParams.get("order_id");
+
+    if (orderId) {
+      // Look up sponsors created from this pending order's stripe session
+      const { data: order } = await supabase
+        .from("pending_orders")
+        .select("stripe_session_id")
+        .eq("id", orderId)
+        .single();
+
+      if (!order?.stripe_session_id) {
+        return new Response(JSON.stringify({ sponsors: [] }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: sponsors } = await supabase
+        .from("sponsors")
+        .select("id, business_name, tier_name, contact_email, logo_url, brand_assets, logo_upload_token, facebook_handle, instagram_handle")
+        .eq("stripe_session_id", order.stripe_session_id);
+
+      return new Response(JSON.stringify({ sponsors: sponsors || [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!token) {
       return new Response(JSON.stringify({ error: "Missing token" }), {
         status: 400,
@@ -29,7 +55,7 @@ Deno.serve(async (req) => {
 
     const { data: sponsor, error } = await supabase
       .from("sponsors")
-      .select("id, business_name, tier_name, logo_url, brand_assets")
+      .select("id, business_name, tier_name, contact_email, logo_url, brand_assets, facebook_handle, instagram_handle")
       .eq("logo_upload_token", token)
       .single();
 
@@ -122,9 +148,9 @@ Deno.serve(async (req) => {
     });
   }
 
-  // POST: save uploaded assets metadata to sponsor record
+  // POST: save uploaded assets metadata + social handles to sponsor record
   if (req.method === "POST") {
-    const { token, logoUrl, assets } = await req.json();
+    const { token, logoUrl, assets, facebookHandle, instagramHandle } = await req.json();
     if (!token) {
       return new Response(JSON.stringify({ error: "Missing token" }), {
         status: 400,
@@ -151,9 +177,16 @@ Deno.serve(async (req) => {
 
     const primaryLogo = logoUrl || (allAssets.length > 0 ? (allAssets[0] as any).url : null);
 
-    const updateData: Record<string, any> = { brand_assets: allAssets };
-    if (primaryLogo) {
-      updateData.logo_url = primaryLogo;
+    const updateData: Record<string, any> = {};
+    if (newAssets.length > 0) updateData.brand_assets = allAssets;
+    if (primaryLogo) updateData.logo_url = primaryLogo;
+    if (typeof facebookHandle === "string") updateData.facebook_handle = facebookHandle || null;
+    if (typeof instagramHandle === "string") updateData.instagram_handle = instagramHandle || null;
+
+    if (Object.keys(updateData).length === 0) {
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const { error: updateError } = await supabase
