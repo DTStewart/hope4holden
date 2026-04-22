@@ -25,30 +25,41 @@ interface FileEntry {
 
 export default function SponsorUpload() {
   const { token } = useParams<{ token: string }>();
-  const [status, setStatus] = useState<"loading" | "ready" | "invalid" | "uploaded" | "already">("loading");
+  const [status, setStatus] = useState<"loading" | "ready" | "invalid" | "uploaded" | "already" | "error">("loading");
   const [sponsor, setSponsor] = useState<SponsorInfo | null>(null);
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [uploading, setUploading] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
 
-  useEffect(() => {
+  const validate = useCallback(async () => {
     if (!token) { setStatus("invalid"); return; }
-    const validate = async () => {
-      try {
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sponsor-upload?token=${token}`;
-        const res = await fetch(url, {
-          headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
-        });
-        if (!res.ok) { setStatus("invalid"); return; }
-        const data = await res.json();
-        setSponsor(data.sponsor);
-        const assets = data.sponsor.brand_assets || [];
-        if (assets.length > 0 || data.sponsor.logo_url) { setStatus("already"); } else { setStatus("ready"); }
-      } catch { setStatus("invalid"); }
-    };
-    validate();
+    setStatus("loading");
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sponsor-upload?token=${token}`;
+      const res = await fetch(url, {
+        headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+      });
+      // 404 = token genuinely doesn't match; other non-2xx = transient/server issue worth retrying
+      if (res.status === 404) { setStatus("invalid"); return; }
+      if (!res.ok) {
+        console.error("[SponsorUpload] validate failed", { status: res.status });
+        setStatus("error");
+        return;
+      }
+      const data = await res.json();
+      setSponsor(data.sponsor);
+      const assets = data.sponsor.brand_assets || [];
+      if (assets.length > 0 || data.sponsor.logo_url) { setStatus("already"); } else { setStatus("ready"); }
+    } catch (err) {
+      console.error("[SponsorUpload] validate threw", err);
+      setStatus("error");
+    }
   }, [token]);
+
+  useEffect(() => {
+    validate();
+  }, [validate]);
 
   const validateFile = useCallback((f: File): Promise<string | null> => {
     return new Promise((resolve) => {
@@ -170,6 +181,17 @@ export default function SponsorUpload() {
             <AlertCircle className="h-14 w-14 text-destructive mx-auto" />
             <h1 className="font-heading font-bold text-2xl text-foreground">Invalid Link</h1>
             <p className="text-muted-foreground">This upload link is invalid or has expired.</p>
+          </div>
+        )}
+        {status === "error" && (
+          <div className="text-center space-y-4">
+            <AlertCircle className="h-14 w-14 text-destructive mx-auto" />
+            <h1 className="font-heading font-bold text-2xl text-foreground">Something went wrong</h1>
+            <p className="text-muted-foreground">
+              We couldn't load your upload link right now. Please try again, or email{" "}
+              <a href="mailto:hello@hope4holden.com" className="text-primary underline">hello@hope4holden.com</a>.
+            </p>
+            <Button onClick={validate} variant="outline" className="rounded">Try Again</Button>
           </div>
         )}
         {status === "already" && sponsor && (

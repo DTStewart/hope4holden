@@ -17,6 +17,9 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Short reference id so a customer's "Ref: abc123" complaint can be grep'd from logs.
+  const refId = crypto.randomUUID().slice(0, 8);
+
   try {
     const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
     if (!STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not configured");
@@ -173,20 +176,23 @@ Deno.serve(async (req) => {
       },
     });
 
-    // Fire-and-forget: update pending order with stripe session id
-    supabase
+    // Await the session-id update — if it silently fails, the post-payment
+    // success page can't find the sponsor rows (it looks up by stripe_session_id).
+    const { error: sessionLinkError } = await supabase
       .from("pending_orders")
       .update({ stripe_session_id: session.id })
-      .eq("id", orderData.id)
-      .then(() => {});
+      .eq("id", orderData.id);
+    if (sessionLinkError) {
+      console.error(`[${refId}] Failed to link pending_order to stripe session:`, sessionLinkError.message);
+    }
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Checkout error:", error);
+    console.error(`[${refId}] Checkout error:`, error);
     return new Response(
-      JSON.stringify({ error: "Checkout failed. Please try again." }),
+      JSON.stringify({ error: `Checkout failed. Please try again. (Ref: ${refId})` }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

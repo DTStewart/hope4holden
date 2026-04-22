@@ -148,9 +148,70 @@ Deno.serve(async (req) => {
     });
   }
 
-  // POST: save uploaded assets metadata + social handles to sponsor record
+  // POST: either save assets (existing) OR send the fallback upload-link email
   if (req.method === "POST") {
-    const { token, logoUrl, assets, facebookHandle, instagramHandle } = await req.json();
+    const body = await req.json();
+
+    // Fallback email action — triggered by the success page when the webhook
+    // race means the inline form didn't appear in time. Idempotent via the
+    // sponsor id in the idempotency key.
+    if (body.action === "send_fallback_email" && body.order_id) {
+      const { data: order } = await supabase
+        .from("pending_orders")
+        .select("stripe_session_id")
+        .eq("id", body.order_id)
+        .single();
+
+      if (!order?.stripe_session_id) {
+        return new Response(JSON.stringify({ sent: 0, sponsors: [] }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: sponsors } = await supabase
+        .from("sponsors")
+        .select("id, business_name, tier_name, contact_email, logo_url, brand_assets, logo_upload_token, facebook_handle, instagram_handle")
+        .eq("stripe_session_id", order.stripe_session_id);
+
+      const siteUrl = Deno.env.get("SITE_URL") || new URL(req.url).origin;
+      const functionsBaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+      let sent = 0;
+      for (const s of sponsors || []) {
+        if (!s.contact_email || !s.logo_upload_token) continue;
+        try {
+          const resp = await fetch(`${functionsBaseUrl}/functions/v1/send-transactional-email`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${serviceKey}`,
+              apikey: serviceKey,
+            },
+            body: JSON.stringify({
+              templateName: "sponsor-logo-upload",
+              recipientEmail: s.contact_email,
+              idempotencyKey: `sponsor-upload-fallback-${s.id}`,
+              templateData: {
+                businessName: s.business_name,
+                tierName: s.tier_name,
+                uploadUrl: `${siteUrl}/sponsor-upload/${s.logo_upload_token}`,
+              },
+            }),
+          });
+          if (resp.ok) sent++;
+          else console.error("Fallback email send failed", { status: resp.status, sponsor: s.id });
+        } catch (e) {
+          console.error("Fallback email send threw:", e);
+        }
+      }
+
+      return new Response(JSON.stringify({ sent, sponsors: sponsors || [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { token, logoUrl, assets, facebookHandle, instagramHandle } = body;
     if (!token) {
       return new Response(JSON.stringify({ error: "Missing token" }), {
         status: 400,

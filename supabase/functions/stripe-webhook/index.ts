@@ -124,6 +124,20 @@ Deno.serve(async (req) => {
 
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+      // Idempotency: if any record already exists for this Stripe session, skip.
+      // Prevents duplicate inserts / double spot decrements when Stripe retries.
+      const idempotencyChecks = await Promise.all([
+        supabase.from("registrations").select("id").eq("stripe_session_id", session.id).limit(1),
+        supabase.from("sponsors").select("id").eq("stripe_session_id", session.id).limit(1),
+        supabase.from("donations").select("id").eq("stripe_session_id", session.id).limit(1),
+        supabase.from("dinners").select("id").eq("stripe_session_id", session.id).limit(1),
+      ]);
+      const alreadyProcessed = idempotencyChecks.some((c) => (c.data?.length ?? 0) > 0);
+      if (alreadyProcessed) {
+        console.log(`Webhook idempotency: session ${session.id} already processed, skipping`);
+        return new Response("OK", { status: 200 });
+      }
+
       const { data: order, error: orderError } = await supabase
         .from("pending_orders")
         .select("*")

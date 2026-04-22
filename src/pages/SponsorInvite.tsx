@@ -33,7 +33,7 @@ export default function SponsorInvite() {
   const success = searchParams.get("success") === "true";
   const canceled = searchParams.get("canceled") === "true";
   const successOrderId = success ? searchParams.get("order_id") : null;
-  const { sponsors: paidSponsors, loading: loadingSponsors } = useSponsorsByOrderId(successOrderId);
+  const { sponsors: paidSponsors, loading: loadingSponsors, timedOut: sponsorLookupTimedOut } = useSponsorsByOrderId(successOrderId);
 
   const [form, setForm] = useState({
     businessName: "",
@@ -155,6 +155,17 @@ export default function SponsorInvite() {
           {loadingSponsors && successOrderId && paidSponsors.length === 0 && (
             <div className="text-center mt-8 text-sm text-[#1A1A1A]/50 flex items-center justify-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" /> Preparing sponsor materials...
+            </div>
+          )}
+          {sponsorLookupTimedOut && paidSponsors.length === 0 && (
+            <div className="bg-accent/10 border border-accent/20 rounded p-6 text-left space-y-2 mt-8">
+              <p className="font-heading font-bold text-[#1A1A1A]">Your payment was received.</p>
+              <p className="text-sm text-[#1A1A1A]/70">
+                We've sent an email with your sponsor logo upload link. If it doesn't arrive within a few
+                minutes, please check your spam folder or email{" "}
+                <a href="mailto:hello@hope4holden.com" className="text-primary underline">hello@hope4holden.com</a>
+                {" "}and we'll sort it out.
+              </p>
             </div>
           )}
           {paidSponsors.map((s) => (

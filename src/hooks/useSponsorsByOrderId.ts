@@ -9,11 +9,13 @@ import type { SponsorMaterialsSponsor } from "@/components/SponsorMaterialsSecti
 export function useSponsorsByOrderId(orderId: string | null) {
   const [sponsors, setSponsors] = useState<SponsorMaterialsSponsor[]>([]);
   const [loading, setLoading] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => {
     if (!orderId) return;
     let cancelled = false;
     setLoading(true);
+    setTimedOut(false);
 
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -24,10 +26,37 @@ export function useSponsorsByOrderId(orderId: string | null) {
           `${supabaseUrl}/functions/v1/sponsor-upload?order_id=${encodeURIComponent(orderId)}`,
           { headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` } }
         );
+        if (!res.ok) {
+          console.warn("[useSponsorsByOrderId] lookup returned non-ok:", res.status);
+          return [];
+        }
+        const data = await res.json();
+        return (data.sponsors || []) as SponsorMaterialsSponsor[];
+      } catch (err) {
+        console.warn("[useSponsorsByOrderId] lookup threw:", err);
+        return [];
+      }
+    };
+
+    // Final fallback: ask the server to email the upload link(s). Returns any
+    // sponsors it finds so we can still render the inline form if they showed
+    // up late.
+    const triggerFallbackEmail = async (): Promise<SponsorMaterialsSponsor[]> => {
+      try {
+        const res = await fetch(`${supabaseUrl}/functions/v1/sponsor-upload`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: supabaseKey,
+            Authorization: `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({ action: "send_fallback_email", order_id: orderId }),
+        });
         if (!res.ok) return [];
         const data = await res.json();
         return (data.sponsors || []) as SponsorMaterialsSponsor[];
-      } catch {
+      } catch (err) {
+        console.warn("[useSponsorsByOrderId] fallback email threw:", err);
         return [];
       }
     };
@@ -46,7 +75,18 @@ export function useSponsorsByOrderId(orderId: string | null) {
         }
         await new Promise((r) => setTimeout(r, 2000));
       }
-      if (!cancelled) setLoading(false);
+      if (cancelled) return;
+
+      // Polling didn't find anything. Hit the fallback endpoint — it will
+      // email the upload link(s) if sponsors exist, or no-op if not.
+      const fallbackFound = await triggerFallbackEmail();
+      if (cancelled) return;
+      if (fallbackFound.length > 0) {
+        setSponsors(fallbackFound);
+      } else {
+        setTimedOut(true);
+      }
+      setLoading(false);
     };
 
     poll();
@@ -55,5 +95,5 @@ export function useSponsorsByOrderId(orderId: string | null) {
     };
   }, [orderId]);
 
-  return { sponsors, loading };
+  return { sponsors, loading, timedOut };
 }
