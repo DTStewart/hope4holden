@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Gavel, CalendarDays, MapPin, CheckCircle } from "lucide-react";
 import { useBidderSession } from "@/hooks/useBidderSession";
 import { BidderRegistrationDialog } from "@/components/auction/BidderRegistrationDialog";
+import { BidderAccountDialog } from "@/components/auction/BidderAccountDialog";
 import { PlaceBidDialog } from "@/components/auction/PlaceBidDialog";
 
 type Settings = {
@@ -56,6 +57,7 @@ export default function Auction() {
   const { bidder, refresh: refreshBidder } = useBidderSession();
 
   const [registerOpen, setRegisterOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [bidDialogItem, setBidDialogItem] = useState<Item | null>(null);
 
   // Initial fetch of settings + items + seed current bids
@@ -237,10 +239,16 @@ export default function Auction() {
             <p className="text-white/70 text-lg">Bidding closes {formatDate(settings.bidding_closes_at)}</p>
           )}
           {bidder && (
-            <div className="mt-4 inline-flex items-center gap-2 text-xs text-white/80 bg-white/10 rounded-full px-4 py-1.5">
+            <button
+              type="button"
+              onClick={() => setAccountOpen(true)}
+              className="mt-4 inline-flex items-center gap-2 text-xs text-white/80 bg-white/10 hover:bg-white/15 rounded-full px-4 py-1.5 transition-colors"
+            >
               <CheckCircle className="h-3.5 w-3.5 text-primary" />
-              Signed in as {bidder.display_name}{bidder.has_payment_method ? "" : " — add a card to bid"}
-            </div>
+              Signed in as {bidder.display_name}
+              {bidder.has_payment_method ? "" : " — add a card"}
+              <span className="text-white/40 ml-1">· Account</span>
+            </button>
           )}
         </div>
       </section>
@@ -337,9 +345,20 @@ export default function Auction() {
           item={bidDialogItem}
           currentBid={currentBids[bidDialogItem.id]?.amount ?? null}
           defaultIncrement={settings.default_bid_increment}
+          bidderAttending={bidder?.attending_event ?? false}
           onBidPlaced={() => {
             // Realtime subscription will update the card, nothing else to do.
           }}
+        />
+      )}
+
+      {bidder && (
+        <BidderAccountDialog
+          open={accountOpen}
+          onOpenChange={setAccountOpen}
+          bidder={bidder}
+          onChanged={() => refreshBidder()}
+          onSignedOut={() => refreshBidder()}
         />
       )}
     </div>

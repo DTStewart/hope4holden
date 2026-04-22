@@ -19,9 +19,11 @@ interface Props {
     starting_bid: number;
     market_value: number;
     bid_increment: number | null;
+    pickup_option?: string;
   } | null;
   currentBid: number | null;
   defaultIncrement: number;
+  bidderAttending: boolean;
   onBidPlaced: () => void;
 }
 
@@ -35,7 +37,7 @@ function potentialReceipt(bid: number, fmv: number): number {
 }
 
 export function PlaceBidDialog({
-  open, onOpenChange, item, currentBid, defaultIncrement, onBidPlaced,
+  open, onOpenChange, item, currentBid, defaultIncrement, bidderAttending, onBidPlaced,
 }: Props) {
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -143,6 +145,16 @@ export function PlaceBidDialog({
               Minimum next bid: ${minNext.toLocaleString()} (${increment} increment)
             </p>
           </div>
+
+          {/* Pickup compatibility warning */}
+          {!bidderAttending && item.pickup_option === "thursday_dinner" && (
+            <div className="rounded bg-destructive/5 border border-destructive/20 p-3 text-sm text-foreground/80">
+              <strong>Heads up:</strong> this item's primary pickup is Thursday dinner. Since you're
+              not attending, we'll reach out to arrange an alternative (pickup in Brandon or shipping
+              at your cost) if you win. Email <a href="mailto:hello@hope4holden.com" className="underline">hello@hope4holden.com</a> with
+              questions before you bid.
+            </div>
+          )}
 
           {numericAmount > 0 && (
             <div className="rounded bg-accent/10 border border-accent/20 p-3 text-sm space-y-1">

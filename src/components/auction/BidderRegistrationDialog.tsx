@@ -5,6 +5,7 @@ import { anonSupabase } from "@/integrations/supabase/anonClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -25,6 +26,7 @@ export function BidderRegistrationDialog({ open, onOpenChange, onRegistered }: P
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [attendingEvent, setAttendingEvent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -59,7 +61,7 @@ export function BidderRegistrationDialog({ open, onOpenChange, onRegistered }: P
     setSubmitting(true);
     try {
       const { data, error } = await anonSupabase.functions.invoke("auction-register-bidder", {
-        body: { email, phone, displayName },
+        body: { email, phone, displayName, attendingEvent },
       });
       if (error) throw error;
       const { sessionToken: st, clientSecret: cs, publishableKey: pk } = data as any;
@@ -126,6 +128,19 @@ export function BidderRegistrationDialog({ open, onOpenChange, onRegistered }: P
                 placeholder="(204) 555-1234"
                 required
               />
+            </div>
+            <div className="flex items-start gap-2 pt-2">
+              <Checkbox
+                id="reg-attending"
+                checked={attendingEvent}
+                onCheckedChange={(v) => setAttendingEvent(v === true)}
+              />
+              <Label htmlFor="reg-attending" className="text-sm font-normal leading-snug cursor-pointer">
+                I'll be at the tournament dinner on Thursday, June 18
+                <span className="block text-xs text-muted-foreground mt-0.5">
+                  Helps us plan pickup — items can be collected that night if you're there.
+                </span>
+              </Label>
             </div>
             <Button type="submit" disabled={submitting} className="w-full">
               {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}

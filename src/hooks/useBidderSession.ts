@@ -9,6 +9,7 @@ export type BidderSession = {
   phone: string;
   display_name: string;
   has_payment_method: boolean;
+  attending_event: boolean;
 };
 
 export function getStoredSessionToken(): string | null {

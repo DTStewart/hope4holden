@@ -24,6 +24,7 @@ export type Database = {
           payment_method_id: string | null
           session_token: string
           phone_verified_at: string | null
+          attending_event: boolean
           created_at: string
           updated_at: string
         }
@@ -36,6 +37,7 @@ export type Database = {
           payment_method_id?: string | null
           session_token: string
           phone_verified_at?: string | null
+          attending_event?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -48,6 +50,7 @@ export type Database = {
           payment_method_id?: string | null
           session_token?: string
           phone_verified_at?: string | null
+          attending_event?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -851,7 +854,16 @@ export type Database = {
           phone: string
           display_name: string
           has_payment_method: boolean
+          attending_event: boolean
         }[]
+      }
+      update_bidder_attending: {
+        Args: { _session_token: string; _attending: boolean }
+        Returns: boolean
+      }
+      admin_clear_bidder_payment_method: {
+        Args: { _bidder_id: string }
+        Returns: boolean
       }
       place_bid: {
         Args: { _session_token: string; _item_id: string; _amount: number }

@@ -92,15 +92,17 @@ Deno.serve(async (req) => {
     }
     const { data: bidder } = await supabase
       .from('auction_bidders')
-      .select('stripe_customer_id, payment_method_id')
+      .select('stripe_customer_id')
       .eq('id', inv.bidder_id)
       .single()
 
+    // Don't lock to the previous payment_method — it may be the card that failed.
+    // automatic_payment_methods lets the user pick any supported method (card,
+    // Apple/Google Pay, etc.) on the fallback page.
     const pi = await stripe.paymentIntents.create({
       amount: inv.amount * 100,
       currency: 'cad',
       customer: bidder?.stripe_customer_id || undefined,
-      payment_method: bidder?.payment_method_id || undefined,
       description: `Hope 4 Holden Silent Auction — ${invoice.item_title}`,
       automatic_payment_methods: { enabled: true },
       metadata: {

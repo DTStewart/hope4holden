@@ -11,7 +11,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Gavel, Loader2, RefreshCw, ExternalLink, Copy } from "lucide-react";
+import { Gavel, Loader2, RefreshCw, ExternalLink, Copy, CreditCard } from "lucide-react";
 
 type Invoice = {
   id: string;
@@ -26,8 +26,8 @@ type Invoice = {
   notified_at: string | null;
   created_at: string;
   stripe_payment_intent_id: string | null;
-  items: { title: string } | null;
-  bidders: { display_name: string; email: string } | null;
+  items: { title: string; pickup_option: string } | null;
+  bidders: { display_name: string; email: string; attending_event: boolean } | null;
 };
 
 const STATUS_VARIANTS: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -50,10 +50,31 @@ export default function AuctionWinnersCard() {
       await ensureAdminSession();
       const { data, error } = await supabase
         .from("auction_invoices")
-        .select("*, items:auction_items(title), bidders:auction_bidders(display_name, email)")
+        .select(
+          "*, items:auction_items(title, pickup_option), bidders:auction_bidders(display_name, email, attending_event)"
+        )
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []) as unknown as Invoice[];
+    },
+  });
+
+  const clearCard = useMutation({
+    mutationFn: async (bidderId: string) => {
+      const { error } = await supabase.rpc("admin_clear_bidder_payment_method", {
+        _bidder_id: bidderId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-auction-invoices"] });
+      toast({
+        title: "Card cleared",
+        description: "Bidder must add a new card via their account to retry.",
+      });
+    },
+    onError: (err: any) => {
+      toast({ title: "Couldn't clear card", description: err.message, variant: "destructive" });
     },
   });
 
@@ -182,6 +203,7 @@ export default function AuctionWinnersCard() {
                 <TableHead>Winner</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
                 <TableHead className="text-right">Receipt</TableHead>
+                <TableHead>Attending</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -199,6 +221,13 @@ export default function AuctionWinnersCard() {
                     <TableCell className="text-right">${inv.amount.toLocaleString()}</TableCell>
                     <TableCell className="text-right text-xs text-muted-foreground">
                       {inv.tax_receipt_amount > 0 ? `$${inv.tax_receipt_amount.toLocaleString()}` : "—"}
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {inv.bidders?.attending_event ? (
+                        <Badge variant="outline" className="text-primary border-primary/30">Thu dinner</Badge>
+                      ) : (
+                        <span className="text-muted-foreground">Remote</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={s.variant}>{s.label}</Badge>
@@ -244,6 +273,37 @@ export default function AuctionWinnersCard() {
                               <ExternalLink className="h-3.5 w-3.5" />
                             </a>
                           </Button>
+                        )}
+                        {(inv.status === "failed" || inv.status === "requires_action") && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-destructive"
+                                title="Clear bidder's card (forces them to add a new one)"
+                              >
+                                <CreditCard className="h-3.5 w-3.5" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Clear this bidder's saved card?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Use this when a winner's card is failing and they need to add a
+                                  different one. Their existing invoice stays open. They'll need to
+                                  visit /auction, sign in, and add a new card via the account dialog
+                                  before the charge can be retried.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => clearCard.mutate(inv.bidder_id)}>
+                                  Clear card
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         )}
                       </div>
                     </TableCell>

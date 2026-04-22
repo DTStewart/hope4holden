@@ -47,12 +47,14 @@ Deno.serve(async (req) => {
   let phone = ''
   let displayName = ''
   let existingSessionToken = ''
+  let attendingEvent = false
   try {
     const body = await req.json()
     email = String(body.email || '').trim().toLowerCase()
     phone = normalizePhone(String(body.phone || ''))
     displayName = String(body.displayName || '').trim()
     existingSessionToken = String(body.sessionToken || '').trim()
+    attendingEvent = Boolean(body.attendingEvent)
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
       status: 400,
@@ -96,7 +98,7 @@ Deno.serve(async (req) => {
     // Update fields in case they changed
     await supabase
       .from('auction_bidders')
-      .update({ phone, display_name: displayName })
+      .update({ phone, display_name: displayName, attending_event: attendingEvent })
       .eq('id', bidder.id)
     customerId = bidder.stripe_customer_id
     sessionToken = bidder.session_token
@@ -124,6 +126,7 @@ Deno.serve(async (req) => {
       display_name: displayName,
       stripe_customer_id: customerId,
       session_token: sessionToken,
+      attending_event: attendingEvent,
     })
     if (insertErr) {
       // Email uniqueness race — look them up and reuse
