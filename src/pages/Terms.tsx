@@ -42,24 +42,15 @@ const TermsPage = () => {
             </p>
 
             <h2 className="font-heading font-extrabold text-2xl text-foreground pt-4">Refund policy</h2>
-            <ul className="list-disc pl-6 space-y-2">
-              <li><strong>Donations</strong> — donations are final and non-refundable once processed.</li>
-              <li>
-                <strong>Team registrations and dinner tickets</strong> — refundable up to 30 days before the
-                tournament date (June 18, 2026). Inside 30 days, we can transfer your spot to another team or
-                guest if you let us know, but we can't offer a cash refund.
-              </li>
-              <li>
-                <strong>Sponsorships</strong> — non-refundable once processed, as sponsor benefits (logo placement,
-                signage printing, etc.) are ordered in advance.
-              </li>
-              <li>
-                If the tournament is cancelled outright for reasons other than weather, we'll contact you about a
-                refund or credit option.
-              </li>
-            </ul>
             <p>
-              To request a refund or transfer, email <a href="mailto:hello@hope4holden.com" className="text-primary underline">hello@hope4holden.com</a>.
+              <strong>All sales on this website are final and non-refundable.</strong> This applies to donations,
+              team registrations, dinner tickets, and sponsorships — proceeds fund tournament costs and A-T
+              research, much of which is committed in advance.
+            </p>
+            <p>
+              If you can no longer attend after purchasing a team registration or dinner ticket, you may
+              transfer your spot to another person. Email <a href="mailto:hello@hope4holden.com" className="text-primary underline">hello@hope4holden.com</a> and
+              we'll update the registration. Transfers don't include a cash refund.
             </p>
 
             <h2 className="font-heading font-extrabold text-2xl text-foreground pt-4">Weather and event changes</h2>
