@@ -16,15 +16,20 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
+// Flip to `true` once you have an Apple Developer account + Sign in with Apple
+// Services ID configured with Lovable (or via Supabase dashboard). Everything
+// else (button, handler, wrapper) is already wired.
+const ENABLE_APPLE_SIGNIN = false;
+
 export function SignInDialog({ open, onOpenChange }: Props) {
   const [email, setEmail] = useState("");
   const [sendingMagicLink, setSendingMagicLink] = useState(false);
   const [magicSent, setMagicSent] = useState(false);
-  const [signingInWith, setSigningInWith] = useState<"google" | "microsoft" | null>(null);
+  const [signingInWith, setSigningInWith] = useState<"google" | "microsoft" | "apple" | null>(null);
 
   const redirectTo = `${window.location.origin}/auction`;
 
-  const signInWithProvider = async (provider: "google" | "microsoft") => {
+  const signInWithProvider = async (provider: "google" | "microsoft" | "apple") => {
     setSigningInWith(provider);
     try {
       const result = await bidderLovable.auth.signInWithOAuth(provider, {
@@ -115,6 +120,22 @@ export function SignInDialog({ open, onOpenChange }: Props) {
                 )}
                 Continue with Microsoft
               </Button>
+
+              {ENABLE_APPLE_SIGNIN && (
+                <Button
+                  variant="outline"
+                  className="w-full justify-center gap-2"
+                  onClick={() => signInWithProvider("apple")}
+                  disabled={!!signingInWith}
+                >
+                  {signingInWith === "apple" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <AppleIcon className="h-4 w-4" />
+                  )}
+                  Continue with Apple
+                </Button>
+              )}
             </div>
 
             <div className="flex items-center gap-3">
@@ -172,6 +193,14 @@ function MicrosoftIcon({ className }: { className?: string }) {
       <rect width="10" height="10" x="12" y="1" fill="#7FBA00" />
       <rect width="10" height="10" x="1" y="12" fill="#00A4EF" />
       <rect width="10" height="10" x="12" y="12" fill="#FFB900" />
+    </svg>
+  );
+}
+
+function AppleIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true" fill="currentColor">
+      <path d="M17.05 20.28c-.98.95-2.05.88-3.08.38-1.09-.52-2.09-.53-3.24 0-1.44.64-2.2.48-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.22 2.31-.87 3.57-.76 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4l.01-.1zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
     </svg>
   );
 }
