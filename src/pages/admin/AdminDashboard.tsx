@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image, ShoppingCart, ClipboardList, UtensilsCrossed, Send } from "lucide-react";
+import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image, ShoppingCart, ClipboardList, UtensilsCrossed, Send, Megaphone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import RegistrationsTab from "./RegistrationsTab";
@@ -17,6 +17,8 @@ import GalleryTab from "./GalleryTab";
 import WaitlistTab from "./WaitlistTab";
 import DinnersTab from "./DinnersTab";
 import EmailsTab from "./EmailsTab";
+import BulkEmailTab from "./BulkEmailTab";
+import DashboardStats from "./DashboardStats";
 
 export default function AdminDashboard() {
   const { user, signOut } = useAuth();
@@ -73,8 +75,9 @@ export default function AdminDashboard() {
       </header>
 
       <div className="p-6 max-w-7xl mx-auto">
+        <DashboardStats />
         <Tabs defaultValue="registrations" className="space-y-6">
-          <TabsList className="grid grid-cols-5 md:grid-cols-11 w-full">
+          <TabsList className="grid grid-cols-4 md:grid-cols-12 w-full">
             <TabsTrigger value="registrations" className="text-xs md:text-sm">
               <Users className="h-4 w-4 mr-1 hidden md:inline" />
               Registrations
@@ -119,6 +122,10 @@ export default function AdminDashboard() {
               <Send className="h-4 w-4 mr-1 hidden md:inline" />
               Emails
             </TabsTrigger>
+            <TabsTrigger value="bulk-email" className="text-xs md:text-sm">
+              <Megaphone className="h-4 w-4 mr-1 hidden md:inline" />
+              Bulk Email
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="registrations"><RegistrationsTab /></TabsContent>
@@ -132,6 +139,7 @@ export default function AdminDashboard() {
           <TabsContent value="waitlist"><WaitlistTab /></TabsContent>
           <TabsContent value="dinners"><DinnersTab /></TabsContent>
           <TabsContent value="emails"><EmailsTab /></TabsContent>
+          <TabsContent value="bulk-email"><BulkEmailTab /></TabsContent>
         </Tabs>
       </div>
     </div>
