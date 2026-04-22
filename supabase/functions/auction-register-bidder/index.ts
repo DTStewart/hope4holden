@@ -24,12 +24,20 @@ Deno.serve(async (req) => {
 
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
   const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  const STRIPE_SECRET = Deno.env.get('STRIPE_SECRET_KEY')
-  const STRIPE_PUBLISHABLE = Deno.env.get('STRIPE_PUBLISHABLE_KEY')
+
+  // Auction uses its own Stripe keys, separate from the main site's checkout.
+  // This lets the auction run on TEST keys during dev while the live website
+  // keeps accepting real donations/registrations on the LIVE keys.
+  // Falls back to STRIPE_SECRET_KEY / STRIPE_PUBLISHABLE_KEY if dedicated
+  // auction vars aren't set (so a production swap is one env-var change).
+  const STRIPE_SECRET =
+    Deno.env.get('STRIPE_AUCTION_SECRET_KEY') || Deno.env.get('STRIPE_SECRET_KEY')
+  const STRIPE_PUBLISHABLE =
+    Deno.env.get('STRIPE_AUCTION_PUBLISHABLE_KEY') || Deno.env.get('STRIPE_PUBLISHABLE_KEY')
 
   if (!STRIPE_SECRET || !STRIPE_PUBLISHABLE) {
-    console.error('Missing Stripe env vars')
-    return new Response(JSON.stringify({ error: 'Payment system not configured' }), {
+    console.error('Missing Stripe env vars for auction')
+    return new Response(JSON.stringify({ error: 'Auction payment system not configured' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
