@@ -1064,33 +1064,7 @@ export type Database = {
           tier_id: string | null
           tier_name: string | null
         }
-        Insert: {
-          approved?: boolean | null
-          brand_assets?: Json | null
-          business_name?: string | null
-          id?: string | null
-          logo_url?: string | null
-          tier_id?: string | null
-          tier_name?: string | null
-        }
-        Update: {
-          approved?: boolean | null
-          brand_assets?: Json | null
-          business_name?: string | null
-          id?: string | null
-          logo_url?: string | null
-          tier_id?: string | null
-          tier_name?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sponsors_tier_id_fkey"
-            columns: ["tier_id"]
-            isOneToOne: false
-            referencedRelation: "sponsorship_tiers"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Functions: {
@@ -1154,6 +1128,18 @@ export type Database = {
           id: string
           notify_outbid_sms: boolean
           phone: string
+        }[]
+      }
+      get_public_sponsors: {
+        Args: never
+        Returns: {
+          approved: boolean
+          brand_assets: Json
+          business_name: string
+          id: string
+          logo_url: string
+          tier_id: string
+          tier_name: string
         }[]
       }
       get_team_for_management: {
