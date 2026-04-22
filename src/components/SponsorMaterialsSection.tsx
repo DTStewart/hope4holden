@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { anonSupabase } from "@/integrations/supabase/anonClient";
 import { Upload, Loader2, X, Plus, Copy, Check, Mail, ImageIcon } from "lucide-react";
 
 const MAX_SIZE = 10 * 1024 * 1024;
@@ -38,6 +38,7 @@ export const SponsorMaterialsSection = ({ sponsor }: Props) => {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
 
   const [copied, setCopied] = useState(false);
   const [showEmailField, setShowEmailField] = useState(false);
@@ -50,20 +51,40 @@ export const SponsorMaterialsSection = ({ sponsor }: Props) => {
     return null;
   }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files;
-    if (!selected) return;
-    setValidationError(null);
-    for (let i = 0; i < selected.length; i++) {
-      const f = selected[i];
-      const err = validateFile(f);
-      if (err) {
-        setValidationError(`${f.name}: ${err}`);
-        continue;
+  const addFiles = useCallback(
+    (selected: FileList | File[] | null) => {
+      if (!selected) return;
+      setValidationError(null);
+      const arr = Array.from(selected);
+      for (const f of arr) {
+        const err = validateFile(f);
+        if (err) {
+          setValidationError(`${f.name}: ${err}`);
+          continue;
+        }
+        setFiles((prev) => [...prev, { file: f, preview: URL.createObjectURL(f), label: "" }]);
       }
-      setFiles((prev) => [...prev, { file: f, preview: URL.createObjectURL(f), label: "" }]);
-    }
+    },
+    [validateFile]
+  );
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    addFiles(e.target.files);
     e.target.value = "";
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    addFiles(e.dataTransfer.files);
+  };
+
+  const handleDrag = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
+    else if (e.type === "dragleave") setDragActive(false);
   };
 
   const removeFile = (index: number) => {
@@ -105,7 +126,7 @@ export const SponsorMaterialsSection = ({ sponsor }: Props) => {
         uploadedAssets.push({ url, filename: entry.file.name, label: entry.label || entry.file.name });
       }
 
-      const { error } = await supabase.functions.invoke("sponsor-upload", {
+      const { error } = await anonSupabase.functions.invoke("sponsor-upload", {
         body: {
           token: sponsor.logo_upload_token,
           assets: uploadedAssets,
@@ -151,7 +172,7 @@ export const SponsorMaterialsSection = ({ sponsor }: Props) => {
       if (sponsor.contact_email) recipients.add(sponsor.contact_email.trim());
 
       for (const email of recipients) {
-        await supabase.functions.invoke("send-transactional-email", {
+        await anonSupabase.functions.invoke("send-transactional-email", {
           body: {
             templateName: "sponsor-logo-upload",
             recipientEmail: email,
@@ -222,11 +243,21 @@ export const SponsorMaterialsSection = ({ sponsor }: Props) => {
       <div>
         <label
           htmlFor={`logo-file-${sponsor.id}`}
-          className="flex flex-col items-center justify-center border-2 border-dashed border-[#1A1A1A]/20 rounded-lg p-6 cursor-pointer hover:border-primary transition-colors"
+          onDragEnter={handleDrag}
+          onDragOver={handleDrag}
+          onDragLeave={handleDrag}
+          onDrop={handleDrop}
+          className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 cursor-pointer transition-colors ${
+            dragActive ? "border-primary bg-primary/5" : "border-[#1A1A1A]/20 hover:border-primary"
+          }`}
         >
           <Plus className="h-7 w-7 text-[#1A1A1A]/50 mb-2" />
-          <span className="text-sm text-[#1A1A1A]/60">
-            {files.length === 0 ? "Click to add logo / brand files (PNG or JPG, max 10MB)" : "Add more files"}
+          <span className="text-sm text-[#1A1A1A]/60 text-center">
+            {dragActive
+              ? "Drop files here"
+              : files.length === 0
+              ? "Drag and drop or click to add logo / brand files (PNG or JPG, max 10MB)"
+              : "Drag and drop or click to add more files"}
           </span>
         </label>
         <input

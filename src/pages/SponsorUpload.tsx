@@ -30,6 +30,7 @@ export default function SponsorUpload() {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [uploading, setUploading] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
 
   useEffect(() => {
     if (!token) { setStatus("invalid"); return; }
@@ -63,25 +64,43 @@ export default function SponsorUpload() {
     });
   }, []);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files;
-    if (!selected) return;
-    setValidationError(null);
-
-    for (let i = 0; i < selected.length; i++) {
-      const f = selected[i];
-      const err = await validateFile(f);
-      if (err) {
-        setValidationError(`${f.name}: ${err}`);
-        continue;
+  const addFiles = useCallback(
+    async (selected: FileList | File[] | null) => {
+      if (!selected) return;
+      setValidationError(null);
+      const arr = Array.from(selected);
+      for (const f of arr) {
+        const err = await validateFile(f);
+        if (err) {
+          setValidationError(`${f.name}: ${err}`);
+          continue;
+        }
+        setFiles((prev) => [
+          ...prev,
+          { file: f, preview: URL.createObjectURL(f), label: "" },
+        ]);
       }
-      setFiles((prev) => [
-        ...prev,
-        { file: f, preview: URL.createObjectURL(f), label: "" },
-      ]);
-    }
-    // Reset input so re-selecting the same file works
+    },
+    [validateFile]
+  );
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    await addFiles(e.target.files);
     e.target.value = "";
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    await addFiles(e.dataTransfer.files);
+  };
+
+  const handleDrag = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
+    else if (e.type === "dragleave") setDragActive(false);
   };
 
   const removeFile = (index: number) => {
@@ -224,10 +243,23 @@ export default function SponsorUpload() {
 
               {/* Add file button */}
               <div>
-                <label htmlFor="logo-file" className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-lg p-6 cursor-pointer hover:border-primary transition-colors">
+                <label
+                  htmlFor="logo-file"
+                  onDragEnter={handleDrag}
+                  onDragOver={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDrop={handleDrop}
+                  className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 cursor-pointer transition-colors ${
+                    dragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary"
+                  }`}
+                >
                   <Plus className="h-8 w-8 text-muted-foreground mb-2" />
-                  <span className="text-sm text-muted-foreground">
-                    {files.length === 0 ? "Click to select files" : "Add more files"}
+                  <span className="text-sm text-muted-foreground text-center">
+                    {dragActive
+                      ? "Drop files here"
+                      : files.length === 0
+                      ? "Drag and drop or click to select files"
+                      : "Drag and drop or click to add more files"}
                   </span>
                 </label>
                 <input id="logo-file" type="file" accept=".png,.jpg,.jpeg,.svg" multiple className="hidden" onChange={handleFileChange} />
