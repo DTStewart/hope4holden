@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { bidderSupabase } from "@/integrations/supabase/bidderClient";
+import { bidderLovable } from "@/integrations/lovable/bidder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,24 +20,26 @@ export function SignInDialog({ open, onOpenChange }: Props) {
   const [email, setEmail] = useState("");
   const [sendingMagicLink, setSendingMagicLink] = useState(false);
   const [magicSent, setMagicSent] = useState(false);
-  const [signingInWith, setSigningInWith] = useState<"google" | "azure" | null>(null);
+  const [signingInWith, setSigningInWith] = useState<"google" | "microsoft" | null>(null);
 
   const redirectTo = `${window.location.origin}/auction`;
 
-  const signInWithProvider = async (provider: "google" | "azure") => {
+  const signInWithProvider = async (provider: "google" | "microsoft") => {
     setSigningInWith(provider);
     try {
-      const { error } = await bidderSupabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo,
-          // Microsoft ("azure") needs the email scope explicitly to return a
-          // usable email in the JWT claims.
-          scopes: provider === "azure" ? "email openid profile" : undefined,
-        },
+      const result = await bidderLovable.auth.signInWithOAuth(provider, {
+        redirect_uri: redirectTo,
       });
-      if (error) throw error;
-      // Browser redirects to the provider — unmount happens naturally.
+      if (result.error) {
+        toast({
+          title: "Couldn't start sign-in",
+          description: String(result.error),
+          variant: "destructive",
+        });
+        setSigningInWith(null);
+      }
+      // If result.redirected is true, the browser navigates away — nothing more to do here.
+      // On return, bidderLovable writes the session to bidderSupabase automatically.
     } catch (err: any) {
       toast({ title: "Couldn't start sign-in", description: err?.message, variant: "destructive" });
       setSigningInWith(null);
@@ -102,10 +105,10 @@ export function SignInDialog({ open, onOpenChange }: Props) {
               <Button
                 variant="outline"
                 className="w-full justify-center gap-2"
-                onClick={() => signInWithProvider("azure")}
+                onClick={() => signInWithProvider("microsoft")}
                 disabled={!!signingInWith}
               >
-                {signingInWith === "azure" ? (
+                {signingInWith === "microsoft" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <MicrosoftIcon className="h-4 w-4" />
