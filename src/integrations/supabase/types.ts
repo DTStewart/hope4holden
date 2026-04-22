@@ -289,6 +289,7 @@ export type Database = {
       }
       donations: {
         Row: {
+          admin_note: string | null
           amount: number
           created_at: string
           donor_address: string | null
@@ -298,12 +299,14 @@ export type Database = {
           donor_postal_code: string | null
           donor_province: string | null
           id: string
+          method: string
           paid: boolean
           stripe_session_id: string | null
           team_id: string | null
           wants_recurring: boolean
         }
         Insert: {
+          admin_note?: string | null
           amount: number
           created_at?: string
           donor_address?: string | null
@@ -313,12 +316,14 @@ export type Database = {
           donor_postal_code?: string | null
           donor_province?: string | null
           id?: string
+          method?: string
           paid?: boolean
           stripe_session_id?: string | null
           team_id?: string | null
           wants_recurring?: boolean
         }
         Update: {
+          admin_note?: string | null
           amount?: number
           created_at?: string
           donor_address?: string | null
@@ -328,6 +333,7 @@ export type Database = {
           donor_postal_code?: string | null
           donor_province?: string | null
           id?: string
+          method?: string
           paid?: boolean
           stripe_session_id?: string | null
           team_id?: string | null
@@ -475,6 +481,36 @@ export type Database = {
         }
         Relationships: []
       }
+      live_dashboard_settings: {
+        Row: {
+          id: number
+          refresh_interval_seconds: number
+          show_auction: boolean
+          show_fundraising: boolean
+          show_leaderboard: boolean
+          show_rainbow: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          refresh_interval_seconds?: number
+          show_auction?: boolean
+          show_fundraising?: boolean
+          show_leaderboard?: boolean
+          show_rainbow?: boolean
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          refresh_interval_seconds?: number
+          show_auction?: boolean
+          show_fundraising?: boolean
+          show_leaderboard?: boolean
+          show_rainbow?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           created_at: string
@@ -505,6 +541,33 @@ export type Database = {
         }
         Relationships: []
       }
+      next_year_interest: {
+        Row: {
+          attended_prior_year: boolean
+          created_at: string
+          email: string
+          id: string
+          name: string | null
+          source: string
+        }
+        Insert: {
+          attended_prior_year?: boolean
+          created_at?: string
+          email: string
+          id?: string
+          name?: string | null
+          source?: string
+        }
+        Update: {
+          attended_prior_year?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
       pending_orders: {
         Row: {
           created_at: string
@@ -532,6 +595,36 @@ export type Database = {
           stripe_session_id?: string | null
           total_amount?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      rainbow_auction_winners: {
+        Row: {
+          amount: number | null
+          created_at: string
+          id: string
+          prize_description: string
+          sort_order: number
+          updated_at: string
+          winner_name: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          id?: string
+          prize_description: string
+          sort_order?: number
+          updated_at?: string
+          winner_name: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          id?: string
+          prize_description?: string
+          sort_order?: number
+          updated_at?: string
+          winner_name?: string
         }
         Relationships: []
       }
@@ -841,6 +934,50 @@ export type Database = {
         }
         Relationships: []
       }
+      ugc_photos: {
+        Row: {
+          admin_note: string | null
+          caption: string | null
+          created_at: string
+          id: string
+          photo_url: string
+          registration_id: string
+          status: string
+          submitter_note: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_note?: string | null
+          caption?: string | null
+          created_at?: string
+          id?: string
+          photo_url: string
+          registration_id: string
+          status?: string
+          submitter_note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_note?: string | null
+          caption?: string | null
+          created_at?: string
+          id?: string
+          photo_url?: string
+          registration_id?: string
+          status?: string
+          submitter_note?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ugc_photos_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -957,6 +1094,15 @@ export type Database = {
       }
     }
     Functions: {
+      add_next_year_interest: {
+        Args: {
+          _attended_prior_year?: boolean
+          _email: string
+          _name?: string
+          _source?: string
+        }
+        Returns: Json
+      }
       admin_clear_bidder_payment_method: {
         Args: { _bidder_id: string }
         Returns: boolean
@@ -975,6 +1121,17 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_approved_ugc: {
+        Args: { _limit?: number }
+        Returns: {
+          caption: string
+          created_at: string
+          id: string
+          photo_url: string
+          team_name: string
+        }[]
+      }
+      get_fundraising_total: { Args: never; Returns: Json }
       get_leaderboard: {
         Args: never
         Returns: {
@@ -986,6 +1143,7 @@ export type Database = {
           team_name: string
         }[]
       }
+      get_live_dashboard_state: { Args: never; Returns: Json }
       get_my_bidder_profile: {
         Args: never
         Returns: {
@@ -1114,6 +1272,10 @@ export type Database = {
           _submitter_note?: string
           _token: string
         }
+        Returns: Json
+      }
+      submit_team_ugc: {
+        Args: { _caption?: string; _photo_url: string; _token: string }
         Returns: Json
       }
       update_bidder_attending: {
