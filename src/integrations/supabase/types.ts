@@ -14,142 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      auction_bidders: {
-        Row: {
-          id: string
-          email: string
-          phone: string
-          display_name: string
-          stripe_customer_id: string | null
-          payment_method_id: string | null
-          session_token: string | null
-          phone_verified_at: string | null
-          attending_event: boolean
-          notify_outbid_sms: boolean
-          auth_user_id: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          email: string
-          phone: string
-          display_name: string
-          stripe_customer_id?: string | null
-          payment_method_id?: string | null
-          session_token?: string | null
-          phone_verified_at?: string | null
-          attending_event?: boolean
-          notify_outbid_sms?: boolean
-          auth_user_id?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          email?: string
-          phone?: string
-          display_name?: string
-          stripe_customer_id?: string | null
-          payment_method_id?: string | null
-          session_token?: string | null
-          phone_verified_at?: string | null
-          attending_event?: boolean
-          notify_outbid_sms?: boolean
-          auth_user_id?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      auction_bids: {
-        Row: {
-          id: string
-          item_id: string
-          bidder_id: string
-          amount: number
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          item_id: string
-          bidder_id: string
-          amount: number
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          item_id?: string
-          bidder_id?: string
-          amount?: number
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "auction_bids_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "auction_items"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      auction_invoices: {
-        Row: {
-          id: string
-          item_id: string
-          bidder_id: string
-          amount: number
-          tax_receipt_amount: number
-          stripe_payment_intent_id: string | null
-          status: string
-          error_message: string | null
-          payment_link_token: string | null
-          paid_at: string | null
-          notified_at: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          item_id: string
-          bidder_id: string
-          amount: number
-          tax_receipt_amount?: number
-          stripe_payment_intent_id?: string | null
-          status?: string
-          error_message?: string | null
-          payment_link_token?: string | null
-          paid_at?: string | null
-          notified_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          item_id?: string
-          bidder_id?: string
-          amount?: number
-          tax_receipt_amount?: number
-          stripe_payment_intent_id?: string | null
-          status?: string
-          error_message?: string | null
-          payment_link_token?: string | null
-          paid_at?: string | null
-          notified_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "auction_invoices_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: true
-            referencedRelation: "auction_items"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
       auction_items: {
         Row: {
           bid_increment: number | null
@@ -527,10 +391,6 @@ export type Database = {
           stripe_session_id: string | null
           team_name: string
           updated_at: string
-          score_token: string
-          team_members: Json
-          team_photo_url: string | null
-          team_slug: string
         }
         Insert: {
           business_name?: string | null
@@ -548,7 +408,6 @@ export type Database = {
           stripe_session_id?: string | null
           team_name: string
           updated_at?: string
-          score_token?: string
         }
         Update: {
           business_name?: string | null
@@ -566,56 +425,8 @@ export type Database = {
           stripe_session_id?: string | null
           team_name?: string
           updated_at?: string
-          score_token?: string
         }
         Relationships: []
-      }
-      scorecard_submissions: {
-        Row: {
-          id: string
-          registration_id: string
-          final_score: number
-          photo_url: string
-          submitter_note: string | null
-          verified: boolean
-          disqualified: boolean
-          admin_note: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          registration_id: string
-          final_score: number
-          photo_url: string
-          submitter_note?: string | null
-          verified?: boolean
-          disqualified?: boolean
-          admin_note?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          registration_id?: string
-          final_score?: number
-          photo_url?: string
-          submitter_note?: string | null
-          verified?: boolean
-          disqualified?: boolean
-          admin_note?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "scorecard_submissions_registration_id_fkey"
-            columns: ["registration_id"]
-            isOneToOne: true
-            referencedRelation: "registrations"
-            referencedColumns: ["id"]
-          }
-        ]
       }
       settings: {
         Row: {
@@ -900,131 +711,7 @@ export type Database = {
       }
     }
     Functions: {
-      attach_bidder_payment_method: {
-        Args: { _payment_method_id: string }
-        Returns: boolean
-      }
       decrement_sponsor_slots: { Args: { _tier_id: string }; Returns: number }
-      get_my_bidder_profile: {
-        Args: Record<string, never>
-        Returns: {
-          id: string
-          email: string
-          phone: string
-          display_name: string
-          has_payment_method: boolean
-          attending_event: boolean
-          notify_outbid_sms: boolean
-        }[]
-      }
-      update_bidder_attending: {
-        Args: { _attending: boolean }
-        Returns: boolean
-      }
-      update_bidder_notify_outbid: {
-        Args: { _enabled: boolean }
-        Returns: boolean
-      }
-      get_team_for_management: {
-        Args: { _token: string }
-        Returns: {
-          registration_id: string
-          team_name: string
-          business_name: string | null
-          team_slug: string
-          team_members: Json
-          team_photo_url: string | null
-          captain_name: string
-          captain_email: string
-          team_fundraising_total: number
-        }[]
-      }
-      get_team_public: {
-        Args: { _slug: string }
-        Returns: {
-          registration_id: string
-          team_name: string
-          business_name: string | null
-          team_slug: string
-          team_photo_url: string | null
-          member_first_names: string[]
-          team_fundraising_total: number
-        }[]
-      }
-      update_team_details: {
-        Args: { _token: string; _team_members: Json; _team_photo_url: string | null }
-        Returns: boolean
-      }
-      get_team_id_by_slug: {
-        Args: { _slug: string }
-        Returns: string
-      }
-      admin_clear_bidder_payment_method: {
-        Args: { _bidder_id: string }
-        Returns: boolean
-      }
-      place_bid: {
-        Args: { _item_id: string; _amount: number }
-        Returns: Json
-      }
-      lookup_auction_invoice_by_token: {
-        Args: { _token: string }
-        Returns: {
-          id: string
-          item_id: string
-          item_title: string
-          bidder_display_name: string
-          amount: number
-          status: string
-          stripe_payment_intent_id: string | null
-        }[]
-      }
-      mark_auction_invoice_paid: {
-        Args: { _token: string; _payment_intent_id: string | null }
-        Returns: Json
-      }
-      my_auction_invoices: {
-        Args: Record<string, never>
-        Returns: {
-          id: string
-          item_id: string
-          item_title: string
-          amount: number
-          status: string
-          payment_link_token: string | null
-          paid_at: string | null
-          created_at: string
-        }[]
-      }
-      lookup_team_by_score_token: {
-        Args: { _token: string }
-        Returns: {
-          registration_id: string
-          team_name: string
-          business_name: string | null
-          already_submitted: boolean
-        }[]
-      }
-      get_leaderboard: {
-        Args: Record<string, never>
-        Returns: {
-          registration_id: string
-          team_name: string
-          business_name: string | null
-          final_score: number
-          photo_url: string
-          submitted_at: string
-        }[]
-      }
-      submit_scorecard: {
-        Args: {
-          _token: string
-          _final_score: number
-          _photo_url: string
-          _submitter_note: string | null
-        }
-        Returns: Json
-      }
       decrement_spots: { Args: never; Returns: number }
       delete_email: {
         Args: { message_id: number; queue_name: string }
