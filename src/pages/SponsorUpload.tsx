@@ -30,6 +30,7 @@ export default function SponsorUpload() {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [uploading, setUploading] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
 
   useEffect(() => {
     if (!token) { setStatus("invalid"); return; }
@@ -63,25 +64,43 @@ export default function SponsorUpload() {
     });
   }, []);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files;
-    if (!selected) return;
-    setValidationError(null);
-
-    for (let i = 0; i < selected.length; i++) {
-      const f = selected[i];
-      const err = await validateFile(f);
-      if (err) {
-        setValidationError(`${f.name}: ${err}`);
-        continue;
+  const addFiles = useCallback(
+    async (selected: FileList | File[] | null) => {
+      if (!selected) return;
+      setValidationError(null);
+      const arr = Array.from(selected);
+      for (const f of arr) {
+        const err = await validateFile(f);
+        if (err) {
+          setValidationError(`${f.name}: ${err}`);
+          continue;
+        }
+        setFiles((prev) => [
+          ...prev,
+          { file: f, preview: URL.createObjectURL(f), label: "" },
+        ]);
       }
-      setFiles((prev) => [
-        ...prev,
-        { file: f, preview: URL.createObjectURL(f), label: "" },
-      ]);
-    }
-    // Reset input so re-selecting the same file works
+    },
+    [validateFile]
+  );
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    await addFiles(e.target.files);
     e.target.value = "";
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    await addFiles(e.dataTransfer.files);
+  };
+
+  const handleDrag = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
+    else if (e.type === "dragleave") setDragActive(false);
   };
 
   const removeFile = (index: number) => {
