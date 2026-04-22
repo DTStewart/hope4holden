@@ -14,6 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
+      auction_bidders: {
+        Row: {
+          id: string
+          email: string
+          phone: string
+          display_name: string
+          stripe_customer_id: string | null
+          payment_method_id: string | null
+          session_token: string
+          phone_verified_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          phone: string
+          display_name: string
+          stripe_customer_id?: string | null
+          payment_method_id?: string | null
+          session_token: string
+          phone_verified_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          phone?: string
+          display_name?: string
+          stripe_customer_id?: string | null
+          payment_method_id?: string | null
+          session_token?: string
+          phone_verified_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      auction_bids: {
+        Row: {
+          id: string
+          item_id: string
+          bidder_id: string
+          amount: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          item_id: string
+          bidder_id: string
+          amount: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          item_id?: string
+          bidder_id?: string
+          amount?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auction_bids_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "auction_items"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       auction_items: {
         Row: {
           bid_increment: number | null
@@ -711,7 +782,25 @@ export type Database = {
       }
     }
     Functions: {
+      attach_bidder_payment_method: {
+        Args: { _session_token: string; _payment_method_id: string }
+        Returns: boolean
+      }
       decrement_sponsor_slots: { Args: { _tier_id: string }; Returns: number }
+      get_bidder_by_session: {
+        Args: { _session_token: string }
+        Returns: {
+          id: string
+          email: string
+          phone: string
+          display_name: string
+          has_payment_method: boolean
+        }[]
+      }
+      place_bid: {
+        Args: { _session_token: string; _item_id: string; _amount: number }
+        Returns: Json
+      }
       decrement_spots: { Args: never; Returns: number }
       delete_email: {
         Args: { message_id: number; queue_name: string }
