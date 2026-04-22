@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { anonSupabase } from "@/integrations/supabase/anonClient";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { CheckCircle, Upload, Loader2, AlertCircle, ImageIcon, X, Plus } from "lucide-react";
@@ -148,10 +148,10 @@ export default function SponsorUpload() {
         });
       }
 
-      const res = await supabase.functions.invoke("sponsor-upload", {
+      const res = await anonSupabase.functions.invoke("sponsor-upload", {
         body: { token, assets: uploadedAssets },
       });
-      if (res.error) throw new Error("Failed to save assets");
+      if (res.error) throw new Error(res.error.message || "Failed to save assets");
       setStatus("uploaded");
       toast({ title: "Assets uploaded successfully!" });
     } catch (err: any) {
