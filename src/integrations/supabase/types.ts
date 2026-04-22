@@ -14,6 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      auction_items: {
+        Row: {
+          bid_increment: number | null
+          created_at: string
+          description: string | null
+          donated_by: string | null
+          ends_at: string | null
+          id: string
+          images: Json
+          market_value: number
+          pickup_notes: string | null
+          pickup_option: string
+          sort_order: number
+          starting_bid: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bid_increment?: number | null
+          created_at?: string
+          description?: string | null
+          donated_by?: string | null
+          ends_at?: string | null
+          id?: string
+          images?: Json
+          market_value?: number
+          pickup_notes?: string | null
+          pickup_option?: string
+          sort_order?: number
+          starting_bid?: number
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bid_increment?: number | null
+          created_at?: string
+          description?: string | null
+          donated_by?: string | null
+          ends_at?: string | null
+          id?: string
+          images?: Json
+          market_value?: number
+          pickup_notes?: string | null
+          pickup_option?: string
+          sort_order?: number
+          starting_bid?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      auction_settings: {
+        Row: {
+          anti_snipe_seconds: number
+          bidding_closes_at: string | null
+          bidding_opens_at: string | null
+          default_bid_increment: number
+          id: number
+          is_live: boolean
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          anti_snipe_seconds?: number
+          bidding_closes_at?: string | null
+          bidding_opens_at?: string | null
+          default_bid_increment?: number
+          id?: number
+          is_live?: boolean
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          anti_snipe_seconds?: number
+          bidding_closes_at?: string | null
+          bidding_opens_at?: string | null
+          default_bid_increment?: number
+          id?: number
+          is_live?: boolean
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       dinners: {
         Row: {
           amount: number
