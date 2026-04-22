@@ -100,7 +100,7 @@ export default function SponsorInvite() {
 
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
+      const { data, error } = await anonSupabase.functions.invoke("create-checkout", {
         body: {
           items: [
             {
