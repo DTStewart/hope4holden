@@ -10,6 +10,7 @@ type Entry = {
   final_score: number;
   photo_url: string;
   submitted_at: string;
+  team_photo_url?: string | null;
 };
 
 export default function Leaderboard() {
@@ -23,7 +24,20 @@ export default function Leaderboard() {
       try {
         const { data, error } = await anonSupabase.rpc("get_leaderboard");
         if (error) throw error;
-        if (!cancelled) setEntries((data as Entry[]) || []);
+        const rows = (data as Entry[]) || [];
+        // Hydrate team_photo_url via a side fetch so the leaderboard can show
+        // the team photo instead of the scorecard photo when available.
+        const regIds = rows.map((r) => r.registration_id).filter(Boolean);
+        if (regIds.length > 0) {
+          const { data: teamPhotos } = await anonSupabase
+            .from("registrations")
+            .select("id, team_photo_url")
+            .in("id", regIds);
+          const photoMap = new Map<string, string | null>();
+          for (const t of (teamPhotos as any[]) || []) photoMap.set(t.id, t.team_photo_url);
+          for (const r of rows) r.team_photo_url = photoMap.get(r.registration_id) ?? null;
+        }
+        if (!cancelled) setEntries(rows);
       } catch (err) {
         console.warn("[Leaderboard] fetch failed:", err);
         if (!cancelled && entries === null) setEntries([]);
@@ -76,14 +90,15 @@ export default function Leaderboard() {
                       <div className="w-10 text-center font-heading font-extrabold text-xl text-foreground/70">
                         {medal || rank}
                       </div>
-                      {e.photo_url ? (
+                      {(e.team_photo_url || e.photo_url) ? (
                         <button
                           type="button"
                           onClick={() => setOpenPhoto(e.photo_url)}
                           className="h-12 w-12 rounded bg-muted overflow-hidden shrink-0 hover:ring-2 hover:ring-primary transition-all"
                           aria-label="View scorecard photo"
+                          title={e.team_photo_url ? "Click to view scorecard" : undefined}
                         >
-                          <img src={e.photo_url} alt="" className="h-full w-full object-cover" />
+                          <img src={e.team_photo_url || e.photo_url} alt="" className="h-full w-full object-cover" />
                         </button>
                       ) : (
                         <div className="h-12 w-12 rounded bg-muted shrink-0" />

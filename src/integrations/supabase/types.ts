@@ -528,6 +528,9 @@ export type Database = {
           team_name: string
           updated_at: string
           score_token: string
+          team_members: Json
+          team_photo_url: string | null
+          team_slug: string
         }
         Insert: {
           business_name?: string | null
@@ -921,6 +924,40 @@ export type Database = {
       update_bidder_notify_outbid: {
         Args: { _enabled: boolean }
         Returns: boolean
+      }
+      get_team_for_management: {
+        Args: { _token: string }
+        Returns: {
+          registration_id: string
+          team_name: string
+          business_name: string | null
+          team_slug: string
+          team_members: Json
+          team_photo_url: string | null
+          captain_name: string
+          captain_email: string
+          team_fundraising_total: number
+        }[]
+      }
+      get_team_public: {
+        Args: { _slug: string }
+        Returns: {
+          registration_id: string
+          team_name: string
+          business_name: string | null
+          team_slug: string
+          team_photo_url: string | null
+          member_first_names: string[]
+          team_fundraising_total: number
+        }[]
+      }
+      update_team_details: {
+        Args: { _token: string; _team_members: Json; _team_photo_url: string | null }
+        Returns: boolean
+      }
+      get_team_id_by_slug: {
+        Args: { _slug: string }
+        Returns: string
       }
       admin_clear_bidder_payment_method: {
         Args: { _bidder_id: string }

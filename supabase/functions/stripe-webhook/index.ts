@@ -273,7 +273,14 @@ Deno.serve(async (req) => {
             break;
           }
 
-          case "donation":
+          case "donation": {
+            // Attribute donation to a team when the checkout carried a team slug.
+            let teamId: string | null = null;
+            if (formData.teamSlug && typeof formData.teamSlug === "string") {
+              const { data: teamLookup } = await supabase.rpc("get_team_id_by_slug", { _slug: formData.teamSlug });
+              if (typeof teamLookup === "string") teamId = teamLookup;
+            }
+
             await supabase.from("donations").insert({
               donor_name: formData.donorName || "Anonymous",
               donor_email: formData.donorEmail || "",
@@ -285,6 +292,7 @@ Deno.serve(async (req) => {
               donor_city: formData.city || null,
               donor_province: formData.province || null,
               donor_postal_code: formData.postalCode || null,
+              team_id: teamId,
             });
 
             lineItems.push({
@@ -310,6 +318,7 @@ Deno.serve(async (req) => {
               }
             );
             break;
+          }
 
           case "dinner":
             await supabase.from("dinners").insert({

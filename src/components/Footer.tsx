@@ -87,6 +87,7 @@ const Footer = () => {
         <div className="mt-12 pt-6 border-t border-white/10 text-xs text-white/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <p>© {new Date().getFullYear()} Hope 4 Holden. All rights reserved.</p>
           <div className="flex items-center gap-4">
+            <Link to="/day-of" className="hover:text-white/60 transition-colors">Day-of Info</Link>
             <Link to="/privacy" className="hover:text-white/60 transition-colors">Privacy</Link>
             <Link to="/terms" className="hover:text-white/60 transition-colors">Terms</Link>
             <Link to="/admin/login" className="hover:text-white/60 transition-colors">Admin</Link>

@@ -28,6 +28,9 @@ import AuctionMyWins from "./pages/AuctionMyWins";
 import AuctionPay from "./pages/AuctionPay";
 import Scorecard from "./pages/Scorecard";
 import Leaderboard from "./pages/Leaderboard";
+import DayOf from "./pages/DayOf";
+import TeamManage from "./pages/TeamManage";
+import TeamPublic from "./pages/TeamPublic";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
@@ -61,6 +64,9 @@ const App = () => (
                 <Route path="/auction/pay/:token" element={<AuctionPay />} />
                 <Route path="/score/:token" element={<Scorecard />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/day-of" element={<DayOf />} />
+                <Route path="/team/manage/:token" element={<TeamManage />} />
+                <Route path="/team/:slug" element={<TeamPublic />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/terms" element={<Terms />} />
               </Route>

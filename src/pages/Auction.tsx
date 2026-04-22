@@ -190,8 +190,10 @@ export default function Auction() {
     );
   }
 
-  // Placeholder when auction isn't live yet
+  // Placeholder when auction isn't live yet. If admins have staged items
+  // (status='open'), show them as teaser cards to build anticipation.
   if (!settings?.is_live) {
+    const teaserItems = items.filter((i) => i.status === "open");
     return (
       <div>
         <section className="section-dark relative overflow-hidden">
@@ -208,7 +210,7 @@ export default function Auction() {
         </section>
 
         <section className="section-light">
-          <div className="container py-16 md:py-20 max-w-2xl">
+          <div className="container py-16 md:py-20 max-w-3xl">
             <div className="space-y-6 text-foreground/70 leading-relaxed text-left">
               <p className="text-lg">
                 Our silent auction features items donated by local businesses and friends of the Stewart family,
@@ -238,6 +240,58 @@ export default function Auction() {
             </div>
           </div>
         </section>
+
+        {teaserItems.length > 0 && (
+          <section className="section-light border-t border-foreground/5">
+            <div className="container py-12 md:py-16">
+              <div className="text-center mb-8">
+                <p className="section-label">Preview</p>
+                <h2 className="font-heading font-extrabold text-3xl md:text-4xl text-foreground">
+                  Up for bid
+                </h2>
+                <p className="text-sm text-foreground/60 mt-2">
+                  {teaserItems.length} item{teaserItems.length === 1 ? "" : "s"} already lined up.
+                  More added regularly — check back.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {teaserItems.map((item) => (
+                  <article key={item.id} className="bg-white border border-[#1A1A1A]/10 rounded overflow-hidden flex flex-col">
+                    {item.images?.[0]?.url ? (
+                      <img
+                        src={item.images[0].url}
+                        alt={item.images[0].alt || item.title}
+                        className="w-full aspect-[4/3] object-cover"
+                      />
+                    ) : (
+                      <div className="w-full aspect-[4/3] bg-muted" />
+                    )}
+                    <div className="p-5 flex-1 flex flex-col">
+                      <h3 className="font-heading font-extrabold text-lg text-foreground mb-1">{item.title}</h3>
+                      {item.donated_by && (
+                        <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-2">
+                          Donated by {item.donated_by}
+                        </p>
+                      )}
+                      {item.description && (
+                        <p className="text-sm text-foreground/70 mb-4 line-clamp-3">{item.description}</p>
+                      )}
+                      <div className="mt-auto text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-foreground/60">Retail value</span>
+                          <span className="font-heading font-bold">${item.market_value.toLocaleString()}</span>
+                        </div>
+                        <p className="text-xs text-foreground/50 mt-3 text-center">
+                          Bidding opens June 1
+                        </p>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
       </div>
     );
   }
