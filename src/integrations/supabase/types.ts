@@ -251,129 +251,6 @@ export type Database = {
         }
         Relationships: []
       }
-      live_dashboard_settings: {
-        Row: {
-          id: number
-          show_auction: boolean
-          show_leaderboard: boolean
-          show_rainbow: boolean
-          show_fundraising: boolean
-          refresh_interval_seconds: number
-          updated_at: string
-        }
-        Insert: {
-          id?: number
-          show_auction?: boolean
-          show_leaderboard?: boolean
-          show_rainbow?: boolean
-          show_fundraising?: boolean
-          refresh_interval_seconds?: number
-          updated_at?: string
-        }
-        Update: {
-          id?: number
-          show_auction?: boolean
-          show_leaderboard?: boolean
-          show_rainbow?: boolean
-          show_fundraising?: boolean
-          refresh_interval_seconds?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      rainbow_auction_winners: {
-        Row: {
-          id: string
-          prize_description: string
-          winner_name: string
-          amount: number | null
-          sort_order: number
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          prize_description: string
-          winner_name: string
-          amount?: number | null
-          sort_order?: number
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          prize_description?: string
-          winner_name?: string
-          amount?: number | null
-          sort_order?: number
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      ugc_photos: {
-        Row: {
-          id: string
-          registration_id: string
-          photo_url: string
-          caption: string | null
-          status: string
-          submitter_note: string | null
-          admin_note: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          registration_id: string
-          photo_url: string
-          caption?: string | null
-          status?: string
-          submitter_note?: string | null
-          admin_note?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          registration_id?: string
-          photo_url?: string
-          caption?: string | null
-          status?: string
-          submitter_note?: string | null
-          admin_note?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      next_year_interest: {
-        Row: {
-          id: string
-          email: string
-          name: string | null
-          attended_prior_year: boolean
-          source: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          email: string
-          name?: string | null
-          attended_prior_year?: boolean
-          source?: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          email?: string
-          name?: string | null
-          attended_prior_year?: boolean
-          source?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
       dinners: {
         Row: {
           amount: number
@@ -413,7 +290,6 @@ export type Database = {
       donations: {
         Row: {
           amount: number
-          admin_note: string | null
           created_at: string
           donor_address: string | null
           donor_city: string | null
@@ -422,7 +298,6 @@ export type Database = {
           donor_postal_code: string | null
           donor_province: string | null
           id: string
-          method: string
           paid: boolean
           stripe_session_id: string | null
           team_id: string | null
@@ -430,7 +305,6 @@ export type Database = {
         }
         Insert: {
           amount: number
-          admin_note?: string | null
           created_at?: string
           donor_address?: string | null
           donor_city?: string | null
@@ -439,7 +313,6 @@ export type Database = {
           donor_postal_code?: string | null
           donor_province?: string | null
           id?: string
-          method?: string
           paid?: boolean
           stripe_session_id?: string | null
           team_id?: string | null
@@ -447,7 +320,6 @@ export type Database = {
         }
         Update: {
           amount?: number
-          admin_note?: string | null
           created_at?: string
           donor_address?: string | null
           donor_city?: string | null
@@ -456,7 +328,6 @@ export type Database = {
           donor_postal_code?: string | null
           donor_province?: string | null
           id?: string
-          method?: string
           paid?: boolean
           stripe_session_id?: string | null
           team_id?: string | null
@@ -1096,37 +967,6 @@ export type Database = {
       }
       decrement_sponsor_slots: { Args: { _tier_id: string }; Returns: number }
       decrement_spots: { Args: never; Returns: number }
-      get_live_dashboard_state: {
-        Args: Record<string, never>
-        Returns: Json
-      }
-      get_fundraising_total: {
-        Args: Record<string, never>
-        Returns: Json
-      }
-      submit_team_ugc: {
-        Args: { _token: string; _photo_url: string; _caption?: string | null }
-        Returns: Json
-      }
-      get_approved_ugc: {
-        Args: { _limit?: number }
-        Returns: {
-          id: string
-          photo_url: string
-          caption: string | null
-          team_name: string
-          created_at: string
-        }[]
-      }
-      add_next_year_interest: {
-        Args: {
-          _email: string
-          _name?: string | null
-          _attended_prior_year?: boolean
-          _source?: string
-        }
-        Returns: Json
-      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
