@@ -142,8 +142,8 @@ const HomePage = () => {
               {sponsors
                 .filter((s) => s.logo_url)
                 .map((s) => (
-                  <div key={s.id} className="bg-white p-6 flex items-center justify-center border border-[#1A1A1A]/10 rounded">
-                    <img src={s.logo_url!} alt={s.business_name} className="h-20 object-contain" />
+                  <div key={s.id} className="bg-white aspect-square p-4 flex items-center justify-center border border-[#1A1A1A]/10 rounded">
+                    <img src={s.logo_url!} alt={s.business_name} className="max-w-full max-h-full w-auto h-auto object-contain" />
                   </div>
                 ))}
             </div>
