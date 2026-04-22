@@ -105,7 +105,7 @@ export const SponsorMaterialsSection = ({ sponsor }: Props) => {
         uploadedAssets.push({ url, filename: entry.file.name, label: entry.label || entry.file.name });
       }
 
-      const { error } = await supabase.functions.invoke("sponsor-upload", {
+      const { error } = await anonSupabase.functions.invoke("sponsor-upload", {
         body: {
           token: sponsor.logo_upload_token,
           assets: uploadedAssets,
@@ -151,7 +151,7 @@ export const SponsorMaterialsSection = ({ sponsor }: Props) => {
       if (sponsor.contact_email) recipients.add(sponsor.contact_email.trim());
 
       for (const email of recipients) {
-        await supabase.functions.invoke("send-transactional-email", {
+        await anonSupabase.functions.invoke("send-transactional-email", {
           body: {
             templateName: "sponsor-logo-upload",
             recipientEmail: email,
