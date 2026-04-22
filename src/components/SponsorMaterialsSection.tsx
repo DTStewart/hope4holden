@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { anonSupabase } from "@/integrations/supabase/anonClient";
 import { Upload, Loader2, X, Plus, Copy, Check, Mail, ImageIcon } from "lucide-react";
 
 const MAX_SIZE = 10 * 1024 * 1024;
