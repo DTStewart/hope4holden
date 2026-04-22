@@ -137,21 +137,15 @@ const HomePage = () => {
             Thank you to our sponsors.
           </h2>
 
-          {sponsors.length > 0 ? (
+          {sponsors.filter((s) => s.logo_url).length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-              {sponsors.map((s) => (
-                <div key={s.id} className="bg-white p-6 flex flex-col items-center gap-3 border border-[#1A1A1A]/10 rounded">
-                  {s.logo_url ? (
-                    <img src={s.logo_url} alt={s.business_name} className="h-16 object-contain" />
-                  ) : (
-                    <div className="h-16 w-16 bg-[#F5F5F5] rounded flex items-center justify-center text-lg font-heading font-bold text-[#1A1A1A]/30">
-                      {s.business_name.charAt(0)}
-                    </div>
-                  )}
-                  <p className="text-sm font-medium text-[#1A1A1A]">{s.business_name}</p>
-                  <span className="text-xs text-[#1A1A1A]/40 font-heading uppercase tracking-wider">{s.tier_name}</span>
-                </div>
-              ))}
+              {sponsors
+                .filter((s) => s.logo_url)
+                .map((s) => (
+                  <div key={s.id} className="bg-white p-6 flex items-center justify-center border border-[#1A1A1A]/10 rounded">
+                    <img src={s.logo_url!} alt={s.business_name} className="h-20 object-contain" />
+                  </div>
+                ))}
             </div>
           ) : (
             <div className="py-16 border-2 border-dashed border-[#1A1A1A]/15 rounded text-center">
