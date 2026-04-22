@@ -8,6 +8,18 @@ like: *"Read BACKLOG.md and build item #4. Current main is at commit X."*
 
 For day-of event logistics, see [GO_LIVE_CHECKLIST.md](GO_LIVE_CHECKLIST.md).
 
+## ⚠️ Before building anything new — apply pending migrations
+
+This project is on **Lovable Cloud**. Migration files in
+`supabase/migrations/` are NOT automatically applied. Ask Lovable explicitly:
+
+> *Apply all pending migrations from `supabase/migrations/`. Confirm when
+> they're applied and regenerate types.ts from the new schema.*
+
+Signs migrations are pending: types.ts is missing tables for shipped features,
+or pages load but error in the console. See
+[GO_LIVE_CHECKLIST.md §0](GO_LIVE_CHECKLIST.md) for more.
+
 ---
 
 ## Priority order (my recommendation)
@@ -21,7 +33,21 @@ For day-of event logistics, see [GO_LIVE_CHECKLIST.md](GO_LIVE_CHECKLIST.md).
 
 ---
 
-## #4 · Live event dashboard
+## ✅ #4 · Live event dashboard — Lovable built this
+
+Lovable built #4 autonomously in commit bcaa5da / 191f10c. Files shipped:
+- `supabase/migrations/20260423000000_live_dashboard.sql`
+- `src/pages/LiveDashboard.tsx` (public `/live` route)
+- `src/pages/admin/LiveDashboardTab.tsx`
+
+Check the resulting implementation matches your Canva/PowerPoint embed
+requirement and that the rainbow-auction admin UI works.
+
+Original spec kept below for reference / amendments:
+
+---
+
+### Original spec for #4
 
 **Goal:** a public URL (no auth) you can project on a TV at the Thursday
 dinner. Shows real-time auction tops, leaderboard (Friday), rainbow-auction

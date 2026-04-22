@@ -6,19 +6,36 @@ Use this when opening the auction to the public (June 1, 2026) and again on tour
 
 ---
 
-## 0. Outstanding migrations to run
+## 0. How migrations actually work in this project
 
-Any time a commit adds a file under `supabase/migrations/`, you need to paste its contents into Supabase dashboard → SQL Editor → **Run**. Lovable does not apply migrations automatically.
+**This project is on Lovable Cloud.** Lovable manages the Supabase instance but
+does NOT automatically apply new migrations when code is pushed. You have to
+explicitly ask Lovable to apply them.
 
-As of the latest commit on `main`, these auction-related migrations need to have been run at least once:
+When there are pending migrations, Lovable's types.ts will stop including the
+types for unapplied tables — that's the telltale sign something's out of sync.
 
-- [ ] `20260422030000_auction_phase1.sql` — settings + items tables, auction-items storage bucket
-- [ ] `20260422040000_auction_phase2_bidding.sql` — bidders, bids, `place_bid` RPC, realtime publication
+**To apply pending migrations**, open the Lovable chat and paste:
 
-Already run earlier:
-- [x] `20260420220000_harden_sponsor_invites_and_slots.sql`
+> *Apply all pending migrations from `supabase/migrations/`. Confirm when
+> they're applied and regenerate types.ts from the new schema.*
 
-If you're ever unsure, check: Supabase dashboard → Database → Tables → look for `auction_items`, `auction_bidders`, `auction_bids`. If missing, migration wasn't run.
+Lovable will run them and commit the regenerated types.ts. Usually no credits
+cost for config work.
+
+**To check what's applied vs pending:**
+
+> *List what migrations are currently applied to the database vs what's in
+> `supabase/migrations/`. Show me any pending ones.*
+
+**Warning signs something isn't applied:**
+- Pages that load but error in console with "relation does not exist"
+- `types.ts` missing tables you know you built
+- Lovable commits titled "Found pending migrations" — that means they exist
+  but haven't been applied; you still need to ask.
+
+Any time you see a new `.sql` file appear under `supabase/migrations/` in a
+commit, ask Lovable to apply it.
 
 ---
 
