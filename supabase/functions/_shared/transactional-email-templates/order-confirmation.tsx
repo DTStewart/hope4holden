@@ -1,10 +1,29 @@
 import * as React from 'npm:react@18.3.1'
 import {
-  Body, Container, Head, Heading, Html, Preview, Text, Hr, Section, Img,
+  Body, Button, Container, Head, Heading, Html, Link, Preview, Text, Hr, Section, Img,
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
 const SITE_NAME = "Hope 4 Holden"
+const ICS_BASE = "https://rhksslzpdzpyrixkfmhb.supabase.co/functions/v1/event-ics"
+
+// Google Calendar deep-link (UTC times in YYYYMMDDTHHmmssZ).
+// Thu June 18 2026 6:00 PM America/Toronto = 22:00 UTC
+// Fri June 19 2026 8:00 AM America/Toronto = 12:00 UTC
+const GCAL_DINNER = 'https://www.google.com/calendar/render?' + new URLSearchParams({
+  action: 'TEMPLATE',
+  text: 'Hope 4 Holden — Dinner + Silent Auction',
+  dates: '20260618T220000Z/20260619T020000Z',
+  details: 'Doors open 6:00 PM. Dinner 6:30 PM. Silent auction closes 9:00 PM. Details: https://hope4holden.com/day-of',
+  location: 'TBD — details emailed closer to the event',
+}).toString()
+const GCAL_TOURNAMENT = 'https://www.google.com/calendar/render?' + new URLSearchParams({
+  action: 'TEMPLATE',
+  text: 'Hope 4 Holden — Golf Tournament',
+  dates: '20260619T120000Z/20260619T190000Z',
+  details: 'Check-in 8:00 AM, shotgun start 9:00 AM. Arrive 30 min early. Details: https://hope4holden.com/day-of',
+  location: 'TBD — details emailed closer to the event',
+}).toString()
 
 interface LineItem {
   type: string
@@ -134,6 +153,39 @@ const OrderConfirmationEmail = ({
           </Section>
         )}
 
+        {(hasRegistration || hasDinner || isDinnerOnly) && (
+          <Section style={infoBox}>
+            <Text style={infoTitle}>📅 Add to your calendar</Text>
+            <Text style={infoText}>
+              One-tap save so you don't miss anything:
+            </Text>
+            <table style={{ borderCollapse: 'collapse' as const, margin: '8px 0 0' }}>
+              <tbody>
+                {(hasDinner || isDinnerOnly || hasRegistration) && (
+                  <tr>
+                    <td style={{ padding: '4px 0' }}>
+                      <Button href={GCAL_DINNER} style={calButton}>Thursday dinner (Google)</Button>
+                    </td>
+                    <td style={{ padding: '4px 0 4px 10px' }}>
+                      <Link href={`${ICS_BASE}?kind=dinner`} style={calLink}>Apple / Outlook (.ics)</Link>
+                    </td>
+                  </tr>
+                )}
+                {hasRegistration && (
+                  <tr>
+                    <td style={{ padding: '4px 0' }}>
+                      <Button href={GCAL_TOURNAMENT} style={calButton}>Friday tournament (Google)</Button>
+                    </td>
+                    <td style={{ padding: '4px 0 4px 10px' }}>
+                      <Link href={`${ICS_BASE}?kind=tournament`} style={calLink}>Apple / Outlook (.ics)</Link>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </Section>
+        )}
+
         <Text style={closingText}>
           We truly appreciate your support. Every contribution helps make the {SITE_NAME} Golf Tournament a success and supports our mission to make a difference. We look forward to seeing you!
         </Text>
@@ -199,3 +251,5 @@ const closingText = { fontSize: '14px', color: '#555', lineHeight: '1.6', margin
 
 const hr = { borderColor: '#e5e5e5', margin: '8px 28px 16px' }
 const footer = { fontSize: '12px', color: '#999', margin: '0 28px 8px' }
+const calButton = { backgroundColor: '#1A1A1A', color: '#ffffff', padding: '8px 14px', borderRadius: 4, fontSize: '13px', fontWeight: 'bold' as const, textDecoration: 'none', fontFamily: "'Montserrat', Arial, sans-serif" }
+const calLink = { color: '#7ab40d', fontSize: '13px', textDecoration: 'underline' }

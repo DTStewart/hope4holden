@@ -5,18 +5,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Trash2, Mail, Loader2 } from "lucide-react";
+import { Download, Trash2, Mail, Loader2, Plus } from "lucide-react";
 import { exportToCsv } from "@/lib/exportCsv";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { EditableEmail } from "@/components/admin/EditableEmail";
 import { resendForDonation } from "@/lib/resendOrderConfirmation";
 import { useState } from "react";
+import WalkUpDonationDialog from "./WalkUpDonationDialog";
+
+const METHOD_LABELS: Record<string, string> = {
+  stripe: "Stripe",
+  cash: "Cash",
+  cheque: "Cheque",
+  eft: "E-transfer",
+  other: "Other",
+};
 
 export default function DonationsTab() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [walkUpOpen, setWalkUpOpen] = useState(false);
 
   const handleResend = async (d: any) => {
     setResendingId(d.id);
@@ -75,12 +85,15 @@ export default function DonationsTab() {
         <CardTitle className="flex items-center justify-between">
           <span>Donations ({donations?.length ?? 0}) — ${total} total</span>
           <div className="flex gap-2">
+            <Button size="sm" onClick={() => setWalkUpOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" /> Add walk-up
+            </Button>
             {donations && donations.length > 0 && (
               <>
                 <Button size="sm" variant="outline" onClick={() =>
                   exportToCsv("donations.csv",
-                    ["Donor", "Email", "Amount", "Recurring", "Paid", "Address", "City", "Province", "Postal Code", "Date"],
-                    donations.map((d: any) => [d.donor_name, d.donor_email, String(d.amount), d.wants_recurring ? "Yes" : "No", d.paid ? "Yes" : "No", d.donor_address || "", d.donor_city || "", d.donor_province || "", d.donor_postal_code || "", new Date(d.created_at).toLocaleDateString()])
+                    ["Donor", "Email", "Amount", "Method", "Recurring", "Paid", "Address", "City", "Province", "Postal Code", "Admin Note", "Date"],
+                    donations.map((d: any) => [d.donor_name, d.donor_email, String(d.amount), d.method || "stripe", d.wants_recurring ? "Yes" : "No", d.paid ? "Yes" : "No", d.donor_address || "", d.donor_city || "", d.donor_province || "", d.donor_postal_code || "", d.admin_note || "", new Date(d.created_at).toLocaleDateString()])
                   )
                 }>
                   <Download className="h-4 w-4 mr-1" /> Export CSV
@@ -116,6 +129,7 @@ export default function DonationsTab() {
                   <TableHead>Donor</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Amount</TableHead>
+                  <TableHead>Method</TableHead>
                   <TableHead>Address</TableHead>
                   <TableHead>Recurring</TableHead>
                   <TableHead>Paid</TableHead>
@@ -137,6 +151,11 @@ export default function DonationsTab() {
                       />
                     </TableCell>
                     <TableCell>${d.amount}</TableCell>
+                    <TableCell>
+                      <Badge variant={d.method && d.method !== "stripe" ? "secondary" : "outline"}>
+                        {METHOD_LABELS[d.method || "stripe"] || d.method}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {d.donor_address ? (
                         <>{d.donor_address}, {d.donor_city}, {d.donor_province} {d.donor_postal_code}</>
@@ -170,6 +189,7 @@ export default function DonationsTab() {
           </div>
         )}
       </CardContent>
+      <WalkUpDonationDialog open={walkUpOpen} onOpenChange={setWalkUpOpen} />
     </Card>
   );
 }

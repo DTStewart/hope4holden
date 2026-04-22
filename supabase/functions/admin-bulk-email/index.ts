@@ -72,12 +72,19 @@ Deno.serve(async (req) => {
   let subject: string
   let body: string
   let dryRun: boolean
+  let templateName: string
+  let templateData: Record<string, unknown>
   try {
     const payload = await req.json()
     recipientGroup = String(payload.recipientGroup || '')
     subject = String(payload.subject || '').trim()
     body = String(payload.body || '').trim()
     dryRun = Boolean(payload.dryRun)
+    templateName = String(payload.templateName || 'bulk-announcement')
+    templateData =
+      payload.templateData && typeof payload.templateData === 'object'
+        ? (payload.templateData as Record<string, unknown>)
+        : {}
   } catch {
     return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
       status: 400,
@@ -91,7 +98,9 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
-  if (!dryRun && (!subject || !body)) {
+  // For bulk-announcement subject+body are required; other templates rely
+  // solely on templateData so only enforce when using the default.
+  if (!dryRun && templateName === 'bulk-announcement' && (!subject || !body)) {
     return new Response(JSON.stringify({ error: 'subject and body are required' }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -180,10 +189,18 @@ Deno.serve(async (req) => {
               apikey: serviceKey,
             },
             body: JSON.stringify({
-              templateName: 'bulk-announcement',
+              templateName,
               recipientEmail: r.email,
               idempotencyKey: `bulk-${runId}-${r.email}`,
-              templateData: { subject, body, recipientName: r.name },
+              templateData: {
+                // bulk-announcement fields — ignored by other templates
+                subject,
+                body,
+                // shared: every template reads recipientName for the greeting
+                recipientName: r.name,
+                // caller-provided overrides (event-recap totalRaised, etc.)
+                ...templateData,
+              },
             }),
           })
           if (resp.ok) queued++

@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import {
-  Loader2, AlertCircle, Users, Camera, Save, Copy, Trophy, ExternalLink, Plus, X,
+  Loader2, AlertCircle, Users, Camera, Save, Copy, Trophy, ExternalLink, Plus, X, Upload, ImageIcon,
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 type TeamMember = {
   name: string;
@@ -360,8 +361,170 @@ export default function TeamManage() {
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
             {saving ? "Saving…" : "Save team details"}
           </Button>
+
+          {token && <UGCUploadSection token={token} />}
         </div>
       </section>
     </div>
+  );
+}
+
+type PendingUpload = { file: File; preview: string; caption: string };
+
+function UGCUploadSection({ token }: { token: string }) {
+  const [queue, setQueue] = useState<PendingUpload[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadedCount, setUploadedCount] = useState(0);
+
+  const onSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const oversize = files.filter((f) => f.size > 10 * 1024 * 1024);
+    if (oversize.length) {
+      toast({
+        title: "Some files too large",
+        description: `${oversize.length} photo(s) exceed 10 MB and were skipped.`,
+        variant: "destructive",
+      });
+    }
+    const accepted = files.filter((f) => f.size <= 10 * 1024 * 1024);
+    setQueue((prev) => [
+      ...prev,
+      ...accepted.map((file) => ({ file, preview: URL.createObjectURL(file), caption: "" })),
+    ]);
+    e.target.value = ""; // allow re-selecting same file
+  };
+
+  const removeAt = (i: number) => {
+    setQueue((prev) => {
+      const next = [...prev];
+      const removed = next.splice(i, 1)[0];
+      if (removed) URL.revokeObjectURL(removed.preview);
+      return next;
+    });
+  };
+
+  const updateCaption = (i: number, caption: string) => {
+    setQueue((prev) => prev.map((item, idx) => (idx === i ? { ...item, caption } : item)));
+  };
+
+  const submitAll = async () => {
+    if (!queue.length) return;
+    setUploading(true);
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    let ok = 0;
+    let failed = 0;
+    for (const item of queue) {
+      try {
+        const uploadRes = await fetch(
+          `${supabaseUrl}/functions/v1/ugc-upload?token=${encodeURIComponent(token)}&filename=${encodeURIComponent(item.file.name)}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": item.file.type,
+              apikey: supabaseKey,
+              Authorization: `Bearer ${supabaseKey}`,
+            },
+            body: item.file,
+          }
+        );
+        if (!uploadRes.ok) throw new Error((await uploadRes.json().catch(() => ({}))).error || "upload failed");
+        const { url } = await uploadRes.json();
+
+        const submitRes = await fetch(`${supabaseUrl}/functions/v1/ugc-upload`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: supabaseKey,
+            Authorization: `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({ token, photo_url: url, caption: item.caption || undefined }),
+        });
+        if (!submitRes.ok) throw new Error((await submitRes.json().catch(() => ({}))).error || "submit failed");
+        ok++;
+      } catch (err) {
+        console.warn("[UGC] upload failed:", err);
+        failed++;
+      }
+    }
+    // Clean up object URLs
+    for (const item of queue) URL.revokeObjectURL(item.preview);
+    setQueue([]);
+    setUploadedCount((prev) => prev + ok);
+    setUploading(false);
+    toast({
+      title: `${ok} photo${ok === 1 ? "" : "s"} submitted`,
+      description: failed > 0
+        ? `${failed} failed — try again or use smaller files.`
+        : "They'll appear after admin review.",
+      variant: failed > 0 ? "destructive" : undefined,
+    });
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <ImageIcon className="h-5 w-5" />
+          Upload event photos
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-foreground/70">
+          Snap photos throughout the day and send them our way — shots of your team, the course,
+          auction items, or anything memorable. Admin reviews before anything is posted publicly.
+        </p>
+
+        <label
+          htmlFor="ugc-files"
+          className="flex flex-col items-center justify-center border-2 border-dashed border-[#1A1A1A]/20 rounded-lg p-6 cursor-pointer hover:border-primary transition-colors"
+        >
+          <Upload className="h-8 w-8 text-[#1A1A1A]/50 mb-2" />
+          <span className="text-sm text-[#1A1A1A]/60">Tap to add photos</span>
+          <span className="text-xs text-[#1A1A1A]/40 mt-1">PNG / JPG / HEIC, max 10 MB each</span>
+        </label>
+        <input
+          id="ugc-files"
+          type="file"
+          accept="image/*"
+          capture="environment"
+          multiple
+          className="hidden"
+          onChange={onSelect}
+        />
+
+        {queue.length > 0 && (
+          <div className="space-y-3">
+            {queue.map((item, idx) => (
+              <div key={idx} className="flex gap-3 bg-muted/20 rounded p-3">
+                <img src={item.preview} alt="" className="h-20 w-20 rounded object-cover shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Textarea
+                    value={item.caption}
+                    onChange={(e) => updateCaption(idx, e.target.value)}
+                    placeholder="Caption (optional)"
+                    rows={2}
+                  />
+                </div>
+                <Button size="sm" variant="ghost" onClick={() => removeAt(idx)}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+            <Button onClick={submitAll} disabled={uploading} className="w-full" size="lg">
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+              {uploading ? "Uploading…" : `Submit ${queue.length} photo${queue.length === 1 ? "" : "s"}`}
+            </Button>
+          </div>
+        )}
+
+        {uploadedCount > 0 && (
+          <p className="text-xs text-center text-foreground/50">
+            {uploadedCount} photo{uploadedCount === 1 ? "" : "s"} submitted this session — thank you!
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }

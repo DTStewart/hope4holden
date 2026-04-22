@@ -29,6 +29,9 @@ import AuctionPay from "./pages/AuctionPay";
 import Scorecard from "./pages/Scorecard";
 import Leaderboard from "./pages/Leaderboard";
 import DayOf from "./pages/DayOf";
+import LiveDashboard from "./pages/LiveDashboard";
+import SaveTheDate from "./pages/SaveTheDate";
+import AdminMobile from "./pages/admin/AdminMobile";
 import TeamManage from "./pages/TeamManage";
 import TeamPublic from "./pages/TeamPublic";
 import Privacy from "./pages/Privacy";
@@ -67,6 +70,7 @@ const App = () => (
                 <Route path="/day-of" element={<DayOf />} />
                 <Route path="/team/manage/:token" element={<TeamManage />} />
                 <Route path="/team/:slug" element={<TeamPublic />} />
+                <Route path="/save-the-date" element={<SaveTheDate />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/terms" element={<Terms />} />
               </Route>
@@ -79,6 +83,15 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/mobile"
+                element={
+                  <ProtectedRoute>
+                    <AdminMobile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/live" element={<LiveDashboard />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/sponsor-upload/:token" element={<SponsorUpload />} />
               <Route path="/sponsor-invite/:token" element={<Layout />}>

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image, ShoppingCart, ClipboardList, UtensilsCrossed, Send, Megaphone, Gavel, Trophy } from "lucide-react";
+import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image, ShoppingCart, ClipboardList, UtensilsCrossed, Send, Megaphone, Gavel, Trophy, Tv, Camera, CalendarDays, PartyPopper } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import RegistrationsTab from "./RegistrationsTab";
@@ -20,12 +20,25 @@ import EmailsTab from "./EmailsTab";
 import BulkEmailTab from "./BulkEmailTab";
 import AuctionTab from "./AuctionTab";
 import ScoresTab from "./ScoresTab";
+import LiveDashboardTab from "./LiveDashboardTab";
+import UGCTab from "./UGCTab";
+import PostEventTab from "./PostEventTab";
+import NextYearListTab from "./NextYearListTab";
 import DashboardStats from "./DashboardStats";
 
 export default function AdminDashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // On narrow viewports, auto-redirect to the mobile admin page. Honored only
+  // on first load; if the user navigates back from /admin/mobile they land here.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.innerWidth <= 640 && !sessionStorage.getItem("skip-admin-mobile-redirect")) {
+      navigate("/admin/mobile", { replace: true });
+    }
+  }, [navigate]);
 
   // Session-expiry guard: verify the auth session before any tab loads,
   // and re-check periodically. If expired/missing, toast + redirect.
@@ -79,7 +92,7 @@ export default function AdminDashboard() {
       <div className="p-6 max-w-7xl mx-auto">
         <DashboardStats />
         <Tabs defaultValue="registrations" className="space-y-6">
-          <TabsList className="grid grid-cols-4 md:grid-cols-[repeat(14,minmax(0,1fr))] w-full">
+          <TabsList className="grid grid-cols-4 md:grid-cols-[repeat(18,minmax(0,1fr))] w-full">
             <TabsTrigger value="registrations" className="text-xs md:text-sm">
               <Users className="h-4 w-4 mr-1 hidden md:inline" />
               Registrations
@@ -136,6 +149,22 @@ export default function AdminDashboard() {
               <Trophy className="h-4 w-4 mr-1 hidden md:inline" />
               Scores
             </TabsTrigger>
+            <TabsTrigger value="live" className="text-xs md:text-sm">
+              <Tv className="h-4 w-4 mr-1 hidden md:inline" />
+              Live
+            </TabsTrigger>
+            <TabsTrigger value="ugc" className="text-xs md:text-sm">
+              <Camera className="h-4 w-4 mr-1 hidden md:inline" />
+              UGC
+            </TabsTrigger>
+            <TabsTrigger value="post-event" className="text-xs md:text-sm">
+              <PartyPopper className="h-4 w-4 mr-1 hidden md:inline" />
+              Post-Event
+            </TabsTrigger>
+            <TabsTrigger value="next-year" className="text-xs md:text-sm">
+              <CalendarDays className="h-4 w-4 mr-1 hidden md:inline" />
+              2027
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="registrations"><RegistrationsTab /></TabsContent>
@@ -152,6 +181,10 @@ export default function AdminDashboard() {
           <TabsContent value="bulk-email"><BulkEmailTab /></TabsContent>
           <TabsContent value="auction"><AuctionTab /></TabsContent>
           <TabsContent value="scores"><ScoresTab /></TabsContent>
+          <TabsContent value="live"><LiveDashboardTab /></TabsContent>
+          <TabsContent value="ugc"><UGCTab /></TabsContent>
+          <TabsContent value="post-event"><PostEventTab /></TabsContent>
+          <TabsContent value="next-year"><NextYearListTab /></TabsContent>
         </Tabs>
       </div>
     </div>
