@@ -521,6 +521,7 @@ export type Database = {
           stripe_session_id: string | null
           team_name: string
           updated_at: string
+          score_token: string
         }
         Insert: {
           business_name?: string | null
@@ -538,6 +539,7 @@ export type Database = {
           stripe_session_id?: string | null
           team_name: string
           updated_at?: string
+          score_token?: string
         }
         Update: {
           business_name?: string | null
@@ -555,8 +557,56 @@ export type Database = {
           stripe_session_id?: string | null
           team_name?: string
           updated_at?: string
+          score_token?: string
         }
         Relationships: []
+      }
+      scorecard_submissions: {
+        Row: {
+          id: string
+          registration_id: string
+          final_score: number
+          photo_url: string
+          submitter_note: string | null
+          verified: boolean
+          disqualified: boolean
+          admin_note: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          registration_id: string
+          final_score: number
+          photo_url: string
+          submitter_note?: string | null
+          verified?: boolean
+          disqualified?: boolean
+          admin_note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          registration_id?: string
+          final_score?: number
+          photo_url?: string
+          submitter_note?: string | null
+          verified?: boolean
+          disqualified?: boolean
+          admin_note?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scorecard_submissions_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: true
+            referencedRelation: "registrations"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       settings: {
         Row: {
@@ -897,6 +947,35 @@ export type Database = {
           paid_at: string | null
           created_at: string
         }[]
+      }
+      lookup_team_by_score_token: {
+        Args: { _token: string }
+        Returns: {
+          registration_id: string
+          team_name: string
+          business_name: string | null
+          already_submitted: boolean
+        }[]
+      }
+      get_leaderboard: {
+        Args: Record<string, never>
+        Returns: {
+          registration_id: string
+          team_name: string
+          business_name: string | null
+          final_score: number
+          photo_url: string
+          submitted_at: string
+        }[]
+      }
+      submit_scorecard: {
+        Args: {
+          _token: string
+          _final_score: number
+          _photo_url: string
+          _submitter_note: string | null
+        }
+        Returns: Json
       }
       decrement_spots: { Args: never; Returns: number }
       delete_email: {

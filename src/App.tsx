@@ -26,6 +26,8 @@ import SponsorInvite from "./pages/SponsorInvite";
 import Auction from "./pages/Auction";
 import AuctionMyWins from "./pages/AuctionMyWins";
 import AuctionPay from "./pages/AuctionPay";
+import Scorecard from "./pages/Scorecard";
+import Leaderboard from "./pages/Leaderboard";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
@@ -57,6 +59,8 @@ const App = () => (
                 <Route path="/auction" element={<Auction />} />
                 <Route path="/auction/my-wins" element={<AuctionMyWins />} />
                 <Route path="/auction/pay/:token" element={<AuctionPay />} />
+                <Route path="/score/:token" element={<Scorecard />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/terms" element={<Terms />} />
               </Route>
