@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { loadStripe, type Stripe as StripeJs } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
-import { anonSupabase } from "@/integrations/supabase/anonClient";
+import { bidderSupabase } from "@/integrations/supabase/bidderClient";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -9,14 +9,14 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { type BidderSession, getStoredSessionToken, clearStoredSessionToken } from "@/hooks/useBidderSession";
+import { type BidderProfile } from "@/hooks/useBidderSession";
 import { Loader2, CreditCard, LogOut, CheckCircle, Gavel } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  bidder: BidderSession;
+  bidder: BidderProfile;
   onChanged: () => void;
   onSignedOut: () => void;
 }
@@ -33,19 +33,14 @@ export function BidderAccountDialog({ open, onOpenChange, bidder, onChanged, onS
   const handleAttendingChange = async (v: boolean) => {
     setAttending(v);
     setSavingAttending(true);
-    const token = getStoredSessionToken();
-    if (!token) return;
     try {
-      const { error } = await anonSupabase.rpc("update_bidder_attending", {
-        _session_token: token,
-        _attending: v,
-      });
+      const { error } = await bidderSupabase.rpc("update_bidder_attending", { _attending: v });
       if (error) throw error;
       onChanged();
       toast({ title: v ? "We'll plan Thursday pickup" : "Pickup preference saved" });
     } catch (err: any) {
       toast({ title: "Couldn't save", description: err.message, variant: "destructive" });
-      setAttending(!v); // revert visual
+      setAttending(!v);
     } finally {
       setSavingAttending(false);
     }
@@ -54,22 +49,14 @@ export function BidderAccountDialog({ open, onOpenChange, bidder, onChanged, onS
   const startChangeCard = async () => {
     setChangingCard(true);
     try {
-      const token = getStoredSessionToken();
-      if (!token) throw new Error("No session");
-      // Re-use the register endpoint; passing sessionToken + existing email triggers
-      // a fresh SetupIntent for the existing bidder without creating duplicates.
-      const { data, error } = await anonSupabase.functions.invoke("auction-register-bidder", {
-        body: {
-          email: bidder.email,
-          phone: bidder.phone,
-          displayName: bidder.display_name,
-          attendingEvent: attending,
-          sessionToken: token,
-        },
+      const { data, error } = await bidderSupabase.functions.invoke("auction-register-bidder", {
+        body: {},
       });
       if (error) throw error;
       const payload = data as any;
-      if (!payload?.clientSecret || !payload?.publishableKey) throw new Error("Missing Stripe setup data");
+      if (!payload?.clientSecret || !payload?.publishableKey) {
+        throw new Error("Missing Stripe setup data");
+      }
       setClientSecret(payload.clientSecret);
       setPublishableKey(payload.publishableKey);
       setStripePromise(loadStripe(payload.publishableKey));
@@ -79,10 +66,13 @@ export function BidderAccountDialog({ open, onOpenChange, bidder, onChanged, onS
     }
   };
 
-  const handleSignOut = () => {
-    clearStoredSessionToken();
-    onSignedOut();
-    onOpenChange(false);
+  const handleSignOut = async () => {
+    try {
+      await bidderSupabase.auth.signOut();
+    } finally {
+      onSignedOut();
+      onOpenChange(false);
+    }
   };
 
   return (
@@ -100,7 +90,9 @@ export function BidderAccountDialog({ open, onOpenChange, bidder, onChanged, onS
             <div>
               <span className="text-muted-foreground">Payment method:</span>{" "}
               {bidder.has_payment_method ? (
-                <span className="inline-flex items-center gap-1 text-primary"><CheckCircle className="h-3 w-3" /> Card on file</span>
+                <span className="inline-flex items-center gap-1 text-primary">
+                  <CheckCircle className="h-3 w-3" /> Card on file
+                </span>
               ) : (
                 <span className="text-destructive">None — add a card to bid</span>
               )}
@@ -120,7 +112,6 @@ export function BidderAccountDialog({ open, onOpenChange, bidder, onChanged, onS
             </Label>
           </div>
 
-          {/* View my wins */}
           <Button asChild variant="outline" className="w-full">
             <Link to="/auction/my-wins" onClick={() => onOpenChange(false)}>
               <Gavel className="h-4 w-4 mr-2" />
@@ -128,7 +119,6 @@ export function BidderAccountDialog({ open, onOpenChange, bidder, onChanged, onS
             </Link>
           </Button>
 
-          {/* Change card */}
           {!changingCard && (
             <Button variant="outline" className="w-full" onClick={startChangeCard}>
               <CreditCard className="h-4 w-4 mr-2" />
@@ -161,7 +151,7 @@ export function BidderAccountDialog({ open, onOpenChange, bidder, onChanged, onS
           )}
 
           <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4 mr-2" /> Sign out on this device
+            <LogOut className="h-4 w-4 mr-2" /> Sign out
           </Button>
         </div>
       </DialogContent>
@@ -194,11 +184,9 @@ function CardForm({ onSaved, onCancel }: { onSaved: () => void; onCancel: () => 
       const paymentMethodId = typeof setupIntent.payment_method === "string"
         ? setupIntent.payment_method
         : (setupIntent.payment_method as any).id;
-      const token = getStoredSessionToken();
-      if (!token) throw new Error("No session");
-      const { data: attached, error: attachErr } = await anonSupabase.rpc(
+      const { data: attached, error: attachErr } = await bidderSupabase.rpc(
         "attach_bidder_payment_method",
-        { _session_token: token, _payment_method_id: paymentMethodId }
+        { _payment_method_id: paymentMethodId }
       );
       if (attachErr || !attached) throw attachErr || new Error("Attach failed");
       toast({ title: "Payment method updated" });

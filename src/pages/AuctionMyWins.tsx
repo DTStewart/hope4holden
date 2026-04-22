@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { anonSupabase } from "@/integrations/supabase/anonClient";
+import { bidderSupabase } from "@/integrations/supabase/bidderClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Gavel, ExternalLink, ArrowLeft } from "lucide-react";
-import { getStoredSessionToken } from "@/hooks/useBidderSession";
+import { useBidderSession } from "@/hooks/useBidderSession";
 
 type MyInvoice = {
   id: string;
@@ -34,22 +34,19 @@ function formatDate(iso: string | null): string {
 
 export default function AuctionMyWins() {
   const navigate = useNavigate();
+  const { session, loading: sessionLoading } = useBidderSession();
   const [invoices, setInvoices] = useState<MyInvoice[] | null>(null);
   const [loading, setLoading] = useState(true);
-  const [notSignedIn, setNotSignedIn] = useState(false);
 
   useEffect(() => {
-    const token = getStoredSessionToken();
-    if (!token) {
-      setNotSignedIn(true);
+    if (sessionLoading) return;
+    if (!session) {
       setLoading(false);
       return;
     }
     (async () => {
       try {
-        const { data, error } = await anonSupabase.rpc("my_auction_invoices", {
-          _session_token: token,
-        });
+        const { data, error } = await bidderSupabase.rpc("my_auction_invoices");
         if (error) throw error;
         setInvoices((data as MyInvoice[]) || []);
       } catch (err) {
@@ -59,9 +56,9 @@ export default function AuctionMyWins() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [session, sessionLoading]);
 
-  if (loading) {
+  if (sessionLoading || loading) {
     return (
       <div className="section-light">
         <div className="container py-20 md:py-28 text-center">
@@ -71,14 +68,14 @@ export default function AuctionMyWins() {
     );
   }
 
-  if (notSignedIn) {
+  if (!session) {
     return (
       <div className="section-light">
         <div className="container py-20 md:py-28 max-w-lg mx-auto text-center space-y-4">
           <Gavel className="h-14 w-14 text-muted-foreground mx-auto" />
           <h1 className="font-heading font-extrabold text-3xl text-foreground">Not signed in</h1>
           <p className="text-foreground/60">
-            To see your auction activity, go to the auction and sign in with the email you used to bid.
+            Sign in on the auction page to see your wins and payment status.
           </p>
           <Button onClick={() => navigate("/auction")}>Go to the auction</Button>
         </div>

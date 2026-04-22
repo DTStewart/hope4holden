@@ -22,9 +22,10 @@ export type Database = {
           display_name: string
           stripe_customer_id: string | null
           payment_method_id: string | null
-          session_token: string
+          session_token: string | null
           phone_verified_at: string | null
           attending_event: boolean
+          auth_user_id: string | null
           created_at: string
           updated_at: string
         }
@@ -35,9 +36,10 @@ export type Database = {
           display_name: string
           stripe_customer_id?: string | null
           payment_method_id?: string | null
-          session_token: string
+          session_token?: string | null
           phone_verified_at?: string | null
           attending_event?: boolean
+          auth_user_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -48,9 +50,10 @@ export type Database = {
           display_name?: string
           stripe_customer_id?: string | null
           payment_method_id?: string | null
-          session_token?: string
+          session_token?: string | null
           phone_verified_at?: string | null
           attending_event?: boolean
+          auth_user_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -892,12 +895,12 @@ export type Database = {
     }
     Functions: {
       attach_bidder_payment_method: {
-        Args: { _session_token: string; _payment_method_id: string }
+        Args: { _payment_method_id: string }
         Returns: boolean
       }
       decrement_sponsor_slots: { Args: { _tier_id: string }; Returns: number }
-      get_bidder_by_session: {
-        Args: { _session_token: string }
+      get_my_bidder_profile: {
+        Args: Record<string, never>
         Returns: {
           id: string
           email: string
@@ -908,7 +911,7 @@ export type Database = {
         }[]
       }
       update_bidder_attending: {
-        Args: { _session_token: string; _attending: boolean }
+        Args: { _attending: boolean }
         Returns: boolean
       }
       admin_clear_bidder_payment_method: {
@@ -916,7 +919,7 @@ export type Database = {
         Returns: boolean
       }
       place_bid: {
-        Args: { _session_token: string; _item_id: string; _amount: number }
+        Args: { _item_id: string; _amount: number }
         Returns: Json
       }
       lookup_auction_invoice_by_token: {
@@ -936,7 +939,7 @@ export type Database = {
         Returns: Json
       }
       my_auction_invoices: {
-        Args: { _session_token: string }
+        Args: Record<string, never>
         Returns: {
           id: string
           item_id: string

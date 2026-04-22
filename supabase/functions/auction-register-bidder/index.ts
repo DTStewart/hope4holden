@@ -7,156 +7,171 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-function randomToken(bytes = 32): string {
-  const arr = new Uint8Array(bytes)
-  crypto.getRandomValues(arr)
-  return Array.from(arr).map((b) => b.toString(16).padStart(2, '0')).join('')
+function parseJwtClaims(token: string): Record<string, unknown> | null {
+  const parts = token.split('.')
+  if (parts.length < 2) return null
+  try {
+    const payload = parts[1]
+      .replaceAll('-', '+')
+      .replaceAll('_', '/')
+      .padEnd(Math.ceil(parts[1].length / 4) * 4, '=')
+    return JSON.parse(atob(payload))
+  } catch {
+    return null
+  }
 }
 
-// Very light normalization — not strict E.164 validation.
 function normalizePhone(raw: string): string {
-  const digits = raw.replace(/[^\d+]/g, '')
-  return digits.startsWith('+') ? digits : digits
+  return raw.replace(/[^\d+]/g, '')
 }
 
+/**
+ * Called after a bidder signs in via OAuth / magic link to either (a) create
+ * their auction_bidders row on first sign-in or (b) refresh their Stripe
+ * SetupIntent so they can add / update a card.
+ *
+ * Requires the caller's Supabase Auth JWT in the Authorization header.
+ * Reads email from that JWT; phone + displayName + attendingEvent come from
+ * the request body (required on first sign-in; ignored on subsequent calls
+ * where the row already exists).
+ */
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
 
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
   const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-
-  // Auction uses its own Stripe keys, separate from the main site's checkout.
-  // This lets the auction run on TEST keys during dev while the live website
-  // keeps accepting real donations/registrations on the LIVE keys.
-  // Falls back to STRIPE_SECRET_KEY / STRIPE_PUBLISHABLE_KEY if dedicated
-  // auction vars aren't set (so a production swap is one env-var change).
   const STRIPE_SECRET =
     Deno.env.get('STRIPE_AUCTION_SECRET_KEY') || Deno.env.get('STRIPE_SECRET_KEY')
   const STRIPE_PUBLISHABLE =
     Deno.env.get('STRIPE_AUCTION_PUBLISHABLE_KEY') || Deno.env.get('STRIPE_PUBLISHABLE_KEY')
 
   if (!STRIPE_SECRET || !STRIPE_PUBLISHABLE) {
-    console.error('Missing Stripe env vars for auction')
     return new Response(JSON.stringify({ error: 'Auction payment system not configured' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 
-  let email = ''
-  let phone = ''
-  let displayName = ''
-  let existingSessionToken = ''
-  let attendingEvent = false
-  try {
-    const body = await req.json()
-    email = String(body.email || '').trim().toLowerCase()
-    phone = normalizePhone(String(body.phone || ''))
-    displayName = String(body.displayName || '').trim()
-    existingSessionToken = String(body.sessionToken || '').trim()
-    attendingEvent = Boolean(body.attendingEvent)
-  } catch {
-    return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
-      status: 400,
+  // Require a signed-in bidder JWT
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return new Response(JSON.stringify({ error: 'Not signed in' }), {
+      status: 401,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
+  const jwt = authHeader.slice('Bearer '.length).trim()
+  const claims = parseJwtClaims(jwt)
+  const authUserId = typeof claims?.sub === 'string' ? claims.sub : null
+  const jwtEmail = typeof claims?.email === 'string' ? (claims.email as string).toLowerCase() : null
 
-  if (!email.includes('@') || phone.length < 7 || displayName.length < 2) {
-    return new Response(
-      JSON.stringify({ error: 'Email, phone, and display name are required.' }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+  if (!authUserId || !jwtEmail || claims?.role !== 'authenticated') {
+    return new Response(JSON.stringify({ error: 'Invalid auth' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
   }
 
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY)
   const stripe = new Stripe(STRIPE_SECRET, { apiVersion: '2025-08-27.basil' })
 
-  // Find existing bidder either by session token (fresh device with same account) or email
-  let bidder: any | null = null
-  if (existingSessionToken) {
-    const { data } = await supabase
-      .from('auction_bidders')
-      .select('*')
-      .eq('session_token', existingSessionToken)
-      .maybeSingle()
-    bidder = data
+  let phone = ''
+  let displayName = ''
+  let attendingEvent = false
+  try {
+    const body = await req.json().catch(() => ({}))
+    phone = normalizePhone(String(body.phone || ''))
+    displayName = String(body.displayName || '').trim()
+    attendingEvent = Boolean(body.attendingEvent)
+  } catch {
+    /* body is optional on returning calls */
   }
+
+  // Look up existing bidder by auth_user_id first, then by email.
+  let { data: bidder } = await supabase
+    .from('auction_bidders')
+    .select('*')
+    .eq('auth_user_id', authUserId)
+    .maybeSingle()
+
   if (!bidder) {
-    const { data } = await supabase
+    const { data: byEmail } = await supabase
       .from('auction_bidders')
       .select('*')
-      .ilike('email', email)
+      .ilike('email', jwtEmail)
       .maybeSingle()
-    bidder = data
+    bidder = byEmail
+
+    // If we matched by email (legacy pre-auth bidder or admin-created), link auth.
+    if (bidder && !bidder.auth_user_id) {
+      await supabase
+        .from('auction_bidders')
+        .update({ auth_user_id: authUserId })
+        .eq('id', bidder.id)
+      bidder.auth_user_id = authUserId
+    }
   }
 
   let customerId: string
-  let sessionToken: string
 
   if (bidder) {
-    // Update fields in case they changed
-    await supabase
-      .from('auction_bidders')
-      .update({ phone, display_name: displayName, attending_event: attendingEvent })
-      .eq('id', bidder.id)
     customerId = bidder.stripe_customer_id
-    sessionToken = bidder.session_token
-
+    // If phone/name/attending were provided, update them (the setup dialog only
+    // sends these on first sign-in — otherwise they're left blank, treat as no-op).
+    const patch: Record<string, unknown> = {}
+    if (phone && phone.length >= 7) patch.phone = phone
+    if (displayName && displayName.length >= 2) patch.display_name = displayName
+    if (typeof attendingEvent === 'boolean') patch.attending_event = attendingEvent
+    if (Object.keys(patch).length > 0) {
+      await supabase.from('auction_bidders').update(patch).eq('id', bidder.id)
+    }
     if (!customerId) {
-      const customer = await stripe.customers.create({ email, phone, name: displayName })
+      const customer = await stripe.customers.create({
+        email: jwtEmail,
+        phone: bidder.phone || phone,
+        name: bidder.display_name || displayName,
+        metadata: { bidder_id: bidder.id, auth_user_id: authUserId },
+      })
       customerId = customer.id
       await supabase
         .from('auction_bidders')
         .update({ stripe_customer_id: customerId })
         .eq('id', bidder.id)
-    } else {
-      // Keep Stripe customer fresh
-      await stripe.customers.update(customerId, { email, phone, name: displayName })
     }
   } else {
-    // Create new bidder + Stripe customer
-    const customer = await stripe.customers.create({ email, phone, name: displayName })
+    // First sign-in: need phone + display name to create the row.
+    if (phone.length < 7 || displayName.length < 2) {
+      return new Response(
+        JSON.stringify({ error: 'setup_required', message: 'Phone and display name are required for first-time setup.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const customer = await stripe.customers.create({
+      email: jwtEmail,
+      phone,
+      name: displayName,
+      metadata: { auth_user_id: authUserId },
+    })
     customerId = customer.id
-    sessionToken = randomToken(32)
 
     const { error: insertErr } = await supabase.from('auction_bidders').insert({
-      email,
+      email: jwtEmail,
       phone,
       display_name: displayName,
       stripe_customer_id: customerId,
-      session_token: sessionToken,
       attending_event: attendingEvent,
+      auth_user_id: authUserId,
     })
     if (insertErr) {
-      // Email uniqueness race — look them up and reuse
-      if (insertErr.code === '23505') {
-        const { data } = await supabase
-          .from('auction_bidders')
-          .select('*')
-          .ilike('email', email)
-          .maybeSingle()
-        if (data) {
-          sessionToken = data.session_token
-          customerId = data.stripe_customer_id
-        } else {
-          console.error('Bidder insert race — could not recover:', insertErr)
-          return new Response(JSON.stringify({ error: 'Registration failed, please try again.' }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          })
-        }
-      } else {
-        console.error('Bidder insert failed:', insertErr)
-        return new Response(JSON.stringify({ error: 'Registration failed, please try again.' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        })
-      }
+      console.error('Bidder insert failed:', insertErr)
+      return new Response(JSON.stringify({ error: 'Registration failed' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
   }
 
-  // Fresh SetupIntent — lets the frontend collect / update the card on file
   const setupIntent = await stripe.setupIntents.create({
     customer: customerId,
     payment_method_types: ['card'],
@@ -165,7 +180,6 @@ Deno.serve(async (req) => {
 
   return new Response(
     JSON.stringify({
-      sessionToken,
       clientSecret: setupIntent.client_secret,
       publishableKey: STRIPE_PUBLISHABLE,
       customerId,

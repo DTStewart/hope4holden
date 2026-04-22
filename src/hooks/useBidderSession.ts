@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { anonSupabase } from "@/integrations/supabase/anonClient";
+import type { Session } from "@supabase/supabase-js";
+import { bidderSupabase } from "@/integrations/supabase/bidderClient";
 
-const STORAGE_KEY = "h4h_bidder_session";
-
-export type BidderSession = {
+export type BidderProfile = {
   id: string;
   email: string;
   phone: string;
@@ -12,65 +11,67 @@ export type BidderSession = {
   attending_event: boolean;
 };
 
-export function getStoredSessionToken(): string | null {
-  try {
-    return localStorage.getItem(STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
+export type BidderSessionState = {
+  session: Session | null;
+  profile: BidderProfile | null;
+  loading: boolean;
+  needsSetup: boolean;
+};
 
-export function setStoredSessionToken(token: string) {
-  try {
-    localStorage.setItem(STORAGE_KEY, token);
-  } catch {
-    /* ignore */
-  }
-}
-
-export function clearStoredSessionToken() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    /* ignore */
-  }
-}
-
+/**
+ * Tracks the currently signed-in bidder's Supabase Auth session AND their
+ * auction_bidders profile. Returns { session, profile, loading, needsSetup }.
+ *
+ * needsSetup === true means they've signed in but haven't provided phone /
+ * display name / card yet (first-time flow).
+ */
 export function useBidderSession() {
-  const [bidder, setBidder] = useState<BidderSession | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [state, setState] = useState<BidderSessionState>({
+    session: null,
+    profile: null,
+    loading: true,
+    needsSetup: false,
+  });
 
-  const refresh = useCallback(async () => {
-    const token = getStoredSessionToken();
-    if (!token) {
-      setBidder(null);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
+  const fetchProfile = useCallback(async (session: Session | null): Promise<BidderProfile | null> => {
+    if (!session) return null;
     try {
-      const { data, error } = await anonSupabase.rpc("get_bidder_by_session", {
-        _session_token: token,
-      });
+      const { data, error } = await bidderSupabase.rpc("get_my_bidder_profile");
       if (error) throw error;
       const first = Array.isArray(data) ? data[0] : data;
-      if (!first) {
-        clearStoredSessionToken();
-        setBidder(null);
-      } else {
-        setBidder(first as BidderSession);
-      }
+      return (first as BidderProfile) || null;
     } catch (err) {
-      console.warn("[useBidderSession] lookup failed:", err);
-      setBidder(null);
-    } finally {
-      setLoading(false);
+      console.warn("[useBidderSession] profile lookup failed:", err);
+      return null;
     }
   }, []);
 
+  const refresh = useCallback(async () => {
+    const { data: { session } } = await bidderSupabase.auth.getSession();
+    const profile = await fetchProfile(session);
+    setState({
+      session,
+      profile,
+      loading: false,
+      needsSetup: !!session && !profile,
+    });
+  }, [fetchProfile]);
+
   useEffect(() => {
     refresh();
-  }, [refresh]);
+    const { data: listener } = bidderSupabase.auth.onAuthStateChange(async (_event, session) => {
+      const profile = await fetchProfile(session);
+      setState({
+        session,
+        profile,
+        loading: false,
+        needsSetup: !!session && !profile,
+      });
+    });
+    return () => {
+      listener?.subscription.unsubscribe();
+    };
+  }, [refresh, fetchProfile]);
 
-  return { bidder, loading, refresh };
+  return { ...state, refresh };
 }

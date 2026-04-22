@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { anonSupabase } from "@/integrations/supabase/anonClient";
+import { bidderSupabase } from "@/integrations/supabase/bidderClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,7 +7,6 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { getStoredSessionToken } from "@/hooks/useBidderSession";
 import { Gavel, Loader2 } from "lucide-react";
 
 interface Props {
@@ -27,11 +26,8 @@ interface Props {
   onBidPlaced: () => void;
 }
 
-// CRA split-receipting: eligible receipt amount = bid - FMV, only when
-// FMV is ≤ 80% of the bid (i.e. bid ≥ 1.25 × FMV).
 function potentialReceipt(bid: number, fmv: number): number {
-  if (fmv <= 0) return 0;
-  if (bid <= 0) return 0;
+  if (fmv <= 0 || bid <= 0) return 0;
   if (fmv / bid > 0.8) return 0;
   return bid - fmv;
 }
@@ -46,9 +42,7 @@ export function PlaceBidDialog({
   const minNext = item ? (currentBid != null ? currentBid + increment : item.starting_bid) : 0;
 
   useEffect(() => {
-    if (open && item) {
-      setAmount(String(minNext));
-    }
+    if (open && item) setAmount(String(minNext));
   }, [open, item, minNext]);
 
   const submit = async (e: React.FormEvent) => {
@@ -59,16 +53,9 @@ export function PlaceBidDialog({
       toast({ title: "Bid too low", description: `Minimum next bid is $${minNext.toLocaleString()}.`, variant: "destructive" });
       return;
     }
-    const token = getStoredSessionToken();
-    if (!token) {
-      toast({ title: "Please register to bid", variant: "destructive" });
-      onOpenChange(false);
-      return;
-    }
     setSubmitting(true);
     try {
-      const { data, error } = await anonSupabase.rpc("place_bid", {
-        _session_token: token,
+      const { data, error } = await bidderSupabase.rpc("place_bid", {
         _item_id: item.id,
         _amount: numeric,
       });
@@ -76,7 +63,8 @@ export function PlaceBidDialog({
       const result = data as any;
       if (!result?.ok) {
         const errorMessages: Record<string, string> = {
-          invalid_session: "Your session expired. Please register again.",
+          not_signed_in: "Please sign in to bid.",
+          profile_not_set_up: "Finish your one-time setup before bidding.",
           payment_method_missing: "Please add a card to your account before bidding.",
           item_not_found: "This item is no longer available.",
           item_not_open: "Bidding on this item has closed.",
@@ -146,25 +134,21 @@ export function PlaceBidDialog({
             </p>
           </div>
 
-          {/* Pickup compatibility warning */}
           {!bidderAttending && item.pickup_option === "thursday_dinner" && (
             <div className="rounded bg-destructive/5 border border-destructive/20 p-3 text-sm text-foreground/80">
               <strong>Heads up:</strong> this item's primary pickup is Thursday dinner. Since you're
               not attending, we'll reach out to arrange an alternative (pickup in Brandon or shipping
-              at your cost) if you win. Email <a href="mailto:hello@hope4holden.com" className="underline">hello@hope4holden.com</a> with
-              questions before you bid.
+              at your cost) if you win.
             </div>
           )}
 
           {numericAmount > 0 && (
             <div className="rounded bg-accent/10 border border-accent/20 p-3 text-sm space-y-1">
               {receipt > 0 ? (
-                <>
-                  <p className="text-foreground/80">
-                    <strong>${receipt.toLocaleString()}</strong> of this bid may be eligible for a tax receipt*
-                    (the portion above retail value).
-                  </p>
-                </>
+                <p className="text-foreground/80">
+                  <strong>${receipt.toLocaleString()}</strong> of this bid may be eligible for a tax receipt*
+                  (the portion above retail value).
+                </p>
               ) : (
                 <p className="text-foreground/70">
                   Bids of <strong>${receiptThreshold.toLocaleString()}</strong> or more may be eligible for a partial tax receipt*.

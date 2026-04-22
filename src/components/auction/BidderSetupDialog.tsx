@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { loadStripe, type Stripe } from "@stripe/stripe-js";
+import { loadStripe, type Stripe as StripeJs } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
-import { anonSupabase } from "@/integrations/supabase/anonClient";
+import { bidderSupabase } from "@/integrations/supabase/bidderClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,20 +10,19 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { setStoredSessionToken } from "@/hooks/useBidderSession";
 import { Loader2, CreditCard, CheckCircle } from "lucide-react";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onRegistered: () => void;
+  signedInEmail: string;
+  onReady: () => void;
 }
 
 type Step = "info" | "card" | "done";
 
-export function BidderRegistrationDialog({ open, onOpenChange, onRegistered }: Props) {
+export function BidderSetupDialog({ open, onOpenChange, signedInEmail, onReady }: Props) {
   const [step, setStep] = useState<Step>("info");
-  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [attendingEvent, setAttendingEvent] = useState(false);
@@ -31,18 +30,14 @@ export function BidderRegistrationDialog({ open, onOpenChange, onRegistered }: P
 
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [publishableKey, setPublishableKey] = useState<string | null>(null);
-  const [sessionToken, setSessionToken] = useState<string | null>(null);
-  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
+  const [stripePromise, setStripePromise] = useState<Promise<StripeJs | null> | null>(null);
 
-  // Reset when dialog opens
   useEffect(() => {
     if (open) {
       setStep("info");
       setClientSecret(null);
       setPublishableKey(null);
-      setSessionToken(null);
       setStripePromise(null);
-      setSubmitting(false);
     }
   }, [open]);
 
@@ -54,30 +49,30 @@ export function BidderRegistrationDialog({ open, onOpenChange, onRegistered }: P
 
   const submitInfo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.includes("@") || phone.trim().length < 7 || displayName.trim().length < 2) {
-      toast({ title: "Please fill in all fields", variant: "destructive" });
+    if (phone.trim().length < 7 || displayName.trim().length < 2) {
+      toast({ title: "Fill in phone and name", variant: "destructive" });
       return;
     }
     setSubmitting(true);
     try {
-      const { data, error } = await anonSupabase.functions.invoke("auction-register-bidder", {
-        body: { email, phone, displayName, attendingEvent },
+      const { data, error } = await bidderSupabase.functions.invoke("auction-register-bidder", {
+        body: { phone, displayName, attendingEvent },
       });
       if (error) throw error;
-      const { sessionToken: st, clientSecret: cs, publishableKey: pk } = data as any;
-      if (!st || !cs || !pk) throw new Error("Registration response missing required fields.");
-      setStoredSessionToken(st);
-      setSessionToken(st);
-      setClientSecret(cs);
-      setPublishableKey(pk);
+      const payload = data as any;
+      if (!payload?.clientSecret || !payload?.publishableKey) {
+        throw new Error("Missing Stripe setup data");
+      }
+      setClientSecret(payload.clientSecret);
+      setPublishableKey(payload.publishableKey);
       setStep("card");
     } catch (err: any) {
-      let description = err?.message || "Please try again.";
+      let description = err?.message || "Try again.";
       try {
         const body = await err?.context?.json?.();
         if (body?.error) description = body.error;
-      } catch { /* keep err.message */ }
-      toast({ title: "Registration failed", description, variant: "destructive" });
+      } catch { /* fall through */ }
+      toast({ title: "Setup failed", description, variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -87,20 +82,20 @@ export function BidderRegistrationDialog({ open, onOpenChange, onRegistered }: P
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Register to bid</DialogTitle>
+          <DialogTitle>One-time setup</DialogTitle>
           <DialogDescription>
-            {step === "info" && "Quick one-time setup. We'll save a card so you can bid with a single tap."}
-            {step === "card" && "Add a card, Apple Pay, or Google Pay. Your card is only charged if you win."}
-            {step === "done" && "You're all set!"}
+            {step === "info" && `Signed in as ${signedInEmail}. A few quick details to complete your profile.`}
+            {step === "card" && "Add a card, Apple Pay, or Google Pay. Only charged if you win."}
+            {step === "done" && "You're set!"}
           </DialogDescription>
         </DialogHeader>
 
         {step === "info" && (
           <form onSubmit={submitInfo} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="reg-name">Display name</Label>
+              <Label htmlFor="setup-name">Display name</Label>
               <Input
-                id="reg-name"
+                id="setup-name"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Shown on leaderboard (e.g., Alex S.)"
@@ -108,20 +103,9 @@ export function BidderRegistrationDialog({ open, onOpenChange, onRegistered }: P
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="reg-email">Email</Label>
+              <Label htmlFor="setup-phone">Phone</Label>
               <Input
-                id="reg-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="reg-phone">Phone</Label>
-              <Input
-                id="reg-phone"
+                id="setup-phone"
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
@@ -131,14 +115,14 @@ export function BidderRegistrationDialog({ open, onOpenChange, onRegistered }: P
             </div>
             <div className="flex items-start gap-2 pt-2">
               <Checkbox
-                id="reg-attending"
+                id="setup-attending"
                 checked={attendingEvent}
                 onCheckedChange={(v) => setAttendingEvent(v === true)}
               />
-              <Label htmlFor="reg-attending" className="text-sm font-normal leading-snug cursor-pointer">
+              <Label htmlFor="setup-attending" className="text-sm font-normal leading-snug cursor-pointer">
                 I'll be at the tournament dinner on Thursday, June 18
                 <span className="block text-xs text-muted-foreground mt-0.5">
-                  Helps us plan pickup — items can be collected that night if you're there.
+                  Helps us plan pickup. You can change this later.
                 </span>
               </Label>
             </div>
@@ -146,22 +130,12 @@ export function BidderRegistrationDialog({ open, onOpenChange, onRegistered }: P
               {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
               Continue to payment
             </Button>
-            <p className="text-xs text-muted-foreground text-center">
-              We'll email + text you outbid alerts and winner details.
-            </p>
           </form>
         )}
 
-        {step === "card" && stripePromise && clientSecret && sessionToken && (
+        {step === "card" && stripePromise && clientSecret && (
           <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: "stripe" } }}>
-            <CardStep
-              sessionToken={sessionToken}
-              onDone={() => {
-                setStep("done");
-                onRegistered();
-                setTimeout(() => onOpenChange(false), 1200);
-              }}
-            />
+            <CardStep onDone={() => { setStep("done"); onReady(); setTimeout(() => onOpenChange(false), 1200); }} />
           </Elements>
         )}
 
@@ -176,7 +150,7 @@ export function BidderRegistrationDialog({ open, onOpenChange, onRegistered }: P
   );
 }
 
-function CardStep({ sessionToken, onDone }: { sessionToken: string; onDone: () => void }) {
+function CardStep({ onDone }: { onDone: () => void }) {
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
@@ -198,24 +172,14 @@ function CardStep({ sessionToken, onDone }: { sessionToken: string; onDone: () =
         toast({ title: "Card not saved yet", description: "Please try again.", variant: "destructive" });
         return;
       }
-
-      // Attach the PaymentMethod id to our bidder record.
       const paymentMethodId = typeof setupIntent.payment_method === "string"
         ? setupIntent.payment_method
         : (setupIntent.payment_method as any).id;
-
-      const { data: attached, error: attachErr } = await anonSupabase.rpc(
+      const { data: attached, error: attachErr } = await bidderSupabase.rpc(
         "attach_bidder_payment_method",
-        { _session_token: sessionToken, _payment_method_id: paymentMethodId }
+        { _payment_method_id: paymentMethodId }
       );
-      if (attachErr || !attached) {
-        toast({
-          title: "Card saved with Stripe but not linked to your account",
-          description: "Please try bidding — if it fails, contact us.",
-          variant: "destructive",
-        });
-        return;
-      }
+      if (attachErr || !attached) throw attachErr || new Error("Attach failed");
       toast({ title: "Card saved" });
       onDone();
     } catch (err: any) {
@@ -232,9 +196,6 @@ function CardStep({ sessionToken, onDone }: { sessionToken: string; onDone: () =
         {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
         Save card
       </Button>
-      <p className="text-xs text-muted-foreground text-center">
-        Your card is saved securely with Stripe. We only charge if you win.
-      </p>
     </form>
   );
 }

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { anonSupabase } from "@/integrations/supabase/anonClient";
+import { bidderSupabase } from "@/integrations/supabase/bidderClient";
 import { Button } from "@/components/ui/button";
-import { Loader2, Gavel, CalendarDays, MapPin, CheckCircle } from "lucide-react";
+import { Loader2, Gavel, CalendarDays, MapPin, CheckCircle, LogIn } from "lucide-react";
 import { useBidderSession } from "@/hooks/useBidderSession";
-import { BidderRegistrationDialog } from "@/components/auction/BidderRegistrationDialog";
+import { SignInDialog } from "@/components/auction/SignInDialog";
+import { BidderSetupDialog } from "@/components/auction/BidderSetupDialog";
 import { BidderAccountDialog } from "@/components/auction/BidderAccountDialog";
 import { PlaceBidDialog } from "@/components/auction/PlaceBidDialog";
 
@@ -44,8 +45,7 @@ const PICKUP_LABELS: Record<string, string> = {
 
 function formatDate(iso: string | null): string {
   if (!iso) return "";
-  const d = new Date(iso);
-  return d.toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" });
+  return new Date(iso).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" });
 }
 
 export default function Auction() {
@@ -54,28 +54,37 @@ export default function Auction() {
   const [loading, setLoading] = useState(true);
   const [currentBids, setCurrentBids] = useState<Record<string, { amount: number; bidderId: string }>>({});
 
-  const { bidder, refresh: refreshBidder } = useBidderSession();
+  const { session, profile, needsSetup, refresh: refreshBidder } = useBidderSession();
 
-  const [registerOpen, setRegisterOpen] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [bidDialogItem, setBidDialogItem] = useState<Item | null>(null);
+
+  // If the session lands and there's no profile yet, open the setup dialog.
+  useEffect(() => {
+    if (needsSetup) {
+      setSetupOpen(true);
+      setSignInOpen(false);
+    }
+  }, [needsSetup]);
 
   // Initial fetch of settings + items + seed current bids
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const [settingsRes, itemsRes, bidsRes] = await Promise.all([
-        anonSupabase
+        bidderSupabase
           .from("auction_settings")
           .select("is_live, bidding_opens_at, bidding_closes_at, default_bid_increment")
           .eq("id", 1)
           .single(),
-        anonSupabase
+        bidderSupabase
           .from("auction_items")
           .select("id, title, description, donated_by, images, starting_bid, bid_increment, market_value, pickup_option, status, sort_order, ends_at")
           .in("status", ["open", "closed"])
           .order("sort_order", { ascending: true }),
-        anonSupabase
+        bidderSupabase
           .from("auction_bids")
           .select("item_id, amount, bidder_id")
           .order("amount", { ascending: false }),
@@ -98,9 +107,9 @@ export default function Auction() {
     return () => { cancelled = true; };
   }, []);
 
-  // Realtime: listen for new bids and update the current-high map live.
+  // Realtime updates for bids + item timer extensions
   useEffect(() => {
-    const channel = anonSupabase
+    const channel = bidderSupabase
       .channel("auction-bids-live")
       .on(
         "postgres_changes",
@@ -116,7 +125,6 @@ export default function Auction() {
           });
         }
       )
-      // Also pick up admin edits (ends_at extensions, status changes, etc.)
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "auction_items" },
@@ -128,7 +136,7 @@ export default function Auction() {
       .subscribe();
 
     return () => {
-      anonSupabase.removeChannel(channel);
+      bidderSupabase.removeChannel(channel);
     };
   }, []);
 
@@ -139,23 +147,17 @@ export default function Auction() {
   const biddingOpenNow = biddingOpensAt ? Date.now() >= biddingOpensAt.getTime() : false;
 
   const handleBidClick = (item: Item) => {
-    if (!bidder) {
-      setBidDialogItem(item); // remember intent; we'll open bid dialog after registration
-      setRegisterOpen(true);
+    if (!session) {
+      setBidDialogItem(item);
+      setSignInOpen(true);
       return;
     }
-    if (!bidder.has_payment_method) {
-      // Registered but no card — take them back through the card step.
+    if (needsSetup || !profile?.has_payment_method) {
       setBidDialogItem(item);
-      setRegisterOpen(true);
+      setSetupOpen(true);
       return;
     }
     setBidDialogItem(item);
-  };
-
-  const onRegistered = async () => {
-    await refreshBidder();
-    // If they clicked a specific item before registering, the bid dialog pops next.
   };
 
   if (loading) {
@@ -213,9 +215,6 @@ export default function Auction() {
                   </div>
                 </div>
               </div>
-              <p className="text-sm text-foreground/60">
-                Bookmark this page — you'll be able to bid from any device with a saved card.
-              </p>
             </div>
           </div>
         </section>
@@ -223,7 +222,6 @@ export default function Auction() {
     );
   }
 
-  // Live
   return (
     <div>
       <section className="section-dark relative overflow-hidden">
@@ -238,18 +236,30 @@ export default function Auction() {
           {biddingOpenNow && settings.bidding_closes_at && (
             <p className="text-white/70 text-lg">Bidding closes {formatDate(settings.bidding_closes_at)}</p>
           )}
-          {bidder && (
-            <button
-              type="button"
-              onClick={() => setAccountOpen(true)}
-              className="mt-4 inline-flex items-center gap-2 text-xs text-white/80 bg-white/10 hover:bg-white/15 rounded-full px-4 py-1.5 transition-colors"
-            >
-              <CheckCircle className="h-3.5 w-3.5 text-primary" />
-              Signed in as {bidder.display_name}
-              {bidder.has_payment_method ? "" : " — add a card"}
-              <span className="text-white/40 ml-1">· Account</span>
-            </button>
-          )}
+
+          <div className="mt-4 flex items-center justify-center gap-2">
+            {profile ? (
+              <button
+                type="button"
+                onClick={() => setAccountOpen(true)}
+                className="inline-flex items-center gap-2 text-xs text-white/80 bg-white/10 hover:bg-white/15 rounded-full px-4 py-1.5 transition-colors"
+              >
+                <CheckCircle className="h-3.5 w-3.5 text-primary" />
+                Signed in as {profile.display_name}
+                {profile.has_payment_method ? "" : " — add a card"}
+                <span className="text-white/40 ml-1">· Account</span>
+              </button>
+            ) : session && needsSetup ? (
+              <Button onClick={() => setSetupOpen(true)} size="sm" variant="secondary">
+                Finish setup to bid
+              </Button>
+            ) : (
+              <Button onClick={() => setSignInOpen(true)} size="sm" variant="secondary">
+                <LogIn className="h-4 w-4 mr-2" />
+                Sign in to bid
+              </Button>
+            )}
+          </div>
         </div>
       </section>
 
@@ -310,7 +320,7 @@ export default function Auction() {
                       ) : canBid ? (
                         <Button className="w-full mt-4 rounded" onClick={() => handleBidClick(item)}>
                           <Gavel className="h-4 w-4 mr-2" />
-                          {bidder?.has_payment_method ? "Place bid" : "Register & bid"}
+                          {profile?.has_payment_method ? "Place bid" : "Sign in & bid"}
                         </Button>
                       ) : (
                         <Button className="w-full mt-4 rounded" disabled variant="outline">
@@ -326,37 +336,36 @@ export default function Auction() {
         </div>
       </section>
 
-      <BidderRegistrationDialog
-        open={registerOpen}
-        onOpenChange={(o) => {
-          setRegisterOpen(o);
-          // If registration closes while we remembered an item, try to continue to bid dialog.
-          if (!o && bidDialogItem && bidder?.has_payment_method) {
-            // noop — bid dialog will open via onRegistered flow below
-          }
-        }}
-        onRegistered={onRegistered}
-      />
+      <SignInDialog open={signInOpen} onOpenChange={setSignInOpen} />
 
-      {bidDialogItem && bidder?.has_payment_method && (
+      {session?.user?.email && (
+        <BidderSetupDialog
+          open={setupOpen}
+          onOpenChange={setSetupOpen}
+          signedInEmail={session.user.email}
+          onReady={() => refreshBidder()}
+        />
+      )}
+
+      {bidDialogItem && profile?.has_payment_method && (
         <PlaceBidDialog
-          open={!!bidDialogItem && !registerOpen}
+          open={!!bidDialogItem && !signInOpen && !setupOpen}
           onOpenChange={(o) => { if (!o) setBidDialogItem(null); }}
           item={bidDialogItem}
           currentBid={currentBids[bidDialogItem.id]?.amount ?? null}
           defaultIncrement={settings.default_bid_increment}
-          bidderAttending={bidder?.attending_event ?? false}
+          bidderAttending={profile?.attending_event ?? false}
           onBidPlaced={() => {
-            // Realtime subscription will update the card, nothing else to do.
+            // Realtime subscription updates the card, nothing else to do.
           }}
         />
       )}
 
-      {bidder && (
+      {profile && (
         <BidderAccountDialog
           open={accountOpen}
           onOpenChange={setAccountOpen}
-          bidder={bidder}
+          bidder={profile}
           onChanged={() => refreshBidder()}
           onSignedOut={() => refreshBidder()}
         />
