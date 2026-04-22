@@ -6,9 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy, Check, X, Copy, Loader2, ExternalLink, Pencil } from "lucide-react";
+import { Trophy, Check, X, Copy, Loader2, ExternalLink, Pencil, Camera, Plus, Upload } from "lucide-react";
 
 type Submission = {
   id: string;
@@ -44,6 +49,8 @@ export default function ScoresTab() {
   const { toast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [entryTeam, setEntryTeam] = useState<TeamRow | null>(null);
+  const [entryMode, setEntryMode] = useState<"create" | "replace_photo">("create");
 
   const { data: submissions } = useQuery<Submission[]>({
     queryKey: ["admin-scorecards"],
@@ -122,6 +129,16 @@ export default function ScoresTab() {
       () => toast({ title: "Link copied" }),
       () => toast({ title: "Copy failed", variant: "destructive" })
     );
+  };
+
+  const openEntry = (team: TeamRow, mode: "create" | "replace_photo") => {
+    setEntryMode(mode);
+    setEntryTeam(team);
+  };
+
+  const handleEntrySaved = () => {
+    queryClient.invalidateQueries({ queryKey: ["admin-scorecards"] });
+    setEntryTeam(null);
   };
 
   // Join submissions into teams table for the unified view
@@ -252,6 +269,26 @@ export default function ScoresTab() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-1 justify-end">
+                          {!s && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs h-7"
+                              onClick={() => openEntry(row, "create")}
+                            >
+                              <Plus className="h-3.5 w-3.5 mr-1" /> Enter
+                            </Button>
+                          )}
+                          {s && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              title="Replace photo"
+                              onClick={() => openEntry(row, "replace_photo")}
+                            >
+                              <Camera className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="ghost"
@@ -304,6 +341,201 @@ export default function ScoresTab() {
           )}
         </CardContent>
       </Card>
+
+      {entryTeam && (
+        <AdminScoreEntryDialog
+          team={entryTeam}
+          mode={entryMode}
+          existingSubmissionId={submissionByReg.get(entryTeam.id)?.id}
+          onClose={() => setEntryTeam(null)}
+          onSaved={handleEntrySaved}
+        />
+      )}
     </div>
+  );
+}
+
+function AdminScoreEntryDialog({
+  team,
+  mode,
+  existingSubmissionId,
+  onClose,
+  onSaved,
+}: {
+  team: TeamRow;
+  mode: "create" | "replace_photo";
+  existingSubmissionId: string | undefined;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const { toast } = useToast();
+  const [score, setScore] = useState("");
+  const [note, setNote] = useState("");
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const onPhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.size > 10 * 1024 * 1024) {
+      toast({ title: "Photo too large", description: "Please keep it under 10 MB.", variant: "destructive" });
+      return;
+    }
+    setPhoto(f);
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoPreview(URL.createObjectURL(f));
+  };
+
+  const uploadPhoto = async (): Promise<string> => {
+    if (!photo) throw new Error("No photo selected");
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const res = await fetch(
+      `${supabaseUrl}/functions/v1/scorecard-upload?token=${encodeURIComponent(team.score_token)}&filename=${encodeURIComponent(photo.name)}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": photo.type,
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+        body: photo,
+      }
+    );
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || "Photo upload failed");
+    }
+    const { url } = await res.json();
+    return url;
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!photo) {
+      toast({ title: "Add a photo", variant: "destructive" });
+      return;
+    }
+    if (mode === "create") {
+      const numeric = Number(score);
+      if (!numeric || numeric <= 0 || numeric >= 300) {
+        toast({ title: "Score looks off", variant: "destructive" });
+        return;
+      }
+    }
+    setSubmitting(true);
+    try {
+      const photoUrl = await uploadPhoto();
+
+      if (mode === "create") {
+        const { error } = await supabase.from("scorecard_submissions").insert({
+          registration_id: team.id,
+          final_score: Number(score),
+          photo_url: photoUrl,
+          submitter_note: note.trim() || null,
+          verified: true, // admin-entered, trusted by default
+          admin_note: "Entered by admin",
+        });
+        if (error) throw error;
+        toast({ title: "Score saved", description: `${team.team_name}: ${score}` });
+      } else {
+        if (!existingSubmissionId) throw new Error("No existing submission to replace photo for");
+        const { error } = await supabase
+          .from("scorecard_submissions")
+          .update({ photo_url: photoUrl })
+          .eq("id", existingSubmissionId);
+        if (error) throw error;
+        toast({ title: "Photo replaced" });
+      }
+      onSaved();
+    } catch (err: any) {
+      toast({ title: "Failed", description: err.message, variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>
+            {mode === "create" ? `Enter score for ${team.team_name}` : `Replace photo for ${team.team_name}`}
+          </DialogTitle>
+          <DialogDescription>
+            {mode === "create"
+              ? "Admin-entered scores are auto-verified."
+              : "Upload a new scorecard photo."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={submit} className="space-y-4">
+          {mode === "create" && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="adm-score">Final score</Label>
+                <Input
+                  id="adm-score"
+                  type="number"
+                  min={1}
+                  max={299}
+                  value={score}
+                  onChange={(e) => setScore(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="adm-note">Note (optional)</Label>
+                <Textarea
+                  id="adm-note"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  rows={2}
+                  placeholder="Any context — who submitted, special rules, etc."
+                />
+              </div>
+            </>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="adm-photo">Scorecard photo</Label>
+            <label
+              htmlFor="adm-photo"
+              className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 cursor-pointer hover:border-primary transition-colors"
+            >
+              {photoPreview ? (
+                <img src={photoPreview} alt="Preview" className="max-h-48 rounded" />
+              ) : (
+                <>
+                  <Camera className="h-7 w-7 text-muted-foreground mb-1" />
+                  <span className="text-sm text-muted-foreground">Tap to take or upload</span>
+                  <span className="text-xs text-muted-foreground/70 mt-0.5">PNG / JPG / HEIC, max 10 MB</span>
+                </>
+              )}
+            </label>
+            <input
+              id="adm-photo"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={onPhotoSelect}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={submitting || !photo}>
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+              {mode === "create" ? "Save score" : "Replace photo"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
