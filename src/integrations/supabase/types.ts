@@ -85,6 +85,62 @@ export type Database = {
           }
         ]
       }
+      auction_invoices: {
+        Row: {
+          id: string
+          item_id: string
+          bidder_id: string
+          amount: number
+          tax_receipt_amount: number
+          stripe_payment_intent_id: string | null
+          status: string
+          error_message: string | null
+          payment_link_token: string | null
+          paid_at: string | null
+          notified_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          item_id: string
+          bidder_id: string
+          amount: number
+          tax_receipt_amount?: number
+          stripe_payment_intent_id?: string | null
+          status?: string
+          error_message?: string | null
+          payment_link_token?: string | null
+          paid_at?: string | null
+          notified_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          item_id?: string
+          bidder_id?: string
+          amount?: number
+          tax_receipt_amount?: number
+          stripe_payment_intent_id?: string | null
+          status?: string
+          error_message?: string | null
+          payment_link_token?: string | null
+          paid_at?: string | null
+          notified_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auction_invoices_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
+            referencedRelation: "auction_items"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       auction_items: {
         Row: {
           bid_increment: number | null
@@ -800,6 +856,35 @@ export type Database = {
       place_bid: {
         Args: { _session_token: string; _item_id: string; _amount: number }
         Returns: Json
+      }
+      lookup_auction_invoice_by_token: {
+        Args: { _token: string }
+        Returns: {
+          id: string
+          item_id: string
+          item_title: string
+          bidder_display_name: string
+          amount: number
+          status: string
+          stripe_payment_intent_id: string | null
+        }[]
+      }
+      mark_auction_invoice_paid: {
+        Args: { _token: string; _payment_intent_id: string | null }
+        Returns: Json
+      }
+      my_auction_invoices: {
+        Args: { _session_token: string }
+        Returns: {
+          id: string
+          item_id: string
+          item_title: string
+          amount: number
+          status: string
+          payment_link_token: string | null
+          paid_at: string | null
+          created_at: string
+        }[]
       }
       decrement_spots: { Args: never; Returns: number }
       delete_email: {

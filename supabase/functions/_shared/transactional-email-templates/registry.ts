@@ -16,6 +16,8 @@ import { template as sponsorLogoUpload } from './sponsor-logo-upload.tsx'
 import { template as orderConfirmation } from './order-confirmation.tsx'
 import { template as adminNewDinner } from './admin-new-dinner.tsx'
 import { template as bulkAnnouncement } from './bulk-announcement.tsx'
+import { template as auctionWinnerPaid } from './auction-winner-paid.tsx'
+import { template as auctionWinnerActionRequired } from './auction-winner-action-required.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'admin-new-registration': adminNewRegistration,
@@ -25,4 +27,6 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'sponsor-logo-upload': sponsorLogoUpload,
   'order-confirmation': orderConfirmation,
   'bulk-announcement': bulkAnnouncement,
+  'auction-winner-paid': auctionWinnerPaid,
+  'auction-winner-action-required': auctionWinnerActionRequired,
 }

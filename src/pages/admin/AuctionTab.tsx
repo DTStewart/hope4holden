@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Loader2, X, Upload, Save, Gavel } from "lucide-react";
+import AuctionWinnersCard from "./AuctionWinnersCard";
 
 type Item = {
   id: string;
@@ -252,6 +253,9 @@ export default function AuctionTab() {
           )}
         </CardContent>
       </Card>
+
+      {/* Winners & settlement */}
+      <AuctionWinnersCard />
     </div>
   );
 }

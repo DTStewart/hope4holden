@@ -24,6 +24,7 @@ import Unsubscribe from "./pages/Unsubscribe";
 import SponsorUpload from "./pages/SponsorUpload";
 import SponsorInvite from "./pages/SponsorInvite";
 import Auction from "./pages/Auction";
+import AuctionPay from "./pages/AuctionPay";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
@@ -53,6 +54,7 @@ const App = () => (
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/participate" element={<Register />} />
                 <Route path="/auction" element={<Auction />} />
+                <Route path="/auction/pay/:token" element={<AuctionPay />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/terms" element={<Terms />} />
               </Route>
