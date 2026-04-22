@@ -243,10 +243,23 @@ export default function SponsorUpload() {
 
               {/* Add file button */}
               <div>
-                <label htmlFor="logo-file" className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-lg p-6 cursor-pointer hover:border-primary transition-colors">
+                <label
+                  htmlFor="logo-file"
+                  onDragEnter={handleDrag}
+                  onDragOver={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDrop={handleDrop}
+                  className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 cursor-pointer transition-colors ${
+                    dragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary"
+                  }`}
+                >
                   <Plus className="h-8 w-8 text-muted-foreground mb-2" />
-                  <span className="text-sm text-muted-foreground">
-                    {files.length === 0 ? "Click to select files" : "Add more files"}
+                  <span className="text-sm text-muted-foreground text-center">
+                    {dragActive
+                      ? "Drop files here"
+                      : files.length === 0
+                      ? "Drag and drop or click to select files"
+                      : "Drag and drop or click to add more files"}
                   </span>
                 </label>
                 <input id="logo-file" type="file" accept=".png,.jpg,.jpeg,.svg" multiple className="hidden" onChange={handleFileChange} />
