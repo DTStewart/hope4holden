@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Mail, Phone, CheckCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { anonSupabase } from "@/integrations/supabase/anonClient";
 import contactHero from "@/assets/CONTACT-H4H_Bar.jpg";
 
 const SUBJECTS = [
@@ -25,7 +25,7 @@ const ContactPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.from("messages").insert({
+    const { error } = await anonSupabase.from("messages").insert({
       sender_name: form.name,
       sender_email: form.email,
       subject: form.subject,

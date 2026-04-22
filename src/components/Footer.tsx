@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { anonSupabase } from "@/integrations/supabase/anonClient";
 import h4hLogo from "@/assets/h4h-logo.png";
 
 const Footer = () => {
@@ -12,7 +12,7 @@ const Footer = () => {
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    const { error } = await supabase.from("email_subscribers").insert({ email });
+    const { error } = await anonSupabase.from("email_subscribers").insert({ email });
     if (error) {
       if (error.code === "23505") {
         toast({ title: "Already subscribed!", description: "This email is already on our list." });

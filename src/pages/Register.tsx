@@ -13,7 +13,6 @@ import {
   CheckCircle, Users, Clock, UtensilsCrossed, ShoppingCart,
   Star, Award, Flag, Utensils, CreditCard, Droplets, Gift, Heart, Trophy, Package,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { anonSupabase } from "@/integrations/supabase/anonClient";
 
 type RegistrationStatus = "coming_soon" | "open" | "sold_out";
@@ -140,7 +139,7 @@ const ParticipatePage = () => {
 
   const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.from("waitlist").insert({
+    const { error } = await anonSupabase.from("waitlist").insert({
       name: waitlistForm.name, email: waitlistForm.email, phone: waitlistForm.phone, team_name: waitlistForm.teamName,
     });
     if (error) {

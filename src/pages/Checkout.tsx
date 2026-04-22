@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { anonSupabase } from "@/integrations/supabase/anonClient";
 import { CheckCircle, XCircle, Loader2, ShoppingCart, ExternalLink, Trash2 } from "lucide-react";
 import { SponsorMaterialsSection } from "@/components/SponsorMaterialsSection";
 import { useSponsorsByOrderId } from "@/hooks/useSponsorsByOrderId";
@@ -131,7 +131,7 @@ const CheckoutPage = () => {
     if (items.length === 0) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
+      const { data, error } = await anonSupabase.functions.invoke("create-checkout", {
         body: {
           items: buildItemsPayload(),
           returnUrl: window.location.origin + "/checkout",

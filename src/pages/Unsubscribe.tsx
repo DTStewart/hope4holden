@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { anonSupabase } from "@/integrations/supabase/anonClient";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 
@@ -31,7 +31,7 @@ const Unsubscribe = () => {
   const handleUnsubscribe = async () => {
     setProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke("handle-email-unsubscribe", { body: { token } });
+      const { data, error } = await anonSupabase.functions.invoke("handle-email-unsubscribe", { body: { token } });
       if (error) { setStatus("error"); return; }
       if (data?.success) { setStatus("success"); }
       else if (data?.reason === "already_unsubscribed") { setStatus("already"); }
