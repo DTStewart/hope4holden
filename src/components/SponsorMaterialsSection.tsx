@@ -243,11 +243,21 @@ export const SponsorMaterialsSection = ({ sponsor }: Props) => {
       <div>
         <label
           htmlFor={`logo-file-${sponsor.id}`}
-          className="flex flex-col items-center justify-center border-2 border-dashed border-[#1A1A1A]/20 rounded-lg p-6 cursor-pointer hover:border-primary transition-colors"
+          onDragEnter={handleDrag}
+          onDragOver={handleDrag}
+          onDragLeave={handleDrag}
+          onDrop={handleDrop}
+          className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 cursor-pointer transition-colors ${
+            dragActive ? "border-primary bg-primary/5" : "border-[#1A1A1A]/20 hover:border-primary"
+          }`}
         >
           <Plus className="h-7 w-7 text-[#1A1A1A]/50 mb-2" />
-          <span className="text-sm text-[#1A1A1A]/60">
-            {files.length === 0 ? "Click to add logo / brand files (PNG or JPG, max 10MB)" : "Add more files"}
+          <span className="text-sm text-[#1A1A1A]/60 text-center">
+            {dragActive
+              ? "Drop files here"
+              : files.length === 0
+              ? "Drag and drop or click to add logo / brand files (PNG or JPG, max 10MB)"
+              : "Drag and drop or click to add more files"}
           </span>
         </label>
         <input
