@@ -9,6 +9,7 @@ export type BidderProfile = {
   display_name: string;
   has_payment_method: boolean;
   attending_event: boolean;
+  notify_outbid_sms: boolean;
 };
 
 export type BidderSessionState = {

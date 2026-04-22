@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { bidderSupabase } from "@/integrations/supabase/bidderClient";
 import { Button } from "@/components/ui/button";
 import { Loader2, Gavel, CalendarDays, MapPin, CheckCircle, LogIn } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { useBidderSession } from "@/hooks/useBidderSession";
 import { SignInDialog } from "@/components/auction/SignInDialog";
 import { BidderSetupDialog } from "@/components/auction/BidderSetupDialog";
@@ -107,7 +108,15 @@ export default function Auction() {
     return () => { cancelled = true; };
   }, []);
 
-  // Realtime updates for bids + item timer extensions
+  // Keep latest profile / items available to the realtime handler without
+  // re-subscribing whenever either changes.
+  const profileRef = useRef(profile);
+  const itemsRef = useRef(items);
+  useEffect(() => { profileRef.current = profile; }, [profile]);
+  useEffect(() => { itemsRef.current = items; }, [items]);
+
+  // Realtime updates for bids + item timer extensions. Also fires an in-app
+  // toast when someone tops the signed-in bidder's previous winning bid.
   useEffect(() => {
     const channel = bidderSupabase
       .channel("auction-bids-live")
@@ -119,6 +128,17 @@ export default function Auction() {
           setCurrentBids((prev) => {
             const existing = prev[row.item_id];
             if (!existing || row.amount > existing.amount) {
+              // If I was the previous high and someone else just outbid me, toast.
+              const me = profileRef.current?.id;
+              if (me && existing?.bidderId === me && row.bidder_id !== me) {
+                const item = itemsRef.current.find((i) => i.id === row.item_id);
+                toast({
+                  title: "You've been outbid",
+                  description: item
+                    ? `${item.title} — current bid $${row.amount.toLocaleString()}`
+                    : `Current bid $${row.amount.toLocaleString()}`,
+                });
+              }
               return { ...prev, [row.item_id]: { amount: row.amount, bidderId: row.bidder_id } };
             }
             return prev;

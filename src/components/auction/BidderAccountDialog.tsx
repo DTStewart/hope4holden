@@ -24,6 +24,8 @@ interface Props {
 export function BidderAccountDialog({ open, onOpenChange, bidder, onChanged, onSignedOut }: Props) {
   const [attending, setAttending] = useState(bidder.attending_event);
   const [savingAttending, setSavingAttending] = useState(false);
+  const [notifyOutbidSms, setNotifyOutbidSms] = useState(bidder.notify_outbid_sms);
+  const [savingNotify, setSavingNotify] = useState(false);
   const [changingCard, setChangingCard] = useState(false);
 
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -43,6 +45,22 @@ export function BidderAccountDialog({ open, onOpenChange, bidder, onChanged, onS
       setAttending(!v);
     } finally {
       setSavingAttending(false);
+    }
+  };
+
+  const handleNotifyChange = async (v: boolean) => {
+    setNotifyOutbidSms(v);
+    setSavingNotify(true);
+    try {
+      const { error } = await bidderSupabase.rpc("update_bidder_notify_outbid", { _enabled: v });
+      if (error) throw error;
+      onChanged();
+      toast({ title: v ? "SMS alerts on" : "SMS alerts off" });
+    } catch (err: any) {
+      toast({ title: "Couldn't save", description: err.message, variant: "destructive" });
+      setNotifyOutbidSms(!v);
+    } finally {
+      setSavingNotify(false);
     }
   };
 
@@ -99,17 +117,35 @@ export function BidderAccountDialog({ open, onOpenChange, bidder, onChanged, onS
             </div>
           </div>
 
-          <div className="flex items-start gap-2">
-            <Checkbox
-              id="account-attending"
-              checked={attending}
-              disabled={savingAttending}
-              onCheckedChange={(v) => handleAttendingChange(v === true)}
-            />
-            <Label htmlFor="account-attending" className="text-sm font-normal leading-snug cursor-pointer">
-              I'll be at the tournament dinner on Thursday, June 18
-              {savingAttending && <Loader2 className="inline h-3 w-3 animate-spin ml-2" />}
-            </Label>
+          <div className="space-y-3">
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="account-attending"
+                checked={attending}
+                disabled={savingAttending}
+                onCheckedChange={(v) => handleAttendingChange(v === true)}
+              />
+              <Label htmlFor="account-attending" className="text-sm font-normal leading-snug cursor-pointer">
+                I'll be at the tournament dinner on Thursday, June 18
+                {savingAttending && <Loader2 className="inline h-3 w-3 animate-spin ml-2" />}
+              </Label>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="account-notify-sms"
+                checked={notifyOutbidSms}
+                disabled={savingNotify}
+                onCheckedChange={(v) => handleNotifyChange(v === true)}
+              />
+              <Label htmlFor="account-notify-sms" className="text-sm font-normal leading-snug cursor-pointer">
+                Text me if I'm outbid
+                {savingNotify && <Loader2 className="inline h-3 w-3 animate-spin ml-2" />}
+                <span className="block text-xs text-muted-foreground mt-0.5">
+                  In-app alerts always show when the auction is open on your screen.
+                </span>
+              </Label>
+            </div>
           </div>
 
           <Button asChild variant="outline" className="w-full">

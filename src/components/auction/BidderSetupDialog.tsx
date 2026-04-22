@@ -26,6 +26,7 @@ export function BidderSetupDialog({ open, onOpenChange, signedInEmail, onReady }
   const [phone, setPhone] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [attendingEvent, setAttendingEvent] = useState(false);
+  const [notifyOutbidSms, setNotifyOutbidSms] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -62,6 +63,10 @@ export function BidderSetupDialog({ open, onOpenChange, signedInEmail, onReady }
       const payload = data as any;
       if (!payload?.clientSecret || !payload?.publishableKey) {
         throw new Error("Missing Stripe setup data");
+      }
+      // Save the SMS opt-in preference if the user flipped it off (default is on).
+      if (!notifyOutbidSms) {
+        await bidderSupabase.rpc("update_bidder_notify_outbid", { _enabled: false });
       }
       setClientSecret(payload.clientSecret);
       setPublishableKey(payload.publishableKey);
@@ -123,6 +128,20 @@ export function BidderSetupDialog({ open, onOpenChange, signedInEmail, onReady }
                 I'll be at the tournament dinner on Thursday, June 18
                 <span className="block text-xs text-muted-foreground mt-0.5">
                   Helps us plan pickup. You can change this later.
+                </span>
+              </Label>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="setup-notify-sms"
+                checked={notifyOutbidSms}
+                onCheckedChange={(v) => setNotifyOutbidSms(v === true)}
+              />
+              <Label htmlFor="setup-notify-sms" className="text-sm font-normal leading-snug cursor-pointer">
+                Text me if I'm outbid
+                <span className="block text-xs text-muted-foreground mt-0.5">
+                  We'll only text when someone outbids you. Reply STOP any time to opt out.
                 </span>
               </Label>
             </div>

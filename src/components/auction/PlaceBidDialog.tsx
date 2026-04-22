@@ -81,6 +81,13 @@ export function PlaceBidDialog({
         title: `Bid placed: $${numeric.toLocaleString()}`,
         description: result.extended ? "Timer extended — a late bid added extra seconds." : undefined,
       });
+      // Fire-and-forget outbid SMS to the person we just topped. Graceful no-op
+      // if Twilio isn't configured or the previous bidder opted out.
+      if (result.bid_id) {
+        void bidderSupabase.functions.invoke("auction-send-outbid-sms", {
+          body: { bid_id: result.bid_id },
+        });
+      }
       onBidPlaced();
       onOpenChange(false);
     } catch (err: any) {

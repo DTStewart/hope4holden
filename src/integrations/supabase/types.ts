@@ -25,6 +25,7 @@ export type Database = {
           session_token: string | null
           phone_verified_at: string | null
           attending_event: boolean
+          notify_outbid_sms: boolean
           auth_user_id: string | null
           created_at: string
           updated_at: string
@@ -39,6 +40,7 @@ export type Database = {
           session_token?: string | null
           phone_verified_at?: string | null
           attending_event?: boolean
+          notify_outbid_sms?: boolean
           auth_user_id?: string | null
           created_at?: string
           updated_at?: string
@@ -53,6 +55,7 @@ export type Database = {
           session_token?: string | null
           phone_verified_at?: string | null
           attending_event?: boolean
+          notify_outbid_sms?: boolean
           auth_user_id?: string | null
           created_at?: string
           updated_at?: string
@@ -908,10 +911,15 @@ export type Database = {
           display_name: string
           has_payment_method: boolean
           attending_event: boolean
+          notify_outbid_sms: boolean
         }[]
       }
       update_bidder_attending: {
         Args: { _attending: boolean }
+        Returns: boolean
+      }
+      update_bidder_notify_outbid: {
+        Args: { _enabled: boolean }
         Returns: boolean
       }
       admin_clear_bidder_payment_method: {
