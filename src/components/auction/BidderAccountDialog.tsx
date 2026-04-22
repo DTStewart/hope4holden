@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { type BidderSession, getStoredSessionToken, clearStoredSessionToken } from "@/hooks/useBidderSession";
-import { Loader2, CreditCard, LogOut, CheckCircle } from "lucide-react";
+import { Loader2, CreditCard, LogOut, CheckCircle, Gavel } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface Props {
   open: boolean;
@@ -118,6 +119,14 @@ export function BidderAccountDialog({ open, onOpenChange, bidder, onChanged, onS
               {savingAttending && <Loader2 className="inline h-3 w-3 animate-spin ml-2" />}
             </Label>
           </div>
+
+          {/* View my wins */}
+          <Button asChild variant="outline" className="w-full">
+            <Link to="/auction/my-wins" onClick={() => onOpenChange(false)}>
+              <Gavel className="h-4 w-4 mr-2" />
+              My auction activity
+            </Link>
+          </Button>
 
           {/* Change card */}
           {!changingCard && (
