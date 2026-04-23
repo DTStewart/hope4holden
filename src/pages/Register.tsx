@@ -209,25 +209,6 @@ const ParticipatePage = () => {
       {/* ─── Register + Dinner side by side ─── */}
       <section className="section-light">
         <div className="container py-10 md:py-12">
-          {regStatus === "sold_out" && (
-            <div className="space-y-3 mb-4 md:mb-6">
-              <div className="bg-destructive rounded p-6 text-center">
-                <p className="font-heading font-extrabold uppercase tracking-wider text-white text-[18px]">
-                  Registration is Sold Out
-                </p>
-              </div>
-              <a
-                href="#dinner"
-                className="block bg-primary hover:bg-[#4A7C09] transition-colors rounded p-6 text-center group"
-              >
-                <p className="font-heading font-extrabold text-white text-[18px] flex items-center justify-center gap-3">
-                  <span>But you can still join us for dinner!</span>
-                  <ArrowRight className="hidden md:inline-block h-5 w-5 transition-transform group-hover:translate-x-1" />
-                  <ArrowDown className="inline-block md:hidden h-5 w-5 transition-transform group-hover:translate-y-1" />
-                </p>
-              </a>
-            </div>
-          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {/* Register */}
             <div id="register" className="bg-white p-6 border border-[#1A1A1A]/10 rounded scroll-mt-24">
