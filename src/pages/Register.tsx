@@ -11,7 +11,7 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/hooks/use-toast";
 import {
   CheckCircle, Users, Clock, UtensilsCrossed, ShoppingCart,
-  Star, Award, Flag, Utensils, CreditCard, Droplets, Gift, Heart, Trophy, Package,
+  Star, Award, Flag, Utensils, CreditCard, Droplets, Gift, Heart, Trophy, Package, ArrowRight, ArrowDown,
 } from "lucide-react";
 import { anonSupabase } from "@/integrations/supabase/anonClient";
 
@@ -209,6 +209,25 @@ const ParticipatePage = () => {
       {/* ─── Register + Dinner side by side ─── */}
       <section className="section-light">
         <div className="container py-10 md:py-12">
+          {regStatus === "sold_out" && (
+            <div className="space-y-3 mb-4 md:mb-6">
+              <div className="bg-destructive rounded p-6 text-center">
+                <p className="font-heading font-extrabold uppercase tracking-wider text-white text-[18px]">
+                  Registration is Sold Out
+                </p>
+              </div>
+              <a
+                href="#dinner"
+                className="block bg-primary hover:bg-[#4A7C09] transition-colors rounded p-6 text-center group"
+              >
+                <p className="font-heading font-extrabold text-white text-[18px] flex items-center justify-center gap-3">
+                  <span>But you can still join us for dinner!</span>
+                  <ArrowRight className="hidden md:inline-block h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  <ArrowDown className="inline-block md:hidden h-5 w-5 transition-transform group-hover:translate-y-1" />
+                </p>
+              </a>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {/* Register */}
             <div id="register" className="bg-white p-6 border border-[#1A1A1A]/10 rounded scroll-mt-24">
@@ -262,7 +281,6 @@ const ParticipatePage = () => {
 
               {regStatus === "sold_out" && (
                 <div className="space-y-3">
-                  <Badge variant="destructive" className="text-xs">Sold Out</Badge>
                   {waitlistSubmitted ? (
                     <div className="flex items-center gap-2 text-primary text-sm">
                       <CheckCircle className="h-4 w-4" />
@@ -270,7 +288,9 @@ const ParticipatePage = () => {
                     </div>
                   ) : (
                     <form onSubmit={handleWaitlistSubmit} className="space-y-2">
-                      <p className="text-xs text-[#1A1A1A]/50">All spots filled. Join the waitlist.</p>
+                      <p className="text-sm text-[#1A1A1A]/70">
+                        Want to golf? Join the waitlist and we'll contact you if a spot opens up.
+                      </p>
                       <div className="grid grid-cols-2 gap-2">
                         <Input name="name" placeholder="Full Name" value={waitlistForm.name} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15 text-sm" />
                         <Input name="email" type="email" placeholder="Email" value={waitlistForm.email} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15 text-sm" />
