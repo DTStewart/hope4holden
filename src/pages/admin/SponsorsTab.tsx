@@ -282,6 +282,30 @@ export default function SponsorsTab() {
   const [sendingEmailFor, setSendingEmailFor] = useState<string | null>(null);
   const [resendingOrderFor, setResendingOrderFor] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [generatingLinkFor, setGeneratingLinkFor] = useState<string | null>(null);
+
+  const handleCopyUploadLink = async (sponsor: any) => {
+    setGeneratingLinkFor(sponsor.id);
+    try {
+      let token = sponsor.logo_upload_token;
+      if (!token) {
+        token = crypto.randomUUID();
+        const { error } = await supabase
+          .from("sponsors")
+          .update({ logo_upload_token: token })
+          .eq("id", sponsor.id);
+        if (error) throw error;
+        queryClient.invalidateQueries({ queryKey: ["admin-sponsors"] });
+      }
+      const url = `https://hope4holden.com/sponsor-upload/${token}`;
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Upload link copied!", description: url });
+    } catch (err: any) {
+      toast({ title: "Failed to generate link", description: err.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setGeneratingLinkFor(null);
+    }
+  };
 
   const handleResendOrder = async (sponsor: any) => {
     setResendingOrderFor(sponsor.id);
@@ -525,6 +549,15 @@ export default function SponsorsTab() {
                               {sendingEmailFor === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
                             </Button>
                           )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            title="Copy upload link (for adding/replacing assets)"
+                            disabled={generatingLinkFor === s.id}
+                            onClick={() => handleCopyUploadLink(s)}
+                          >
+                            {generatingLinkFor === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <LinkIcon className="h-3 w-3" />}
+                          </Button>
                           <Button
                             size="sm"
                             variant="outline"

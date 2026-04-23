@@ -92,7 +92,7 @@ export default function AdminDashboard() {
       <div className="p-6 max-w-7xl mx-auto">
         <DashboardStats />
         <Tabs defaultValue="registrations" className="space-y-6">
-          <TabsList className="grid grid-cols-4 md:grid-cols-[repeat(18,minmax(0,1fr))] w-full">
+          <TabsList className="flex flex-wrap h-auto gap-1 w-full justify-start">
             <TabsTrigger value="registrations" className="text-xs md:text-sm">
               <Users className="h-4 w-4 mr-1 hidden md:inline" />
               Registrations
