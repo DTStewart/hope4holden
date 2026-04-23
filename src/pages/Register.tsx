@@ -281,7 +281,6 @@ const ParticipatePage = () => {
 
               {regStatus === "sold_out" && (
                 <div className="space-y-3">
-                  <Badge variant="destructive" className="text-xs">Sold Out</Badge>
                   {waitlistSubmitted ? (
                     <div className="flex items-center gap-2 text-primary text-sm">
                       <CheckCircle className="h-4 w-4" />
@@ -289,7 +288,9 @@ const ParticipatePage = () => {
                     </div>
                   ) : (
                     <form onSubmit={handleWaitlistSubmit} className="space-y-2">
-                      <p className="text-xs text-[#1A1A1A]/50">All spots filled. Join the waitlist.</p>
+                      <p className="text-sm text-[#1A1A1A]/70">
+                        Want to golf? Join the waitlist and we'll contact you if a spot opens up.
+                      </p>
                       <div className="grid grid-cols-2 gap-2">
                         <Input name="name" placeholder="Full Name" value={waitlistForm.name} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15 text-sm" />
                         <Input name="email" type="email" placeholder="Email" value={waitlistForm.email} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15 text-sm" />
