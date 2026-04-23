@@ -223,9 +223,9 @@ export default function SponsorInvite() {
             <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40">Sponsor Information</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="businessName" className="text-[#1A1A1A] font-medium">Name for Recognition *</Label>
-                <Input id="businessName" name="businessName" value={form.businessName} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" placeholder="Business name or your name" />
-                <p className="text-xs text-[#1A1A1A]/50">This is how you'll be recognized — on signs at the event, in our sponsor list, and in thank-you posts.</p>
+                <Label htmlFor="businessName" className="text-[#1A1A1A] font-medium">Business or Sponsor Name *</Label>
+                <Input id="businessName" name="businessName" value={form.businessName} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" placeholder="e.g. Acme Corp or Jane Smith" />
+                <p className="text-xs text-[#1A1A1A]/50">How you'll be recognized — on event signage, our sponsor list, and thank-you posts.</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="contactName" className="text-[#1A1A1A] font-medium">Contact Name *</Label>
