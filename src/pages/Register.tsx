@@ -218,6 +218,26 @@ const ParticipatePage = () => {
               </div>
               <p className="text-[#1A1A1A]/50 text-sm mb-4">$600 — Dinner Thursday + golf Friday for 4 golfers.</p>
 
+              {regStatus === "sold_out" && (
+                <div className="space-y-3 mb-4">
+                  <div className="bg-destructive rounded p-4 text-center">
+                    <p className="font-heading font-extrabold uppercase tracking-wider text-white text-[18px]">
+                      Registration is Sold Out
+                    </p>
+                  </div>
+                  <a
+                    href="#dinner"
+                    className="block bg-[#7ab40d] hover:bg-[#4A7C09] transition-colors rounded p-4 text-center group"
+                  >
+                    <p className="font-heading font-extrabold text-white text-[18px] flex items-center justify-center gap-3">
+                      <span>But you can still join us for dinner!</span>
+                      <ArrowRight className="hidden md:inline-block h-5 w-5 transition-transform group-hover:translate-x-1" />
+                      <ArrowDown className="inline-block md:hidden h-5 w-5 transition-transform group-hover:translate-y-1" />
+                    </p>
+                  </a>
+                </div>
+              )}
+
               {regStatus === "open" && (
                 <div className="space-y-3">
                   {spotsAvailable !== null && (
