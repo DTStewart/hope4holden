@@ -298,3 +298,57 @@ See recent commits for details. Short version:
 - Day-of info page
 - Auction teasers
 - Team features (roster + dietary + photo + donation pages)
+
+- ---
+
+## CRM Layer (post-tournament)
+
+- Central contacts table with deduplication by email across registrations, sponsors, donations, dinners
+- Lifetime value tracking per contact (total contributed across all years)
+- Inline editable notes and tags on each contact
+- Contact detail view showing full transaction history across all years
+- CSV export for contacts
+
+## Pipeline & Stages (post-tournament)
+
+- Sponsor pipeline: verbal commitment, invoice sent, paid, logo received, fulfilled
+- Registration pipeline: interested, registered, paid, golfer names confirmed
+- Visual pipeline board in admin dashboard
+
+## Automated Reminders (post-tournament)
+
+- "Sponsor paid X days ago but hasn't uploaded logo" notification
+- "Team registered but hasn't provided golfer names" notification
+- Configurable reminder intervals in admin settings
+
+## Segmented Email Lists (post-tournament)
+
+- Build lists by year, transaction type, and tags (e.g., "all 2025 sponsors not yet committed for 2026")
+- Bulk email send capability from admin dashboard
+- Newsletter/announcement emails separate from transactional emails
+
+## Interaction Timeline (post-tournament)
+
+- Per-contact timeline showing every transaction, email sent, note added
+- Ability to log manual interactions (phone calls, in-person conversations)
+
+## Reporting Dashboards (post-tournament)
+
+- Total raised by year and by source (registrations, sponsorships, donations, dinner)
+- Sponsor retention rate year over year
+- Average donation amount trends
+- Golfer return rate
+- Exportable reports
+
+## Recurring Revenue Tracking (post-tournament)
+
+- Flag repeat sponsors and golfers across years
+- Lapsed sponsor identification for outreach
+- Year-over-year comparison views
+
+## Technical Improvements (post-tournament)
+
+- Embedded Stripe checkout (replace hosted checkout redirect)
+- Google Analytics or Plausible integration
+- Automated Stripe-to-database sync for off-platform payments
+- Admin session management fix (proper token refresh)
