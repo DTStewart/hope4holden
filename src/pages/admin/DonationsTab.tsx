@@ -13,6 +13,7 @@ import { EditableEmail } from "@/components/admin/EditableEmail";
 import { resendForDonation } from "@/lib/resendOrderConfirmation";
 import { useState } from "react";
 import WalkUpDonationDialog from "./WalkUpDonationDialog";
+import { YearFilter } from "@/components/admin/YearFilter";
 
 const METHOD_LABELS: Record<string, string> = {
   stripe: "Stripe",
@@ -27,6 +28,7 @@ export default function DonationsTab() {
   const { toast } = useToast();
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [walkUpOpen, setWalkUpOpen] = useState(false);
+  const [yearFilter, setYearFilter] = useState<number | null>(null);
 
   const handleResend = async (d: any) => {
     setResendingId(d.id);
@@ -41,12 +43,14 @@ export default function DonationsTab() {
   };
 
   const { data: donations, isLoading } = useQuery({
-    queryKey: ["admin-donations"],
+    queryKey: ["admin-donations", yearFilter],
+    enabled: yearFilter != null,
     queryFn: async () => {
       await ensureAdminSession();
       const { data, error } = await supabase
         .from("donations")
         .select("*")
+        .eq("tournament_year", yearFilter as number)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -82,9 +86,10 @@ export default function DonationsTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex items-center justify-between flex-wrap gap-2">
           <span>Donations ({donations?.length ?? 0}) — ${total} total</span>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap items-center">
+            <YearFilter table="donations" value={yearFilter} onChange={setYearFilter} />
             <Button size="sm" onClick={() => setWalkUpOpen(true)}>
               <Plus className="h-4 w-4 mr-1" /> Add walk-up
             </Button>
