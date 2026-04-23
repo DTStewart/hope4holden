@@ -117,8 +117,12 @@ const ParticipatePage = () => {
     setDrawerOpen(true);
   };
 
-  const handleSelectTier = (tier: Tier) => {
-    addItem({ type: "sponsorship", description: `${tier.name} Sponsorship`, amount: tier.price, formData: { tier: tier.name, tierId: tier.id } });
+  const handleSelectTier = (tier: Tier, overrideAmount?: number) => {
+    const amount = overrideAmount && overrideAmount >= tier.price ? overrideAmount : tier.price;
+    const label = overrideAmount && overrideAmount > tier.price
+      ? `${tier.name} Sponsorship ($${amount.toLocaleString()})`
+      : `${tier.name} Sponsorship`;
+    addItem({ type: "sponsorship", description: label, amount, formData: { tier: tier.name, tierId: tier.id } });
     toast({ title: `${tier.name} sponsorship added to cart!` });
     setDrawerOpen(true);
   };
