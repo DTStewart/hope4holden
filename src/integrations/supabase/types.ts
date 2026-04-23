@@ -454,6 +454,39 @@ export type Database = {
         }
         Relationships: []
       }
+      extra_golfer_invites: {
+        Row: {
+          created_at: string
+          golfer_count: number
+          golfing_with: string | null
+          id: string
+          price_per_golfer: number
+          token: string
+          used: boolean
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          golfer_count: number
+          golfing_with?: string | null
+          id?: string
+          price_per_golfer?: number
+          token?: string
+          used?: boolean
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          golfer_count?: number
+          golfing_with?: string | null
+          id?: string
+          price_per_golfer?: number
+          token?: string
+          used?: boolean
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       gallery_photos: {
         Row: {
           caption: string | null
@@ -639,8 +672,12 @@ export type Database = {
           captain_postal_code: string | null
           captain_province: string | null
           created_at: string
+          golfer_count: number | null
+          golfing_with: string | null
           id: string
+          is_extra_golfers: boolean
           paid: boolean
+          parent_token: string | null
           score_token: string
           status: string
           stripe_session_id: string | null
@@ -660,8 +697,12 @@ export type Database = {
           captain_postal_code?: string | null
           captain_province?: string | null
           created_at?: string
+          golfer_count?: number | null
+          golfing_with?: string | null
           id?: string
+          is_extra_golfers?: boolean
           paid?: boolean
+          parent_token?: string | null
           score_token?: string
           status?: string
           stripe_session_id?: string | null
@@ -681,8 +722,12 @@ export type Database = {
           captain_postal_code?: string | null
           captain_province?: string | null
           created_at?: string
+          golfer_count?: number | null
+          golfing_with?: string | null
           id?: string
+          is_extra_golfers?: boolean
           paid?: boolean
+          parent_token?: string | null
           score_token?: string
           status?: string
           stripe_session_id?: string | null
@@ -1186,6 +1231,17 @@ export type Database = {
           item_title: string
           status: string
           stripe_payment_intent_id: string
+        }[]
+      }
+      lookup_extra_golfer_invite: {
+        Args: { _token: string }
+        Returns: {
+          golfer_count: number
+          golfing_with: string
+          id: string
+          price_per_golfer: number
+          token: string
+          used: boolean
         }[]
       }
       lookup_sponsor_invite: {
