@@ -7,12 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { anonSupabase } from "@/integrations/supabase/anonClient";
-import { CheckCircle, XCircle, Loader2, ShoppingCart, ExternalLink, Trash2 } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, ShoppingCart, ExternalLink, Trash2, Heart } from "lucide-react";
 import { SponsorMaterialsSection } from "@/components/SponsorMaterialsSection";
 import { useSponsorsByOrderId } from "@/hooks/useSponsorsByOrderId";
 
 const CheckoutPage = () => {
-  const { items, totalAmount, clearCart, removeItem } = useCart();
+  const { items, totalAmount, clearCart, removeItem, addItem } = useCart();
+  const [donationDismissed, setDonationDismissed] = useState(false);
+  const [customDonation, setCustomDonation] = useState("");
+  const [showCustomDonation, setShowCustomDonation] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
