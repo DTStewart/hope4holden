@@ -12,7 +12,7 @@ import { SponsorMaterialsSection } from "@/components/SponsorMaterialsSection";
 import { useSponsorsByOrderId } from "@/hooks/useSponsorsByOrderId";
 
 const CheckoutPage = () => {
-  const { items, totalAmount, clearCart, removeItem, addItem } = useCart();
+  const { items, totalAmount, clearCart, removeItem, addItem, updateItem } = useCart();
   const [donationDismissed, setDonationDismissed] = useState(false);
   const [customDonation, setCustomDonation] = useState("");
   const [showCustomDonation, setShowCustomDonation] = useState(false);
