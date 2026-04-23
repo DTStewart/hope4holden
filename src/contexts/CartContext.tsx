@@ -19,6 +19,7 @@ export interface CartContact {
 interface CartContextType {
   items: CartItem[];
   addItem: (item: Omit<CartItem, "id">) => void;
+  updateItem: (id: string, updates: Partial<Omit<CartItem, "id">>) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
   totalAmount: number;
@@ -72,6 +73,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setItems((prev) => [...prev, newItem]);
   }, []);
 
+  const updateItem = useCallback((id: string, updates: Partial<Omit<CartItem, "id">>) => {
+    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...updates } : item)));
+  }, []);
+
   const removeItem = useCallback((id: string) => {
     setItems((prev) => prev.filter((item) => item.id !== id));
   }, []);
@@ -87,7 +92,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, clearCart, totalAmount, itemCount, isDrawerOpen, setDrawerOpen, contact, setContact }}
+      value={{ items, addItem, updateItem, removeItem, clearCart, totalAmount, itemCount, isDrawerOpen, setDrawerOpen, contact, setContact }}
     >
       {children}
     </CartContext.Provider>

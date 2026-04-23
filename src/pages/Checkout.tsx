@@ -12,7 +12,7 @@ import { SponsorMaterialsSection } from "@/components/SponsorMaterialsSection";
 import { useSponsorsByOrderId } from "@/hooks/useSponsorsByOrderId";
 
 const CheckoutPage = () => {
-  const { items, totalAmount, clearCart, removeItem, addItem } = useCart();
+  const { items, totalAmount, clearCart, removeItem, addItem, updateItem } = useCart();
   const [donationDismissed, setDonationDismissed] = useState(false);
   const [customDonation, setCustomDonation] = useState("");
   const [showCustomDonation, setShowCustomDonation] = useState(false);
@@ -49,6 +49,26 @@ const CheckoutPage = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const upsertDonation = (amt: number) => {
+    const existing = items.find((i) => i.type === "donation");
+    if (existing) {
+      updateItem(existing.id, {
+        description: `Donation — $${amt}`,
+        amount: amt,
+        formData: { ...existing.formData, amount: amt },
+      });
+      toast({ title: "Donation updated", description: `Donation set to $${amt}. Thank you!` });
+    } else {
+      addItem({
+        type: "donation",
+        description: `Donation — $${amt}`,
+        amount: amt,
+        formData: { amount: amt },
+      });
+      toast({ title: "Donation added", description: `$${amt} added to your order. Thank you!` });
+    }
   };
 
   // Warm up the create-checkout edge function on mount
@@ -346,13 +366,9 @@ const CheckoutPage = () => {
                     type="button"
                     variant="outline"
                     onClick={() => {
-                      addItem({
-                        type: "donation",
-                        description: `Donation — $${amt}`,
-                        amount: amt,
-                        formData: { amount: amt },
-                      });
-                      toast({ title: "Donation added", description: `$${amt} added to your order. Thank you!` });
+                      upsertDonation(amt);
+                      setShowCustomDonation(false);
+                      setCustomDonation("");
                     }}
                     className="rounded border-primary/30 text-primary hover:bg-primary hover:text-white font-heading font-bold"
                   >
@@ -387,15 +403,9 @@ const CheckoutPage = () => {
                         toast({ title: "Enter a valid amount", variant: "destructive" });
                         return;
                       }
-                      addItem({
-                        type: "donation",
-                        description: `Donation — $${amt}`,
-                        amount: amt,
-                        formData: { amount: amt },
-                      });
+                      upsertDonation(amt);
                       setCustomDonation("");
                       setShowCustomDonation(false);
-                      toast({ title: "Donation added", description: `$${amt} added to your order. Thank you!` });
                     }}
                     className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold"
                   >
