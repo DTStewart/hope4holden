@@ -329,6 +329,90 @@ const CheckoutPage = () => {
             </div>
           )}
 
+          {/* Donation Upsell — hidden if donation already in cart or dismissed */}
+          {!hasDonation && !donationDismissed && (
+            <div className="bg-primary/5 p-8 border border-primary/20 rounded space-y-4">
+              <div className="flex items-start gap-3">
+                <Heart className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                <div className="flex-1">
+                  <p className="font-heading font-bold text-[#1A1A1A]">Would you like to add a donation?</p>
+                  <p className="text-sm text-[#1A1A1A]/60 mt-1">Every dollar helps fund A-T research.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[25, 50, 100].map((amt) => (
+                  <Button
+                    key={amt}
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      addItem({
+                        type: "donation",
+                        description: `Donation — $${amt}`,
+                        amount: amt,
+                        formData: { amount: amt },
+                      });
+                      toast({ title: "Donation added", description: `$${amt} added to your order. Thank you!` });
+                    }}
+                    className="rounded border-primary/30 text-primary hover:bg-primary hover:text-white font-heading font-bold"
+                  >
+                    ${amt}
+                  </Button>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowCustomDonation((v) => !v)}
+                  className="rounded border-primary/30 text-primary hover:bg-primary hover:text-white font-heading font-bold"
+                >
+                  Other
+                </Button>
+              </div>
+              {showCustomDonation && (
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder="Amount"
+                    value={customDonation}
+                    onChange={(e) => setCustomDonation(e.target.value)}
+                    className="rounded border-[#1A1A1A]/15"
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      const amt = parseInt(customDonation, 10);
+                      if (!amt || amt < 1) {
+                        toast({ title: "Enter a valid amount", variant: "destructive" });
+                        return;
+                      }
+                      addItem({
+                        type: "donation",
+                        description: `Donation — $${amt}`,
+                        amount: amt,
+                        formData: { amount: amt },
+                      });
+                      setCustomDonation("");
+                      setShowCustomDonation(false);
+                      toast({ title: "Donation added", description: `$${amt} added to your order. Thank you!` });
+                    }}
+                    className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold"
+                  >
+                    Add
+                  </Button>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setDonationDismissed(true)}
+                className="text-xs text-[#1A1A1A]/40 hover:text-[#1A1A1A]/60 underline underline-offset-2"
+              >
+                No thanks
+              </button>
+            </div>
+          )}
+
           {/* Order Summary */}
           <div className="bg-white p-8 border border-[#1A1A1A]/10 rounded space-y-4">
             <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40">Order Summary</p>
