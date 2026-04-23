@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { EditableEmail } from "@/components/admin/EditableEmail";
 import { resendForRegistration } from "@/lib/resendOrderConfirmation";
 import { useState } from "react";
+import { YearFilter } from "@/components/admin/YearFilter";
 
 const PRICE_PER_GOLFER = 150;
 
@@ -22,6 +23,7 @@ export default function RegistrationsTab() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [yearFilter, setYearFilter] = useState<number | null>(null);
 
   // Extra-golfer link generator state
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
@@ -77,12 +79,14 @@ export default function RegistrationsTab() {
   };
 
   const { data: registrations, isLoading } = useQuery({
-    queryKey: ["admin-registrations"],
+    queryKey: ["admin-registrations", yearFilter],
+    enabled: yearFilter != null,
     queryFn: async () => {
       await ensureAdminSession();
       const { data, error } = await supabase
         .from("registrations")
         .select("*")
+        .eq("tournament_year", yearFilter as number)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -118,7 +122,8 @@ export default function RegistrationsTab() {
       <CardHeader>
         <CardTitle className="flex items-center justify-between flex-wrap gap-2">
           <span>Team Registrations ({registrations?.length ?? 0})</span>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap items-center">
+            <YearFilter table="registrations" value={yearFilter} onChange={setYearFilter} />
             <Dialog
               open={linkDialogOpen}
               onOpenChange={(open) => {
