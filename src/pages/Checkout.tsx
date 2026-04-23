@@ -346,13 +346,9 @@ const CheckoutPage = () => {
                     type="button"
                     variant="outline"
                     onClick={() => {
-                      addItem({
-                        type: "donation",
-                        description: `Donation — $${amt}`,
-                        amount: amt,
-                        formData: { amount: amt },
-                      });
-                      toast({ title: "Donation added", description: `$${amt} added to your order. Thank you!` });
+                      upsertDonation(amt);
+                      setShowCustomDonation(false);
+                      setCustomDonation("");
                     }}
                     className="rounded border-primary/30 text-primary hover:bg-primary hover:text-white font-heading font-bold"
                   >
@@ -387,15 +383,9 @@ const CheckoutPage = () => {
                         toast({ title: "Enter a valid amount", variant: "destructive" });
                         return;
                       }
-                      addItem({
-                        type: "donation",
-                        description: `Donation — $${amt}`,
-                        amount: amt,
-                        formData: { amount: amt },
-                      });
+                      upsertDonation(amt);
                       setCustomDonation("");
                       setShowCustomDonation(false);
-                      toast({ title: "Donation added", description: `$${amt} added to your order. Thank you!` });
                     }}
                     className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold"
                   >
