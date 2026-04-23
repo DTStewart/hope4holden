@@ -10,6 +10,7 @@ import { Download, ChevronDown, ChevronRight, Trash2 } from "lucide-react";
 import { exportToCsv } from "@/lib/exportCsv";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { YearFilter } from "@/components/admin/YearFilter";
 
 interface OrderItem {
   type: string;
@@ -43,17 +44,20 @@ function typeBadgeVariant(type: string) {
 
 export default function OrdersTab() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [yearFilter, setYearFilter] = useState<number | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const { data: orders, isLoading } = useQuery({
-    queryKey: ["admin-orders"],
+    queryKey: ["admin-orders", yearFilter],
+    enabled: yearFilter != null,
     queryFn: async () => {
       await ensureAdminSession();
       const { data, error } = await supabase
         .from("pending_orders")
         .select("*")
         .eq("status", "completed")
+        .eq("tournament_year", yearFilter as number)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []).map((o) => ({
@@ -123,9 +127,10 @@ export default function OrdersTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex items-center justify-between flex-wrap gap-2">
             <span>Completed Orders ({allOrders.length})</span>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap items-center">
+              <YearFilter table="pending_orders" value={yearFilter} onChange={setYearFilter} />
               {allOrders.length > 0 && (
                 <>
                   <Button size="sm" variant="outline" onClick={handleExport}>
