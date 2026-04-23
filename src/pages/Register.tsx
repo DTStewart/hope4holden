@@ -374,6 +374,9 @@ const ParticipatePage = () => {
               {standardTiers.map((tier) => {
                 const Icon = tierIcons[tier.name] || Flag;
                 const soldOut = isSoldOut(tier);
+                const isFairway = tier.name === "Fairway Friend";
+                const fairwayNum = Number(fairwayAmount);
+                const fairwayValid = fairwayNum >= tier.price;
                 return (
                   <div key={tier.id} className={`bg-white p-5 flex flex-col ${soldOut ? "opacity-60" : ""}`}>
                     <div className="flex items-start justify-between mb-2">
@@ -393,14 +396,41 @@ const ParticipatePage = () => {
                         </li>
                       ))}
                     </ul>
-                    <Button
-                      className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-xs"
-                      size="sm"
-                      onClick={() => handleSelectTier(tier)}
-                      disabled={soldOut}
-                    >
-                      {soldOut ? "Sold Out" : isInKind(tier) ? "Add to Cart" : "Select"}
-                    </Button>
+                    {isFairway && !soldOut ? (
+                      <div className="space-y-2">
+                        <label className="block">
+                          <span className="text-[10px] font-heading font-bold uppercase tracking-wider text-[#1A1A1A]/60">Your contribution (min ${tier.price})</span>
+                          <div className="mt-1 flex items-center gap-1 border border-[#1A1A1A]/15 rounded px-2 focus-within:border-primary">
+                            <span className="text-sm text-[#1A1A1A]/60">$</span>
+                            <input
+                              type="number"
+                              min={tier.price}
+                              step="1"
+                              value={fairwayAmount}
+                              onChange={(e) => setFairwayAmount(e.target.value)}
+                              className="w-full py-1.5 text-sm bg-transparent outline-none"
+                            />
+                          </div>
+                        </label>
+                        <Button
+                          className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-xs"
+                          size="sm"
+                          onClick={() => handleSelectTier(tier, fairwayNum)}
+                          disabled={!fairwayValid}
+                        >
+                          {fairwayValid ? `Add $${fairwayNum.toLocaleString()} to Cart` : `Min $${tier.price}`}
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        className="w-full rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-xs"
+                        size="sm"
+                        onClick={() => handleSelectTier(tier)}
+                        disabled={soldOut}
+                      >
+                        {soldOut ? "Sold Out" : isInKind(tier) ? "Add to Cart" : "Select"}
+                      </Button>
+                    )}
                   </div>
                 );
               })}
