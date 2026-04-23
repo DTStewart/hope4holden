@@ -76,6 +76,7 @@ const ParticipatePage = () => {
   const [customAmount, setCustomAmount] = useState("");
   const [isCustom, setIsCustom] = useState(false);
   const [wantsRecurring, setWantsRecurring] = useState(false);
+  const [fairwayAmount, setFairwayAmount] = useState<string>("250");
   const donationAmount = isCustom ? Number(customAmount) : selectedAmount;
 
   const [waitlistForm, setWaitlistForm] = useState({ name: "", email: "", phone: "", teamName: "" });
