@@ -45,6 +45,9 @@ export default function SettingsTab() {
   const [spotsRemaining, setSpotsRemaining] = useState<string | null>(null);
   const displayedSpots = spotsRemaining ?? getStringVal("spots_remaining");
 
+  const [tournamentYear, setTournamentYear] = useState<string | null>(null);
+  const displayedYear = tournamentYear ?? getStringVal("current_tournament_year") ?? "2026";
+
   const upsertSetting = useMutation({
     mutationFn: async ({ key, value }: { key: string; value: any }) => {
       const existing = settings?.find((s) => s.key === key);
