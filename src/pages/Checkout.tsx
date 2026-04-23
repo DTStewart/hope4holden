@@ -51,6 +51,26 @@ const CheckoutPage = () => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const upsertDonation = (amt: number) => {
+    const existing = items.find((i) => i.type === "donation");
+    if (existing) {
+      updateItem(existing.id, {
+        description: `Donation — $${amt}`,
+        amount: amt,
+        formData: { ...existing.formData, amount: amt },
+      });
+      toast({ title: "Donation updated", description: `Donation set to $${amt}. Thank you!` });
+    } else {
+      addItem({
+        type: "donation",
+        description: `Donation — $${amt}`,
+        amount: amt,
+        formData: { amount: amt },
+      });
+      toast({ title: "Donation added", description: `$${amt} added to your order. Thank you!` });
+    }
+  };
+
   // Warm up the create-checkout edge function on mount
   useEffect(() => {
     if (items.length > 0 && !success && !canceled) {
