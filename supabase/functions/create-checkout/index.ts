@@ -11,6 +11,7 @@ const corsHeaders = {
 const REGISTRATION_PRICE = 600;
 const DINNER_PRICE = 45;
 const MIN_DONATION = 5;
+const EXTRA_GOLFER_PRICE = 150;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -121,6 +122,36 @@ Deno.serve(async (req) => {
             );
           }
           serverAmount = quantity * DINNER_PRICE;
+          break;
+        }
+
+        case "extra_golfers": {
+          // Validate token and golfer count against the invite row
+          const inviteToken = item.formData?.inviteToken;
+          if (!inviteToken) {
+            return new Response(
+              JSON.stringify({ error: "Missing extra-golfer invite token" }),
+              { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          const { data: invite } = await supabase
+            .from("extra_golfer_invites")
+            .select("id, golfer_count, used")
+            .eq("token", inviteToken)
+            .maybeSingle();
+          if (!invite) {
+            return new Response(
+              JSON.stringify({ error: "Extra-golfer invite not found" }),
+              { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          if (invite.used) {
+            return new Response(
+              JSON.stringify({ error: "This payment link has already been used." }),
+              { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          serverAmount = invite.golfer_count * EXTRA_GOLFER_PRICE;
           break;
         }
 
