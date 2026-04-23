@@ -36,6 +36,7 @@ import TeamManage from "./pages/TeamManage";
 import TeamPublic from "./pages/TeamPublic";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import ExtraGolfer from "./pages/ExtraGolfer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -97,6 +98,7 @@ const App = () => (
               <Route path="/sponsor-invite/:token" element={<Layout />}>
                 <Route index element={<SponsorInvite />} />
               </Route>
+              <Route path="/extra-golfer/:token" element={<ExtraGolfer />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
