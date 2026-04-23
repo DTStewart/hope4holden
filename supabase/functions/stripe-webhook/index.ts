@@ -356,6 +356,63 @@ Deno.serve(async (req) => {
               }
             );
             break;
+
+          case "extra_golfers": {
+            const golferCount = Number(formData.golferCount) || 1;
+            const golfers = Array.isArray(formData.golfers) ? formData.golfers : [];
+            const teamLabel = `Extra Golfers — ${formData.golfingWith || "TBD"}`;
+            // Use a stable slug to avoid unique-collision; team_slug has no unique constraint listed but keep it readable
+            const slug = `extra-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+            await supabase.from("registrations").insert({
+              team_name: teamLabel,
+              business_name: formData.golfingWith || null,
+              captain_name: formData.contactName || golfers[0]?.name || "Extra Golfer",
+              captain_email: formData.contactEmail || "",
+              captain_phone: formData.contactPhone || "",
+              team_members: golfers,
+              team_slug: slug,
+              status: "confirmed",
+              stripe_session_id: session.id,
+              paid: true,
+              is_extra_golfers: true,
+              golfing_with: formData.golfingWith || null,
+              golfer_count: golferCount,
+              parent_token: formData.inviteToken || null,
+            });
+
+            // Mark the invite as used
+            if (formData.inviteToken) {
+              await supabase
+                .from("extra_golfer_invites")
+                .update({ used: true, used_at: new Date().toISOString() })
+                .eq("token", formData.inviteToken);
+            }
+
+            lineItems.push({
+              type: "extra_golfers",
+              description: `${golferCount} Extra Golfer${golferCount > 1 ? "s" : ""}${formData.golfingWith ? ` — golfing with ${formData.golfingWith}` : ""}`,
+              amount: item.amount,
+            });
+            hasRegistration = true;
+            if (!recipientEmail && formData.contactEmail) {
+              recipientEmail = formData.contactEmail;
+              recipientName = formData.contactName || "";
+            }
+
+            await notifyAdmins(
+              supabase,
+              SUPABASE_URL,
+              SUPABASE_SERVICE_ROLE_KEY,
+              "admin-new-registration",
+              {
+                teamName: teamLabel,
+                captainName: formData.contactName || "",
+                captainEmail: formData.contactEmail || "",
+              }
+            );
+            break;
+          }
         }
       }
 

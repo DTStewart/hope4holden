@@ -5,18 +5,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Trash2, Mail, Loader2 } from "lucide-react";
+import { Download, Trash2, Mail, Loader2, UserPlus, Link as LinkIcon, Copy } from "lucide-react";
 import { exportToCsv } from "@/lib/exportCsv";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { EditableEmail } from "@/components/admin/EditableEmail";
 import { resendForRegistration } from "@/lib/resendOrderConfirmation";
 import { useState } from "react";
+
+const PRICE_PER_GOLFER = 150;
 
 export default function RegistrationsTab() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [resendingId, setResendingId] = useState<string | null>(null);
+
+  // Extra-golfer link generator state
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [golferCount, setGolferCount] = useState<number>(1);
+  const [golfingWith, setGolfingWith] = useState<string>("");
+  const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   const handleResend = async (reg: any) => {
     setResendingId(reg.id);
@@ -28,6 +40,40 @@ export default function RegistrationsTab() {
     } finally {
       setResendingId(null);
     }
+  };
+
+  const handleGenerateLink = async () => {
+    if (golferCount < 1 || golferCount > 8) {
+      toast({ title: "Pick between 1 and 8 golfers", variant: "destructive" });
+      return;
+    }
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase
+        .from("extra_golfer_invites")
+        .insert({
+          golfer_count: golferCount,
+          golfing_with: golfingWith.trim() || null,
+          price_per_golfer: PRICE_PER_GOLFER * 100,
+        })
+        .select("token")
+        .single();
+      if (error) throw error;
+      const url = `${window.location.origin}/extra-golfer/${data.token}`;
+      setGeneratedUrl(url);
+      await navigator.clipboard.writeText(url).catch(() => {});
+      toast({ title: "Link generated and copied to clipboard" });
+    } catch (err: any) {
+      toast({ title: "Could not generate link", description: err.message, variant: "destructive" });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const resetLinkDialog = () => {
+    setGolferCount(1);
+    setGolfingWith("");
+    setGeneratedUrl(null);
   };
 
   const { data: registrations, isLoading } = useQuery({
@@ -70,9 +116,98 @@ export default function RegistrationsTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex items-center justify-between flex-wrap gap-2">
           <span>Team Registrations ({registrations?.length ?? 0})</span>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Dialog
+              open={linkDialogOpen}
+              onOpenChange={(open) => {
+                setLinkDialogOpen(open);
+                if (!open) resetLinkDialog();
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline">
+                  <UserPlus className="h-4 w-4 mr-1" /> Extra Golfer Link
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Generate Extra Golfer Payment Link</DialogTitle>
+                  <DialogDescription>
+                    Creates a link the recipient can use to pay for extra golfers added to a team.
+                    ${PRICE_PER_GOLFER} per golfer.
+                  </DialogDescription>
+                </DialogHeader>
+
+                {!generatedUrl ? (
+                  <div className="space-y-4 py-2">
+                    <div>
+                      <Label htmlFor="golferCount">Number of golfers *</Label>
+                      <Input
+                        id="golferCount"
+                        type="number"
+                        min={1}
+                        max={8}
+                        value={golferCount}
+                        onChange={(e) => setGolferCount(Number(e.target.value))}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Total: ${golferCount * PRICE_PER_GOLFER}
+                      </p>
+                    </div>
+                    <div>
+                      <Label htmlFor="golfingWith">Which team are they joining? (optional)</Label>
+                      <Input
+                        id="golfingWith"
+                        value={golfingWith}
+                        onChange={(e) => setGolfingWith(e.target.value)}
+                        placeholder="e.g. The Birdies, John Smith's team"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Pre-fills on their page so they don't have to know. Leave blank to let them tell us.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3 py-2">
+                    <Label>Payment link (already copied to your clipboard)</Label>
+                    <div className="flex gap-2">
+                      <Input value={generatedUrl} readOnly onFocus={(e) => e.target.select()} />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          navigator.clipboard.writeText(generatedUrl);
+                          toast({ title: "Copied!" });
+                        }}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Send this to the recipient by text or email. The link works once.
+                    </p>
+                  </div>
+                )}
+
+                <DialogFooter>
+                  {!generatedUrl ? (
+                    <>
+                      <Button variant="outline" onClick={() => setLinkDialogOpen(false)}>Cancel</Button>
+                      <Button onClick={handleGenerateLink} disabled={generating}>
+                        {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LinkIcon className="h-4 w-4 mr-2" />}
+                        Generate Link
+                      </Button>
+                    </>
+                  ) : (
+                    <Button onClick={() => setLinkDialogOpen(false)}>Done</Button>
+                  )}
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
             {registrations && registrations.length > 0 && (
               <>
                 <Button
@@ -80,11 +215,14 @@ export default function RegistrationsTab() {
                   variant="outline"
                   onClick={() =>
                     exportToCsv("registrations.csv",
-                      ["Team Name", "Captain", "Email", "Phone", "Address", "City", "Province", "Postal Code", "Status", "Paid", "Date"],
-                      registrations.map((r) => [
+                      ["Team Name", "Captain", "Email", "Phone", "Address", "City", "Province", "Postal Code", "Status", "Paid", "Extra Golfers", "Golfing With", "Date"],
+                      registrations.map((r: any) => [
                         r.team_name, r.captain_name, r.captain_email, r.captain_phone,
                         r.captain_address || "", r.captain_city || "", r.captain_province || "", r.captain_postal_code || "",
-                        r.status, r.paid ? "Yes" : "No", new Date(r.created_at).toLocaleDateString(),
+                        r.status, r.paid ? "Yes" : "No",
+                        r.is_extra_golfers ? `Yes (${r.golfer_count || ""})` : "No",
+                        r.golfing_with || "",
+                        new Date(r.created_at).toLocaleDateString(),
                       ])
                     )
                   }
@@ -121,7 +259,7 @@ export default function RegistrationsTab() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Team Name</TableHead>
+                  <TableHead>Team / Type</TableHead>
                   <TableHead>Captain</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
@@ -132,9 +270,28 @@ export default function RegistrationsTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {registrations?.map((reg) => (
+                {registrations?.map((reg: any) => (
                   <TableRow key={reg.id}>
-                    <TableCell className="font-medium">{reg.team_name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div>{reg.team_name}</div>
+                      {reg.is_extra_golfers && (
+                        <div className="mt-1 space-y-1">
+                          <Badge variant="secondary" className="text-xs">
+                            Extra golfers ({reg.golfer_count})
+                          </Badge>
+                          {reg.golfing_with && (
+                            <div className="text-xs text-muted-foreground">
+                              Golfing with: <span className="font-medium">{reg.golfing_with}</span>
+                            </div>
+                          )}
+                          {Array.isArray(reg.team_members) && reg.team_members.length > 0 && (
+                            <div className="text-xs text-muted-foreground">
+                              {reg.team_members.map((m: any) => m?.name).filter(Boolean).join(", ")}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell>{reg.captain_name}</TableCell>
                     <TableCell>
                       <EditableEmail
