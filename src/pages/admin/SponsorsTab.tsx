@@ -552,6 +552,15 @@ export default function SponsorsTab() {
                           <Button
                             size="sm"
                             variant="outline"
+                            title="Copy upload link (for adding/replacing assets)"
+                            disabled={generatingLinkFor === s.id}
+                            onClick={() => handleCopyUploadLink(s)}
+                          >
+                            {generatingLinkFor === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <LinkIcon className="h-3 w-3" />}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
                             title="Resend order confirmation"
                             disabled={resendingOrderFor === s.id}
                             onClick={() => handleResendOrder(s)}
