@@ -279,8 +279,9 @@ const CheckoutPage = () => {
             <div className="bg-white p-8 border border-[#1A1A1A]/10 rounded space-y-4">
               <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40">Sponsorship Details</p>
               <div className="space-y-2">
-                <Label htmlFor="sponsorBusinessName" className="text-[#1A1A1A] font-medium">Sponsor Business Name *</Label>
-                <Input id="sponsorBusinessName" name="sponsorBusinessName" value={form.sponsorBusinessName} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" />
+                <Label htmlFor="sponsorBusinessName" className="text-[#1A1A1A] font-medium">Name for Recognition *</Label>
+                <Input id="sponsorBusinessName" name="sponsorBusinessName" value={form.sponsorBusinessName} onChange={handleChange} required className="rounded border-[#1A1A1A]/15" placeholder="Business name or your name" />
+                <p className="text-xs text-[#1A1A1A]/50">This is how you'll be recognized — on signs at the event, in our sponsor list, and in thank-you posts. Use a business name or your personal name.</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
