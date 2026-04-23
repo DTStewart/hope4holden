@@ -11,7 +11,7 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "@/hooks/use-toast";
 import {
   CheckCircle, Users, Clock, UtensilsCrossed, ShoppingCart,
-  Star, Award, Flag, Utensils, CreditCard, Droplets, Gift, Heart, Trophy, Package,
+  Star, Award, Flag, Utensils, CreditCard, Droplets, Gift, Heart, Trophy, Package, ArrowRight, ArrowDown,
 } from "lucide-react";
 import { anonSupabase } from "@/integrations/supabase/anonClient";
 
