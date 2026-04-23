@@ -45,6 +45,9 @@ export default function SettingsTab() {
   const [spotsRemaining, setSpotsRemaining] = useState<string | null>(null);
   const displayedSpots = spotsRemaining ?? getStringVal("spots_remaining");
 
+  const [tournamentYear, setTournamentYear] = useState<string | null>(null);
+  const displayedYear = tournamentYear ?? getStringVal("current_tournament_year") ?? "2026";
+
   const upsertSetting = useMutation({
     mutationFn: async ({ key, value }: { key: string; value: any }) => {
       const existing = settings?.find((s) => s.key === key);
@@ -118,6 +121,34 @@ export default function SettingsTab() {
                 upsertSetting.mutate({
                   key: "spots_remaining",
                   value: Number(displayedSpots),
+                })
+              }
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Save
+            </Button>
+          </div>
+
+          <div className="flex items-end gap-4 max-w-sm pt-4 border-t">
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="year">Tournament Year</Label>
+              <Input
+                id="year"
+                type="number"
+                min="2024"
+                max="2099"
+                value={displayedYear}
+                onChange={(e) => setTournamentYear(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Year stamped on all new transactions. Bump this after the event to roll over to the next year.
+              </p>
+            </div>
+            <Button
+              onClick={() =>
+                upsertSetting.mutate({
+                  key: "current_tournament_year",
+                  value: Number(displayedYear),
                 })
               }
             >

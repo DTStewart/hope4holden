@@ -15,6 +15,7 @@ import { exportToCsv } from "@/lib/exportCsv";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { EditableEmail } from "@/components/admin/EditableEmail";
 import { resendForSponsor } from "@/lib/resendOrderConfirmation";
+import { YearFilter } from "@/components/admin/YearFilter";
 
 function TiersCard() {
   const queryClient = useQueryClient();
@@ -283,6 +284,7 @@ export default function SponsorsTab() {
   const [resendingOrderFor, setResendingOrderFor] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [generatingLinkFor, setGeneratingLinkFor] = useState<string | null>(null);
+  const [yearFilter, setYearFilter] = useState<number | null>(null);
 
   const handleCopyUploadLink = async (sponsor: any) => {
     setGeneratingLinkFor(sponsor.id);
@@ -355,12 +357,14 @@ export default function SponsorsTab() {
   }, []);
 
   const { data: sponsors, isLoading } = useQuery({
-    queryKey: ["admin-sponsors"],
+    queryKey: ["admin-sponsors", yearFilter],
+    enabled: yearFilter != null,
     queryFn: async () => {
-      console.log("[SponsorsTab] Fetching sponsors...");
+      console.log("[SponsorsTab] Fetching sponsors for year", yearFilter);
       const { data, error } = await supabase
         .from("sponsors")
         .select("id, business_name, contact_name, contact_email, contact_phone, facebook_handle, instagram_handle, tier_id, tier_name, amount, paid, approved, brand_assets, logo_url, logo_upload_token, stripe_session_id, created_at, updated_at")
+        .eq("tournament_year", yearFilter as number)
         .order("created_at", { ascending: false });
       console.log("[SponsorsTab] sponsors query result:", { count: data?.length, error, firstRow: data?.[0] });
       if (error) throw error;
@@ -416,9 +420,10 @@ export default function SponsorsTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex items-center justify-between flex-wrap gap-2">
             <span>Sponsors ({sponsors?.length ?? 0})</span>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap items-center">
+              <YearFilter table="sponsors" value={yearFilter} onChange={setYearFilter} />
               <Button size="sm" variant="outline" onClick={() => setInviteOpen(true)}>
                 <LinkIcon className="h-4 w-4 mr-1" /> Generate Invite Link
               </Button>

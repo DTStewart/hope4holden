@@ -262,6 +262,7 @@ export type Database = {
           paid: boolean
           quantity: number
           stripe_session_id: string | null
+          tournament_year: number
         }
         Insert: {
           amount: number
@@ -273,6 +274,7 @@ export type Database = {
           paid?: boolean
           quantity?: number
           stripe_session_id?: string | null
+          tournament_year?: number
         }
         Update: {
           amount?: number
@@ -284,6 +286,7 @@ export type Database = {
           paid?: boolean
           quantity?: number
           stripe_session_id?: string | null
+          tournament_year?: number
         }
         Relationships: []
       }
@@ -303,6 +306,7 @@ export type Database = {
           paid: boolean
           stripe_session_id: string | null
           team_id: string | null
+          tournament_year: number
           wants_recurring: boolean
         }
         Insert: {
@@ -320,6 +324,7 @@ export type Database = {
           paid?: boolean
           stripe_session_id?: string | null
           team_id?: string | null
+          tournament_year?: number
           wants_recurring?: boolean
         }
         Update: {
@@ -337,6 +342,7 @@ export type Database = {
           paid?: boolean
           stripe_session_id?: string | null
           team_id?: string | null
+          tournament_year?: number
           wants_recurring?: boolean
         }
         Relationships: [
@@ -609,6 +615,7 @@ export type Database = {
           status: string
           stripe_session_id: string | null
           total_amount: number
+          tournament_year: number
           updated_at: string
         }
         Insert: {
@@ -618,6 +625,7 @@ export type Database = {
           status?: string
           stripe_session_id?: string | null
           total_amount?: number
+          tournament_year?: number
           updated_at?: string
         }
         Update: {
@@ -627,6 +635,7 @@ export type Database = {
           status?: string
           stripe_session_id?: string | null
           total_amount?: number
+          tournament_year?: number
           updated_at?: string
         }
         Relationships: []
@@ -685,6 +694,7 @@ export type Database = {
           team_name: string
           team_photo_url: string | null
           team_slug: string
+          tournament_year: number
           updated_at: string
         }
         Insert: {
@@ -710,6 +720,7 @@ export type Database = {
           team_name: string
           team_photo_url?: string | null
           team_slug: string
+          tournament_year?: number
           updated_at?: string
         }
         Update: {
@@ -735,6 +746,7 @@ export type Database = {
           team_name?: string
           team_photo_url?: string | null
           team_slug?: string
+          tournament_year?: number
           updated_at?: string
         }
         Relationships: []
@@ -867,6 +879,7 @@ export type Database = {
           stripe_session_id: string | null
           tier_id: string | null
           tier_name: string
+          tournament_year: number
           updated_at: string
         }
         Insert: {
@@ -887,6 +900,7 @@ export type Database = {
           stripe_session_id?: string | null
           tier_id?: string | null
           tier_name: string
+          tournament_year?: number
           updated_at?: string
         }
         Update: {
@@ -907,6 +921,7 @@ export type Database = {
           stripe_session_id?: string | null
           tier_id?: string | null
           tier_name?: string
+          tournament_year?: number
           updated_at?: string
         }
         Relationships: [
@@ -1150,6 +1165,7 @@ export type Database = {
           team_name: string
         }[]
       }
+      get_current_tournament_year: { Args: never; Returns: number }
       get_fundraising_total: { Args: never; Returns: Json }
       get_leaderboard: {
         Args: never
