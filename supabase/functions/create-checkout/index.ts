@@ -88,8 +88,15 @@ Deno.serve(async (req) => {
             );
           }
 
-          // For invite-based purchases, use the amount from formData (already validated by invite)
-          serverAmount = hasInviteToken ? Number(item.amount) || tier.price : tier.price;
+          // For invite-based purchases, use the amount from formData (already validated by invite).
+          // Otherwise, allow the buyer to pay AT OR ABOVE the tier price (e.g., Fairway Friend
+          // is $250 minimum but supporters can choose to give more). Never allow less than tier.price.
+          if (hasInviteToken) {
+            serverAmount = Number(item.amount) || tier.price;
+          } else {
+            const requested = Number(item.amount);
+            serverAmount = requested && requested > tier.price ? requested : tier.price;
+          }
           break;
         }
 
