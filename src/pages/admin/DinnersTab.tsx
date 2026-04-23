@@ -12,11 +12,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { EditableEmail } from "@/components/admin/EditableEmail";
 import { resendForDinner } from "@/lib/resendOrderConfirmation";
 import { useState } from "react";
+import { YearFilter } from "@/components/admin/YearFilter";
 
 export default function DinnersTab() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [yearFilter, setYearFilter] = useState<number | null>(null);
 
   const handleResend = async (d: any) => {
     setResendingId(d.id);
@@ -31,12 +33,14 @@ export default function DinnersTab() {
   };
 
   const { data: dinners, isLoading } = useQuery({
-    queryKey: ["admin-dinners"],
+    queryKey: ["admin-dinners", yearFilter],
+    enabled: yearFilter != null,
     queryFn: async () => {
       await ensureAdminSession();
       const { data, error } = await supabase
         .from("dinners")
         .select("*")
+        .eq("tournament_year", yearFilter as number)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -73,9 +77,10 @@ export default function DinnersTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex items-center justify-between flex-wrap gap-2">
           <span>Dinner Tickets ({totalTickets} tickets, {dinners?.length ?? 0} orders) — ${totalRevenue} total</span>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap items-center">
+            <YearFilter table="dinners" value={yearFilter} onChange={setYearFilter} />
             {dinners && dinners.length > 0 && (
               <>
                 <Button size="sm" variant="outline" onClick={() =>
