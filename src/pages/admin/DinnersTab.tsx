@@ -1,18 +1,33 @@
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ColumnDef } from "@tanstack/react-table";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Trash2, Mail, Loader2 } from "lucide-react";
-import { exportToCsv } from "@/lib/exportCsv";
+import { Trash2, Mail, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { EditableEmail } from "@/components/admin/EditableEmail";
 import { resendForDinner } from "@/lib/resendOrderConfirmation";
-import { useState } from "react";
 import { YearFilter } from "@/components/admin/YearFilter";
+import { AdminDataTable } from "@/components/admin/AdminDataTable";
+
+interface Dinner {
+  id: string;
+  guest_name: string;
+  guest_email: string;
+  guest_phone: string;
+  quantity: number;
+  amount: number;
+  paid: boolean;
+  created_at: string;
+}
 
 export default function DinnersTab() {
   const queryClient = useQueryClient();
@@ -20,10 +35,10 @@ export default function DinnersTab() {
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [yearFilter, setYearFilter] = useState<number | null>(null);
 
-  const handleResend = async (d: any) => {
+  const handleResend = async (d: Dinner) => {
     setResendingId(d.id);
     try {
-      await resendForDinner(d);
+      await resendForDinner(d as any);
       toast({ title: "Confirmation email sent", description: `Sent to ${d.guest_email}` });
     } catch (err: any) {
       toast({ title: "Failed to send email", description: err.message || "Please try again.", variant: "destructive" });
@@ -43,7 +58,7 @@ export default function DinnersTab() {
         .eq("tournament_year", yearFilter as number)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as Dinner[];
     },
   });
 
@@ -69,10 +84,66 @@ export default function DinnersTab() {
     },
   });
 
-  const totalTickets = dinners?.reduce((sum, d) => sum + d.quantity, 0) ?? 0;
-  const totalRevenue = dinners?.reduce((sum, d) => sum + d.amount, 0) ?? 0;
+  const columns = useMemo<ColumnDef<Dinner>[]>(() => [
+    { accessorKey: "guest_name", header: "Guest", cell: ({ row }) => <span className="font-medium">{row.original.guest_name}</span> },
+    {
+      accessorKey: "guest_email",
+      header: "Email",
+      cell: ({ row }) => (
+        <EditableEmail
+          table="dinners"
+          id={row.original.id}
+          column="guest_email"
+          value={row.original.guest_email}
+          invalidateKey={["admin-dinners"]}
+        />
+      ),
+    },
+    { accessorKey: "guest_phone", header: "Phone" },
+    { accessorKey: "quantity", header: "Qty" },
+    { accessorKey: "amount", header: "Amount", cell: ({ row }) => `$${row.original.amount}` },
+    {
+      accessorKey: "paid",
+      header: "Paid",
+      cell: ({ row }) => (
+        <Badge variant={row.original.paid ? "default" : "destructive"}>{row.original.paid ? "Yes" : "No"}</Badge>
+      ),
+    },
+    {
+      accessorKey: "created_at",
+      header: "Date",
+      cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString(),
+    },
+    {
+      id: "actions",
+      header: "",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const d = row.original;
+        return (
+          <div className="space-x-1 whitespace-nowrap">
+            <Button
+              size="sm"
+              variant="outline"
+              title="Resend order confirmation"
+              disabled={resendingId === d.id}
+              onClick={() => handleResend(d)}
+            >
+              {resendingId === d.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+            </Button>
+            <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteOne.mutate(d.id)}>
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
+        );
+      },
+    },
+  ], [resendingId, deleteOne]);
 
   if (isLoading) return <div className="text-center py-8 text-muted-foreground">Loading...</div>;
+
+  const totalTickets = dinners?.reduce((sum, d) => sum + d.quantity, 0) ?? 0;
+  const totalRevenue = dinners?.reduce((sum, d) => sum + d.amount, 0) ?? 0;
 
   return (
     <Card>
@@ -82,93 +153,36 @@ export default function DinnersTab() {
           <div className="flex gap-2 flex-wrap items-center">
             <YearFilter table="dinners" value={yearFilter} onChange={setYearFilter} />
             {dinners && dinners.length > 0 && (
-              <>
-                <Button size="sm" variant="outline" onClick={() =>
-                  exportToCsv("dinner-tickets.csv",
-                    ["Guest", "Email", "Phone", "Qty", "Amount", "Paid", "Date"],
-                    dinners.map((d) => [d.guest_name, d.guest_email, d.guest_phone, String(d.quantity), String(d.amount), d.paid ? "Yes" : "No", new Date(d.created_at).toLocaleDateString()])
-                  )
-                }>
-                  <Download className="h-4 w-4 mr-1" /> Export CSV
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button size="sm" variant="destructive"><Trash2 className="h-4 w-4 mr-1" /> Delete All</Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete all dinner tickets?</AlertDialogTitle>
-                      <AlertDialogDescription>This will permanently delete all {dinners.length} dinner ticket order(s). This action cannot be undone.</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => deleteAll.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete All</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="destructive"><Trash2 className="h-4 w-4 mr-1" /> Delete All</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete all dinner tickets?</AlertDialogTitle>
+                    <AlertDialogDescription>This will permanently delete all {dinners.length} dinner ticket order(s). This action cannot be undone.</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => deleteAll.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete All</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {dinners?.length === 0 ? (
-          <p className="text-muted-foreground text-center py-4">No dinner ticket orders yet.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Guest</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Qty</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Paid</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dinners?.map((d) => (
-                  <TableRow key={d.id}>
-                    <TableCell className="font-medium">{d.guest_name}</TableCell>
-                    <TableCell>
-                      <EditableEmail
-                        table="dinners"
-                        id={d.id}
-                        column="guest_email"
-                        value={d.guest_email}
-                        invalidateKey={["admin-dinners"]}
-                      />
-                    </TableCell>
-                    <TableCell>{d.guest_phone}</TableCell>
-                    <TableCell>{d.quantity}</TableCell>
-                    <TableCell>${d.amount}</TableCell>
-                    <TableCell>
-                      <Badge variant={d.paid ? "default" : "destructive"}>{d.paid ? "Yes" : "No"}</Badge>
-                    </TableCell>
-                    <TableCell>{new Date(d.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell className="space-x-1 whitespace-nowrap">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        title="Resend order confirmation"
-                        disabled={resendingId === d.id}
-                        onClick={() => handleResend(d)}
-                      >
-                        {resendingId === d.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
-                      </Button>
-                      <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteOne.mutate(d.id)}>
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+        <AdminDataTable<Dinner>
+          data={dinners ?? []}
+          columns={columns}
+          urlStateKey="dinners"
+          searchPlaceholder="Search guest, email, phone…"
+          searchKeys={["guest_name", "guest_email", "guest_phone"]}
+          initialSort={{ id: "created_at", desc: true }}
+          emptyMessage="No dinner ticket orders yet."
+          exportFilename="dinner-tickets"
+        />
       </CardContent>
     </Card>
   );
