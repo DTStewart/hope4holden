@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from "react";
+import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
@@ -19,7 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const checkAdmin = async (userId: string) => {
+  const checkAdmin = useCallback(async (userId: string) => {
     const { data, error } = await supabase.rpc("has_role", {
       _user_id: userId,
       _role: "admin",
@@ -30,9 +30,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return !!data;
-  };
+  }, []);
 
-  const resolveSession = async (incomingSession: Session | null) => {
+  const resolveSession = useCallback(async (incomingSession: Session | null) => {
     let nextSession = incomingSession;
 
     if (!nextSession) {
@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const admin = await checkAdmin(data.session.user.id);
       setIsAdmin(admin);
     }
-  };
+  }, [checkAdmin]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [resolveSession]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
