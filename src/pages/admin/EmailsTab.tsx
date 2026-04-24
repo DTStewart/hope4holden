@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ColumnDef } from "@tanstack/react-table";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,18 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Mail, CheckCircle, XCircle, AlertTriangle, ChevronLeft, ChevronRight, Loader2, RotateCw } from "lucide-react";
+import { Mail, CheckCircle, XCircle, AlertTriangle, Loader2, RotateCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { AdminDataTable } from "@/components/admin/AdminDataTable";
 
-const STATUS_COLORS: Record<string, string> = {
+const STATUS_COLORS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   sent: "default",
   pending: "secondary",
   dlq: "destructive",
@@ -40,17 +34,25 @@ const TIME_RANGES = [
   { label: "All time", hours: 0 },
 ];
 
-const PAGE_SIZE = 50;
+interface EmailRow {
+  id: string;
+  template_name: string;
+  recipient_email: string;
+  status: string;
+  error_message: string | null;
+  message_id: string | null;
+  metadata: any;
+  created_at: string;
+}
 
 export default function EmailsTab() {
   const [timeRange, setTimeRange] = useState(168);
   const [templateFilter, setTemplateFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [page, setPage] = useState(0);
   const [resendingId, setResendingId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleResend = async (row: any) => {
+  const handleResend = async (row: EmailRow) => {
     setResendingId(row.id);
     try {
       const templateData =
@@ -81,30 +83,27 @@ export default function EmailsTab() {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return (data || []) as EmailRow[];
     },
   });
 
   // Deduplicate by message_id — keep latest row per message_id
   const logs = useMemo(() => {
     if (!rawLogs) return [];
-    const seen = new Map<string, typeof rawLogs[0]>();
+    const seen = new Map<string, EmailRow>();
     for (const row of rawLogs) {
       const key = row.message_id ?? row.id;
-      if (!seen.has(key)) {
-        seen.set(key, row);
-      }
+      if (!seen.has(key)) seen.set(key, row);
     }
     return Array.from(seen.values());
   }, [rawLogs]);
 
-  // Get distinct template names
   const templateNames = useMemo(() => {
     const names = new Set(logs.map((l) => l.template_name));
     return Array.from(names).sort();
   }, [logs]);
 
-  // Filter
+  // Apply non-search filters above AdminDataTable
   const filtered = useMemo(() => {
     let result = logs;
     if (timeRange > 0) {
@@ -120,7 +119,6 @@ export default function EmailsTab() {
     return result;
   }, [logs, timeRange, templateFilter, statusFilter]);
 
-  // Stats
   const stats = useMemo(() => {
     const s = { total: filtered.length, sent: 0, failed: 0, suppressed: 0 };
     for (const l of filtered) {
@@ -131,15 +129,67 @@ export default function EmailsTab() {
     return s;
   }, [filtered]);
 
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const pageData = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-
-  // Reset page when filters change
-  const handleFilterChange = (setter: (v: any) => void) => (val: any) => {
-    setter(val);
-    setPage(0);
-  };
+  const columns = useMemo<ColumnDef<EmailRow>[]>(() => [
+    {
+      accessorKey: "template_name",
+      header: "Template",
+      cell: ({ row }) => <span className="font-medium text-xs">{row.original.template_name}</span>,
+    },
+    {
+      accessorKey: "recipient_email",
+      header: "Recipient",
+      cell: ({ row }) => <span className="text-xs">{row.original.recipient_email}</span>,
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <Badge variant={STATUS_COLORS[row.original.status] ?? "secondary"}>
+          {row.original.status}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "created_at",
+      header: "Date",
+      cell: ({ row }) => (
+        <span className="text-xs whitespace-nowrap">
+          {new Date(row.original.created_at).toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "error_message",
+      header: "Error",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <span className="text-xs text-destructive max-w-xs truncate block" title={row.original.error_message || ""}>
+          {row.original.error_message || "—"}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: "",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const l = row.original;
+        const canResend = l.status === "pending" || l.status === "failed" || l.status === "dlq";
+        if (!canResend) return null;
+        return (
+          <Button
+            size="sm"
+            variant="outline"
+            title="Resend this email"
+            disabled={resendingId === l.id}
+            onClick={() => handleResend(l)}
+          >
+            {resendingId === l.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCw className="h-3 w-3" />}
+          </Button>
+        );
+      },
+    },
+  ], [resendingId]);
 
   if (isLoading) return <div className="text-center py-8 text-muted-foreground">Loading...</div>;
 
@@ -185,23 +235,23 @@ export default function EmailsTab() {
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Filters (preserved as separate controls above AdminDataTable) */}
       <Card>
         <CardContent className="pt-4 pb-4">
           <div className="flex flex-wrap gap-3 items-center">
-            <div className="flex gap-1">
+            <div className="flex gap-1 flex-wrap">
               {TIME_RANGES.map((r) => (
                 <Button
                   key={r.hours}
                   size="sm"
                   variant={timeRange === r.hours ? "default" : "outline"}
-                  onClick={() => handleFilterChange(setTimeRange)(r.hours)}
+                  onClick={() => setTimeRange(r.hours)}
                 >
                   {r.label}
                 </Button>
               ))}
             </div>
-            <Select value={templateFilter} onValueChange={handleFilterChange(setTemplateFilter)}>
+            <Select value={templateFilter} onValueChange={setTemplateFilter}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="All templates" />
               </SelectTrigger>
@@ -212,7 +262,7 @@ export default function EmailsTab() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={statusFilter} onValueChange={handleFilterChange(setStatusFilter)}>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
@@ -236,76 +286,16 @@ export default function EmailsTab() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {filtered.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No emails found for the selected filters.</p>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <Table>
-                    <TableHeader>
-                    <TableRow>
-                      <TableHead>Template</TableHead>
-                      <TableHead>Recipient</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Error</TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pageData.map((l) => {
-                      const canResend = l.status === "pending" || l.status === "failed" || l.status === "dlq";
-                      return (
-                        <TableRow key={l.id}>
-                          <TableCell className="font-medium text-xs">{l.template_name}</TableCell>
-                          <TableCell className="text-xs">{l.recipient_email}</TableCell>
-                          <TableCell>
-                            <Badge variant={STATUS_COLORS[l.status] as any ?? "secondary"}>
-                              {l.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-xs whitespace-nowrap">
-                            {new Date(l.created_at).toLocaleString()}
-                          </TableCell>
-                          <TableCell className="text-xs text-destructive max-w-xs truncate">
-                            {l.error_message || "—"}
-                          </TableCell>
-                          <TableCell>
-                            {canResend && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                title="Resend this email"
-                                disabled={resendingId === l.id}
-                                onClick={() => handleResend(l)}
-                              >
-                                {resendingId === l.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCw className="h-3 w-3" />}
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Page {page + 1} of {totalPages}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage(page - 1)}>
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button size="sm" variant="outline" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+          <AdminDataTable<EmailRow>
+            data={filtered}
+            columns={columns}
+            urlStateKey="emails"
+            searchPlaceholder="Search recipient, template, error…"
+            searchKeys={["recipient_email", "template_name", "status", "error_message"]}
+            initialSort={{ id: "created_at", desc: true }}
+            emptyMessage="No emails found for the selected filters."
+            exportFilename="emails"
+          />
         </CardContent>
       </Card>
     </div>
