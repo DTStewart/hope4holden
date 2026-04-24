@@ -1,13 +1,25 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ColumnDef } from "@tanstack/react-table";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AdminDataTable } from "@/components/admin/AdminDataTable";
+
+interface Message {
+  id: string;
+  sender_name: string;
+  sender_email: string;
+  subject: string | null;
+  message: string;
+  read: boolean;
+  created_at: string;
+}
 
 export default function MessagesTab() {
   const queryClient = useQueryClient();
@@ -22,7 +34,7 @@ export default function MessagesTab() {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return (data || []) as Message[];
     },
   });
 
@@ -61,6 +73,55 @@ export default function MessagesTab() {
 
   const unreadCount = messages?.filter((m) => !m.read).length ?? 0;
 
+  const columns = useMemo<ColumnDef<Message>[]>(() => [
+    { accessorKey: "sender_name", header: "Name", cell: ({ row }) => <span className="font-medium">{row.original.sender_name}</span> },
+    { accessorKey: "sender_email", header: "Email" },
+    {
+      accessorKey: "subject",
+      header: "Subject",
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.subject || "—"}</span>,
+    },
+    {
+      accessorKey: "message",
+      header: "Message",
+      cell: ({ row }) => <span className="block max-w-xs truncate">{row.original.message}</span>,
+    },
+    {
+      accessorKey: "read",
+      header: "Status",
+      cell: ({ row }) => (
+        <Badge variant={row.original.read ? "secondary" : "default"}>
+          {row.original.read ? "Read" : "New"}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "created_at",
+      header: "Date",
+      cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString(),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const m = row.original;
+        return (
+          <div className="space-x-1 whitespace-nowrap">
+            {!m.read && (
+              <Button size="sm" variant="outline" onClick={() => markRead.mutate(m.id)}>
+                <Eye className="h-3 w-3" />
+              </Button>
+            )}
+            <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteOne.mutate(m.id)}>
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
+        );
+      },
+    },
+  ], [markRead, deleteOne]);
+
   if (isLoading) return <div className="text-center py-8 text-muted-foreground">Loading...</div>;
 
   return (
@@ -91,49 +152,16 @@ export default function MessagesTab() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {messages?.length === 0 ? (
-          <p className="text-muted-foreground text-center py-4">No messages yet.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Subject</TableHead>
-                  <TableHead>Message</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {messages?.map((m) => (
-                  <TableRow key={m.id} className={!m.read ? "bg-primary/5" : ""}>
-                    <TableCell className="font-medium">{m.sender_name}</TableCell>
-                    <TableCell>{m.sender_email}</TableCell>
-                    <TableCell className="text-muted-foreground">{(m as any).subject || "—"}</TableCell>
-                    <TableCell className="max-w-xs truncate">{m.message}</TableCell>
-                    <TableCell>
-                      <Badge variant={m.read ? "secondary" : "default"}>{m.read ? "Read" : "New"}</Badge>
-                    </TableCell>
-                    <TableCell>{new Date(m.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell className="space-x-1">
-                      {!m.read && (
-                        <Button size="sm" variant="outline" onClick={() => markRead.mutate(m.id)}>
-                          <Eye className="h-3 w-3" />
-                        </Button>
-                      )}
-                      <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteOne.mutate(m.id)}>
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+        <AdminDataTable<Message>
+          data={messages ?? []}
+          columns={columns}
+          urlStateKey="messages"
+          searchPlaceholder="Search name, email, subject, body…"
+          searchKeys={["sender_name", "sender_email", "subject", "message"]}
+          initialSort={{ id: "created_at", desc: true }}
+          emptyMessage="No messages yet."
+          exportFilename="messages"
+        />
       </CardContent>
     </Card>
   );

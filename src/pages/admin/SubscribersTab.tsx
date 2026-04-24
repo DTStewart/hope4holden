@@ -1,12 +1,20 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ColumnDef } from "@tanstack/react-table";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AdminDataTable } from "@/components/admin/AdminDataTable";
+
+interface Subscriber {
+  id: string;
+  email: string;
+  created_at: string;
+}
 
 export default function SubscribersTab() {
   const queryClient = useQueryClient();
@@ -21,7 +29,7 @@ export default function SubscribersTab() {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return (data || []) as Subscriber[];
     },
   });
 
@@ -46,6 +54,25 @@ export default function SubscribersTab() {
       toast({ title: "All subscribers removed" });
     },
   });
+
+  const columns = useMemo<ColumnDef<Subscriber>[]>(() => [
+    { accessorKey: "email", header: "Email", cell: ({ row }) => <span className="font-medium">{row.original.email}</span> },
+    {
+      accessorKey: "created_at",
+      header: "Subscribed On",
+      cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString(),
+    },
+    {
+      id: "actions",
+      header: "",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteOne.mutate(row.original.id)}>
+          <Trash2 className="h-3 w-3" />
+        </Button>
+      ),
+    },
+  ], [deleteOne]);
 
   if (isLoading) return <div className="text-center py-8 text-muted-foreground">Loading...</div>;
 
@@ -74,34 +101,16 @@ export default function SubscribersTab() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {subscribers?.length === 0 ? (
-          <p className="text-muted-foreground text-center py-4">No subscribers yet.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Subscribed On</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {subscribers?.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell className="font-medium">{s.email}</TableCell>
-                    <TableCell>{new Date(s.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteOne.mutate(s.id)}>
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+        <AdminDataTable<Subscriber>
+          data={subscribers ?? []}
+          columns={columns}
+          urlStateKey="subscribers"
+          searchPlaceholder="Search email…"
+          searchKeys={["email"]}
+          initialSort={{ id: "created_at", desc: true }}
+          emptyMessage="No subscribers yet."
+          exportFilename="subscribers"
+        />
       </CardContent>
     </Card>
   );
