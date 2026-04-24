@@ -1,13 +1,14 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ColumnDef } from "@tanstack/react-table";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Trash2, CalendarDays } from "lucide-react";
-import { exportToCsv } from "@/lib/exportCsv";
+import { Trash2, CalendarDays } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { AdminDataTable } from "@/components/admin/AdminDataTable";
 
 type Entry = {
   id: string;
@@ -61,6 +62,51 @@ export default function NextYearListTab() {
     { total: 0, attended: 0 }
   );
 
+  const columns = useMemo<ColumnDef<Entry>[]>(() => [
+    { accessorKey: "email", header: "Email", cell: ({ row }) => <span className="font-medium">{row.original.email}</span> },
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => row.original.name || <span className="text-muted-foreground">—</span>,
+    },
+    {
+      accessorKey: "attended_prior_year",
+      header: "Attended 2026",
+      cell: ({ row }) =>
+        row.original.attended_prior_year ? <Badge>Yes</Badge> : <Badge variant="outline">No</Badge>,
+    },
+    {
+      accessorKey: "source",
+      header: "Source",
+      cell: ({ row }) => SOURCE_LABELS[row.original.source] || row.original.source,
+    },
+    {
+      accessorKey: "created_at",
+      header: "Signed up",
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground">
+          {new Date(row.original.created_at).toLocaleDateString()}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: "",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="text-destructive hover:text-destructive"
+          onClick={() => deleteOne.mutate(row.original.id)}
+          aria-label="Delete"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      ),
+    },
+  ], [deleteOne]);
+
   return (
     <Card>
       <CardHeader>
@@ -69,27 +115,6 @@ export default function NextYearListTab() {
             <CalendarDays className="h-5 w-5" />
             2027 interest list ({totals?.total ?? 0})
           </span>
-          {entries && entries.length > 0 && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() =>
-                exportToCsv(
-                  "next-year-interest.csv",
-                  ["Email", "Name", "Attended 2026", "Source", "Signed up"],
-                  entries.map((e) => [
-                    e.email,
-                    e.name || "",
-                    e.attended_prior_year ? "Yes" : "No",
-                    SOURCE_LABELS[e.source] || e.source,
-                    new Date(e.created_at).toLocaleDateString(),
-                  ])
-                )
-              }
-            >
-              <Download className="h-4 w-4 mr-1" /> Export CSV
-            </Button>
-          )}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -100,53 +125,17 @@ export default function NextYearListTab() {
         )}
         {isLoading ? (
           <p className="text-center py-6 text-muted-foreground">Loading...</p>
-        ) : !entries?.length ? (
-          <p className="text-center text-muted-foreground py-6">
-            Nothing yet. Link drops in the post-event recap at <code>/save-the-date</code>.
-          </p>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Email</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Attended 2026</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Signed up</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {entries.map((e) => (
-                <TableRow key={e.id}>
-                  <TableCell className="font-medium">{e.email}</TableCell>
-                  <TableCell>{e.name || <span className="text-muted-foreground">—</span>}</TableCell>
-                  <TableCell>
-                    {e.attended_prior_year ? (
-                      <Badge>Yes</Badge>
-                    ) : (
-                      <Badge variant="outline">No</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>{SOURCE_LABELS[e.source] || e.source}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {new Date(e.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => deleteOne.mutate(e.id)}
-                      aria-label="Delete"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <AdminDataTable<Entry>
+            data={entries ?? []}
+            columns={columns}
+            urlStateKey="next_year_interest"
+            searchPlaceholder="Search email, name…"
+            searchKeys={["email", "name", "source"]}
+            initialSort={{ id: "created_at", desc: true }}
+            emptyMessage="Nothing yet. Link drops in the post-event recap at /save-the-date."
+            exportFilename="next-year-interest"
+          />
         )}
       </CardContent>
     </Card>

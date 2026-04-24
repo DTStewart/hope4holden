@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ColumnDef } from "@tanstack/react-table";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,12 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Trophy, Check, X, Copy, Loader2, ExternalLink, Pencil, Camera, Plus, Upload } from "lucide-react";
+import { AdminDataTable } from "@/components/admin/AdminDataTable";
 
 type Submission = {
   id: string;
@@ -42,6 +43,9 @@ type TeamRow = {
   score_token: string;
   paid: boolean;
   submission?: Submission;
+  // Flattened for sort/search
+  final_score?: number | null;
+  status_label?: string;
 };
 
 export default function ScoresTab() {
@@ -141,17 +145,203 @@ export default function ScoresTab() {
     setEntryTeam(null);
   };
 
-  // Join submissions into teams table for the unified view
-  const submissionByReg = new Map<string, Submission>(
-    (submissions || []).map((s) => [s.registration_id, s])
+  // Join submissions into teams with flattened sort/search fields
+  const submissionByReg = useMemo(
+    () => new Map<string, Submission>((submissions || []).map((s) => [s.registration_id, s])),
+    [submissions]
   );
-  const rows: TeamRow[] = (teams || []).map((t) => ({
-    ...t,
-    submission: submissionByReg.get(t.id),
-  }));
+
+  const rows: TeamRow[] = useMemo(() => {
+    return (teams || []).map((t) => {
+      const sub = submissionByReg.get(t.id);
+      const status_label = !sub
+        ? "Not submitted"
+        : sub.disqualified
+        ? "Disqualified"
+        : sub.verified
+        ? "Verified"
+        : "Pending review";
+      return {
+        ...t,
+        submission: sub,
+        final_score: sub?.final_score ?? null,
+        status_label,
+      };
+    });
+  }, [teams, submissionByReg]);
 
   const submitted = rows.filter((r) => r.submission).length;
   const verified = (submissions || []).filter((s) => s.verified && !s.disqualified).length;
+
+  const columns = useMemo<ColumnDef<TeamRow>[]>(() => [
+    {
+      accessorKey: "team_name",
+      header: "Team",
+      cell: ({ row }) => (
+        <div>
+          <div className="font-medium">{row.original.team_name}</div>
+          {row.original.business_name && row.original.business_name !== row.original.team_name && (
+            <div className="text-xs text-muted-foreground">{row.original.business_name}</div>
+          )}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "captain_name",
+      header: "Captain",
+      cell: ({ row }) => (
+        <div className="text-xs">
+          {row.original.captain_name}
+          <div className="text-muted-foreground">{row.original.captain_email}</div>
+        </div>
+      ),
+    },
+    {
+      id: "photo",
+      header: "Photo",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const s = row.original.submission;
+        return s?.photo_url ? (
+          <a
+            href={s.photo_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block h-10 w-10 rounded overflow-hidden border border-border"
+          >
+            <img src={s.photo_url} alt="" className="h-full w-full object-cover" />
+          </a>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        );
+      },
+    },
+    {
+      accessorKey: "final_score",
+      header: "Score",
+      sortUndefined: "last",
+      cell: ({ row }) => {
+        const s = row.original.submission;
+        if (!s) return <span className="text-muted-foreground text-xs">No submission</span>;
+        if (editingId === s.id) {
+          return (
+            <div className="flex items-center gap-1">
+              <Input
+                type="number"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                className="h-8 w-20 text-right"
+                autoFocus
+              />
+              <Button size="sm" variant="ghost" onClick={() => updateScore.mutate({ id: s.id, score: Number(editValue) })}>
+                <Check className="h-3.5 w-3.5" />
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          );
+        }
+        return (
+          <button
+            type="button"
+            onClick={() => { setEditingId(s.id); setEditValue(String(s.final_score)); }}
+            className="inline-flex items-center gap-1 font-heading font-bold text-lg hover:text-primary"
+            title="Edit score"
+          >
+            {s.final_score}
+            <Pencil className="h-3 w-3 text-muted-foreground" />
+          </button>
+        );
+      },
+    },
+    {
+      accessorKey: "status_label",
+      header: "Status",
+      cell: ({ row }) => {
+        const s = row.original.submission;
+        if (!s) return <Badge variant="outline">Not submitted</Badge>;
+        if (s.disqualified) return <Badge variant="destructive">Disqualified</Badge>;
+        if (s.verified) return <Badge className="bg-primary/15 text-primary border-primary/30" variant="outline">Verified</Badge>;
+        return <Badge variant="secondary">Pending review</Badge>;
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const r = row.original;
+        const s = r.submission;
+        return (
+          <div className="flex gap-1 justify-end">
+            {!s && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs h-7"
+                onClick={() => openEntry(r, "create")}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" /> Enter
+              </Button>
+            )}
+            {s && (
+              <Button
+                size="sm"
+                variant="ghost"
+                title="Replace photo"
+                onClick={() => openEntry(r, "replace_photo")}
+              >
+                <Camera className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="ghost"
+              title="Copy scorecard link"
+              onClick={() => copyLink(r.score_token)}
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              title="Open scorecard page"
+              asChild
+            >
+              <a href={`/score/${r.score_token}`} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </Button>
+            {s && !s.verified && !s.disqualified && (
+              <Button
+                size="sm"
+                variant="ghost"
+                title="Verify"
+                className="text-primary"
+                disabled={verify.isPending}
+                onClick={() => verify.mutate({ id: s.id, verified: true })}
+              >
+                <Check className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            {s && (
+              <Button
+                size="sm"
+                variant="ghost"
+                title={s.disqualified ? "Un-disqualify" : "Disqualify"}
+                className="text-destructive"
+                disabled={disqualify.isPending}
+                onClick={() => disqualify.mutate({ id: s.id, disqualified: !s.disqualified })}
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+        );
+      },
+    },
+  ], [editingId, editValue, verify, disqualify, updateScore]);
 
   return (
     <div className="space-y-6">
@@ -183,161 +373,16 @@ export default function ScoresTab() {
               <Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading…
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Team</TableHead>
-                  <TableHead>Captain</TableHead>
-                  <TableHead className="text-center">Photo</TableHead>
-                  <TableHead className="text-right">Score</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((row) => {
-                  const s = row.submission;
-                  return (
-                    <TableRow key={row.id}>
-                      <TableCell>
-                        <div className="font-medium">{row.team_name}</div>
-                        {row.business_name && row.business_name !== row.team_name && (
-                          <div className="text-xs text-muted-foreground">{row.business_name}</div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        {row.captain_name}
-                        <div className="text-muted-foreground">{row.captain_email}</div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {s?.photo_url ? (
-                          <a
-                            href={s.photo_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-block h-10 w-10 rounded overflow-hidden border border-border"
-                          >
-                            <img src={s.photo_url} alt="" className="h-full w-full object-cover" />
-                          </a>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {s ? (
-                          editingId === s.id ? (
-                            <div className="flex items-center justify-end gap-1">
-                              <Input
-                                type="number"
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                className="h-8 w-20 text-right"
-                                autoFocus
-                              />
-                              <Button size="sm" variant="ghost" onClick={() => updateScore.mutate({ id: s.id, score: Number(editValue) })}>
-                                <Check className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>
-                                <X className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => { setEditingId(s.id); setEditValue(String(s.final_score)); }}
-                              className="inline-flex items-center gap-1 font-heading font-bold text-lg hover:text-primary"
-                              title="Edit score"
-                            >
-                              {s.final_score}
-                              <Pencil className="h-3 w-3 text-muted-foreground" />
-                            </button>
-                          )
-                        ) : (
-                          <span className="text-muted-foreground text-xs">No submission</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {!s ? (
-                          <Badge variant="outline">Not submitted</Badge>
-                        ) : s.disqualified ? (
-                          <Badge variant="destructive">Disqualified</Badge>
-                        ) : s.verified ? (
-                          <Badge className="bg-primary/15 text-primary border-primary/30" variant="outline">Verified</Badge>
-                        ) : (
-                          <Badge variant="secondary">Pending review</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-1 justify-end">
-                          {!s && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-xs h-7"
-                              onClick={() => openEntry(row, "create")}
-                            >
-                              <Plus className="h-3.5 w-3.5 mr-1" /> Enter
-                            </Button>
-                          )}
-                          {s && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              title="Replace photo"
-                              onClick={() => openEntry(row, "replace_photo")}
-                            >
-                              <Camera className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            title="Copy scorecard link"
-                            onClick={() => copyLink(row.score_token)}
-                          >
-                            <Copy className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            title="Open scorecard page"
-                            asChild
-                          >
-                            <a href={`/score/${row.score_token}`} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </a>
-                          </Button>
-                          {s && !s.verified && !s.disqualified && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              title="Verify"
-                              className="text-primary"
-                              disabled={verify.isPending}
-                              onClick={() => verify.mutate({ id: s.id, verified: true })}
-                            >
-                              <Check className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                          {s && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              title={s.disqualified ? "Un-disqualify" : "Disqualify"}
-                              className="text-destructive"
-                              disabled={disqualify.isPending}
-                              onClick={() => disqualify.mutate({ id: s.id, disqualified: !s.disqualified })}
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <AdminDataTable<TeamRow>
+              data={rows}
+              columns={columns}
+              urlStateKey="scores"
+              searchPlaceholder="Search team, captain, email…"
+              searchKeys={["team_name", "business_name", "captain_name", "captain_email", "status_label"]}
+              initialSort={{ id: "final_score", desc: false }}
+              emptyMessage="No teams yet."
+              exportFilename="scores"
+            />
           )}
         </CardContent>
       </Card>

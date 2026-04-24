@@ -1,13 +1,23 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ColumnDef } from "@tanstack/react-table";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Trash2 } from "lucide-react";
-import { exportToCsv } from "@/lib/exportCsv";
+import { Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AdminDataTable } from "@/components/admin/AdminDataTable";
+
+interface WaitlistEntry {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  team_name: string;
+  created_at: string;
+}
 
 export default function WaitlistTab() {
   const queryClient = useQueryClient();
@@ -22,7 +32,7 @@ export default function WaitlistTab() {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data || [];
+      return (data || []) as WaitlistEntry[];
     },
   });
 
@@ -48,12 +58,27 @@ export default function WaitlistTab() {
     },
   });
 
-  const handleExport = () => {
-    if (!entries?.length) return;
-    exportToCsv("waitlist.csv", ["Name", "Email", "Phone", "Team Name", "Date"],
-      entries.map((e) => [e.name, e.email, e.phone, e.team_name, new Date(e.created_at).toLocaleDateString()])
-    );
-  };
+  const columns = useMemo<ColumnDef<WaitlistEntry>[]>(() => [
+    { accessorKey: "name", header: "Name", cell: ({ row }) => <span className="font-medium">{row.original.name}</span> },
+    { accessorKey: "email", header: "Email" },
+    { accessorKey: "phone", header: "Phone" },
+    { accessorKey: "team_name", header: "Team Name" },
+    {
+      accessorKey: "created_at",
+      header: "Date",
+      cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString(),
+    },
+    {
+      id: "actions",
+      header: "",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteOne.mutate(row.original.id)}>
+          <Trash2 className="h-3 w-3" />
+        </Button>
+      ),
+    },
+  ], [deleteOne]);
 
   if (isLoading) return <div className="text-center py-8 text-muted-foreground">Loading...</div>;
 
@@ -74,65 +99,36 @@ export default function WaitlistTab() {
             <span>Waitlist ({all.length})</span>
             <div className="flex gap-2">
               {all.length > 0 && (
-                <>
-                  <Button size="sm" variant="outline" onClick={handleExport}>
-                    <Download className="h-4 w-4 mr-1" /> Export CSV
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button size="sm" variant="destructive"><Trash2 className="h-4 w-4 mr-1" /> Delete All</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete all waitlist entries?</AlertDialogTitle>
-                        <AlertDialogDescription>This will permanently delete all {all.length} waitlist entry/entries. This action cannot be undone.</AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => deleteAll.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete All</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button size="sm" variant="destructive"><Trash2 className="h-4 w-4 mr-1" /> Delete All</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete all waitlist entries?</AlertDialogTitle>
+                      <AlertDialogDescription>This will permanently delete all {all.length} waitlist entry/entries. This action cannot be undone.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => deleteAll.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete All</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
             </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {all.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No waitlist entries yet.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Team Name</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {all.map((entry) => (
-                    <TableRow key={entry.id}>
-                      <TableCell className="font-medium">{entry.name}</TableCell>
-                      <TableCell>{entry.email}</TableCell>
-                      <TableCell>{entry.phone}</TableCell>
-                      <TableCell>{entry.team_name}</TableCell>
-                      <TableCell>{new Date(entry.created_at).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteOne.mutate(entry.id)}>
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+          <AdminDataTable<WaitlistEntry>
+            data={all}
+            columns={columns}
+            urlStateKey="waitlist"
+            searchPlaceholder="Search name, email, team…"
+            searchKeys={["name", "email", "phone", "team_name"]}
+            initialSort={{ id: "created_at", desc: true }}
+            emptyMessage="No waitlist entries yet."
+            exportFilename="waitlist"
+          />
         </CardContent>
       </Card>
     </div>

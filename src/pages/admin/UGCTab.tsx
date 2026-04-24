@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ColumnDef } from "@tanstack/react-table";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, Loader2, Image as ImageIcon, Trash2 } from "lucide-react";
+import { Check, X, Image as ImageIcon, Trash2 } from "lucide-react";
+import { AdminDataTable } from "@/components/admin/AdminDataTable";
 
 type Photo = {
   id: string;
@@ -19,6 +21,8 @@ type Photo = {
   admin_note: string | null;
   created_at: string;
   registrations: { team_name: string } | null;
+  // Flattened fields for searching/sorting
+  team_name?: string;
 };
 
 type Filter = "pending" | "approved" | "rejected" | "all";
@@ -40,7 +44,10 @@ export default function UGCTab() {
       if (filter !== "all") query = query.eq("status", filter);
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []) as unknown as Photo[];
+      return ((data || []) as unknown as Photo[]).map((p) => ({
+        ...p,
+        team_name: p.registrations?.team_name || "",
+      }));
     },
   });
 
@@ -76,17 +83,118 @@ export default function UGCTab() {
     {} as Record<string, number>
   );
 
+  const columns = useMemo<ColumnDef<Photo>[]>(() => [
+    {
+      id: "photo",
+      header: "Photo",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <button
+          type="button"
+          onClick={() => setOpenPhoto(row.original.photo_url)}
+          className="block h-14 w-20 bg-muted rounded overflow-hidden border border-border hover:opacity-80 transition-opacity"
+        >
+          <img src={row.original.photo_url} alt="" className="h-full w-full object-cover" />
+        </button>
+      ),
+    },
+    {
+      accessorKey: "team_name",
+      header: "Team",
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.team_name || "—"}</span>
+      ),
+    },
+    {
+      accessorKey: "caption",
+      header: "Caption",
+      cell: ({ row }) =>
+        row.original.caption ? (
+          <span className="block max-w-xs text-sm line-clamp-2">{row.original.caption}</span>
+        ) : (
+          <span className="text-muted-foreground text-xs">—</span>
+        ),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <Badge
+          variant={
+            row.original.status === "approved"
+              ? "default"
+              : row.original.status === "rejected"
+              ? "destructive"
+              : "outline"
+          }
+        >
+          {row.original.status}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "created_at",
+      header: "Submitted",
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground whitespace-nowrap">
+          {new Date(row.original.created_at).toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: "",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const p = row.original;
+        return (
+          <div className="flex gap-1 justify-end whitespace-nowrap">
+            {p.status !== "approved" && (
+              <Button
+                size="sm"
+                variant="default"
+                onClick={() => setStatus.mutate({ id: p.id, status: "approved" })}
+                disabled={setStatus.isPending}
+              >
+                <Check className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            {p.status !== "rejected" && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setStatus.mutate({ id: p.id, status: "rejected" })}
+                disabled={setStatus.isPending}
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-destructive hover:text-destructive"
+              onClick={() => deleteOne.mutate(p.id)}
+              aria-label="Delete"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        );
+      },
+    },
+  ], [setStatus, deleteOne]);
+
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex items-center justify-between flex-wrap gap-2">
             <span className="flex items-center gap-2">
               <ImageIcon className="h-5 w-5" />
               User-generated photos
             </span>
             <Select value={filter} onValueChange={(v) => setFilter(v as Filter)}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-48 h-9">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -106,72 +214,18 @@ export default function UGCTab() {
           )}
 
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : !photos?.length ? (
-            <p className="text-center text-muted-foreground py-8">
-              {filter === "pending" ? "No pending photos." : `No ${filter} photos.`}
-            </p>
+            <div className="text-center py-8 text-muted-foreground">Loading…</div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {photos.map((p) => (
-                <div key={p.id} className="border rounded-lg overflow-hidden bg-card">
-                  <button
-                    type="button"
-                    onClick={() => setOpenPhoto(p.photo_url)}
-                    className="block w-full aspect-[4/3] bg-muted overflow-hidden"
-                  >
-                    <img src={p.photo_url} alt="" className="h-full w-full object-cover hover:opacity-90 transition-opacity" />
-                  </button>
-                  <div className="p-3 space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-medium truncate">{p.registrations?.team_name || "—"}</span>
-                      <Badge variant={p.status === "approved" ? "default" : p.status === "rejected" ? "destructive" : "outline"}>
-                        {p.status}
-                      </Badge>
-                    </div>
-                    {p.caption && <p className="text-sm text-foreground/80 line-clamp-3">{p.caption}</p>}
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(p.created_at).toLocaleString()}
-                    </p>
-                    <div className="flex gap-2 pt-1">
-                      {p.status !== "approved" && (
-                        <Button
-                          size="sm"
-                          variant="default"
-                          className="flex-1"
-                          onClick={() => setStatus.mutate({ id: p.id, status: "approved" })}
-                          disabled={setStatus.isPending}
-                        >
-                          <Check className="h-3.5 w-3.5 mr-1" /> Approve
-                        </Button>
-                      )}
-                      {p.status !== "rejected" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => setStatus.mutate({ id: p.id, status: "rejected" })}
-                          disabled={setStatus.isPending}
-                        >
-                          <X className="h-3.5 w-3.5 mr-1" /> Reject
-                        </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => deleteOne.mutate(p.id)}
-                        aria-label="Delete"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <AdminDataTable<Photo>
+              data={photos ?? []}
+              columns={columns}
+              urlStateKey="ugc"
+              searchPlaceholder="Search team, caption…"
+              searchKeys={["team_name", "caption", "submitter_note"]}
+              initialSort={{ id: "created_at", desc: true }}
+              emptyMessage={filter === "pending" ? "No pending photos." : `No ${filter} photos.`}
+              exportFilename="ugc-photos"
+            />
           )}
         </CardContent>
       </Card>

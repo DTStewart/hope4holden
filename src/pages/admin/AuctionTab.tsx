@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ColumnDef } from "@tanstack/react-table";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
@@ -21,6 +21,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Loader2, X, Upload, Save, Gavel } from "lucide-react";
 import AuctionWinnersCard from "./AuctionWinnersCard";
+import { AdminDataTable } from "@/components/admin/AdminDataTable";
 
 type Item = {
   id: string;
@@ -166,90 +167,13 @@ export default function AuctionTab() {
             <div className="flex items-center justify-center py-8 text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading…
             </div>
-          ) : !items?.length ? (
-            <p className="text-sm text-muted-foreground py-4">
-              No items yet. Click &ldquo;Add item&rdquo; to create your first one.
-            </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Item</TableHead>
-                  <TableHead>Donor</TableHead>
-                  <TableHead className="text-right">Start</TableHead>
-                  <TableHead className="text-right">Retail</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Pickup</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items.map((it) => (
-                  <TableRow key={it.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        {it.images?.[0]?.url ? (
-                          <img src={it.images[0].url} alt="" className="h-10 w-10 object-cover rounded" />
-                        ) : (
-                          <div className="h-10 w-10 rounded bg-muted" />
-                        )}
-                        <div>
-                          <div className="font-medium">{it.title}</div>
-                          {it.description && (
-                            <div className="text-xs text-muted-foreground line-clamp-1 max-w-xs">
-                              {it.description}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm">{it.donated_by || "—"}</TableCell>
-                    <TableCell className="text-right">${it.starting_bid.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">${it.market_value.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={it.status === "open" ? "default" : it.status === "closed" ? "secondary" : "outline"}
-                      >
-                        {it.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {PICKUP_OPTIONS.find((p) => p.value === it.pickup_option)?.label || it.pickup_option}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex gap-2 justify-end">
-                        <ItemDialog
-                          mode="edit"
-                          item={it}
-                          onSaved={() => queryClient.invalidateQueries({ queryKey: ["admin-auction-items"] })}
-                        />
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="ghost" className="text-destructive">
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete this item?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This removes {it.title} from the auction permanently.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => deleteItem.mutate(it.id)}>
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <AuctionItemsTable
+              items={items || []}
+              pickupOptions={PICKUP_OPTIONS}
+              onRefresh={() => queryClient.invalidateQueries({ queryKey: ["admin-auction-items"] })}
+              onDelete={(id) => deleteItem.mutate(id)}
+            />
           )}
         </CardContent>
       </Card>
@@ -257,6 +181,125 @@ export default function AuctionTab() {
       {/* Winners & settlement */}
       <AuctionWinnersCard />
     </div>
+  );
+}
+
+function AuctionItemsTable({
+  items,
+  pickupOptions,
+  onRefresh,
+  onDelete,
+}: {
+  items: Item[];
+  pickupOptions: { value: string; label: string }[];
+  onRefresh: () => void;
+  onDelete: (id: string) => void;
+}) {
+  const columns = useMemo<ColumnDef<Item>[]>(() => [
+    {
+      accessorKey: "title",
+      header: "Item",
+      cell: ({ row }) => {
+        const it = row.original;
+        return (
+          <div className="flex items-center gap-3">
+            {it.images?.[0]?.url ? (
+              <img src={it.images[0].url} alt="" className="h-10 w-10 object-cover rounded" />
+            ) : (
+              <div className="h-10 w-10 rounded bg-muted" />
+            )}
+            <div>
+              <div className="font-medium">{it.title}</div>
+              {it.description && (
+                <div className="text-xs text-muted-foreground line-clamp-1 max-w-xs">
+                  {it.description}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "donated_by",
+      header: "Donor",
+      cell: ({ row }) => <span className="text-sm">{row.original.donated_by || "—"}</span>,
+    },
+    {
+      accessorKey: "starting_bid",
+      header: "Start",
+      cell: ({ row }) => `$${row.original.starting_bid.toLocaleString()}`,
+    },
+    {
+      accessorKey: "market_value",
+      header: "Retail",
+      cell: ({ row }) => `$${row.original.market_value.toLocaleString()}`,
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => (
+        <Badge
+          variant={row.original.status === "open" ? "default" : row.original.status === "closed" ? "secondary" : "outline"}
+        >
+          {row.original.status}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "pickup_option",
+      header: "Pickup",
+      cell: ({ row }) => (
+        <span className="text-xs text-muted-foreground">
+          {pickupOptions.find((p) => p.value === row.original.pickup_option)?.label || row.original.pickup_option}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const it = row.original;
+        return (
+          <div className="flex gap-2 justify-end">
+            <ItemDialog mode="edit" item={it} onSaved={onRefresh} />
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" variant="ghost" className="text-destructive">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete this item?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This removes {it.title} from the auction permanently.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => onDelete(it.id)}>Delete</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        );
+      },
+    },
+  ], [pickupOptions, onRefresh, onDelete]);
+
+  return (
+    <AdminDataTable<Item>
+      data={items}
+      columns={columns}
+      urlStateKey="auction_items"
+      searchPlaceholder="Search title, donor, status…"
+      searchKeys={["title", "description", "donated_by", "status"]}
+      initialSort={{ id: "sort_order" as any, desc: false }}
+      emptyMessage='No items yet. Click "Add item" to create your first one.'
+      exportFilename="auction-items"
+    />
   );
 }
 
