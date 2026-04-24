@@ -303,12 +303,6 @@ function AuctionItemsTable({
   );
 }
 
-      {/* Winners & settlement */}
-      <AuctionWinnersCard />
-    </div>
-  );
-}
-
 function SettingsForm({
   settings,
   onSave,
