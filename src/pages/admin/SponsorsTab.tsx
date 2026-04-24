@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ColumnDef } from "@tanstack/react-table";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,14 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, Save, Download, ImageIcon, Mail, MailCheck, Loader2, Trash2, LinkIcon, Copy } from "lucide-react";
-import { exportToCsv } from "@/lib/exportCsv";
+import { Check, X, Save, ImageIcon, Mail, MailCheck, Loader2, Trash2, LinkIcon, Copy } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { EditableEmail } from "@/components/admin/EditableEmail";
 import { resendForSponsor } from "@/lib/resendOrderConfirmation";
 import { YearFilter } from "@/components/admin/YearFilter";
+import { AdminDataTable } from "@/components/admin/AdminDataTable";
 
 function TiersCard() {
   const queryClient = useQueryClient();
