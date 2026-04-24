@@ -412,6 +412,130 @@ export default function SponsorsTab() {
     return Array.isArray(assets) ? assets : [];
   };
 
+  const columns = useMemo<ColumnDef<any>[]>(() => [
+    { accessorKey: "business_name", header: "Business", cell: ({ row }) => <span className="font-medium">{row.original.business_name}</span> },
+    { accessorKey: "contact_name", header: "Contact" },
+    {
+      accessorKey: "contact_email",
+      header: "Email",
+      cell: ({ row }) => (
+        <EditableEmail
+          table="sponsors"
+          id={row.original.id}
+          column="contact_email"
+          value={row.original.contact_email}
+          invalidateKey={["admin-sponsors"]}
+        />
+      ),
+    },
+    {
+      accessorKey: "facebook_handle",
+      header: "Facebook",
+      cell: ({ row }) => <span className="text-muted-foreground text-sm">{row.original.facebook_handle || "—"}</span>,
+    },
+    {
+      accessorKey: "instagram_handle",
+      header: "Instagram",
+      cell: ({ row }) => <span className="text-muted-foreground text-sm">{row.original.instagram_handle || "—"}</span>,
+    },
+    { accessorKey: "tier_name", header: "Tier" },
+    { accessorKey: "amount", header: "Amount", cell: ({ row }) => `$${row.original.amount}` },
+    {
+      accessorKey: "paid",
+      header: "Paid",
+      cell: ({ row }) => (
+        <Badge variant={row.original.paid ? "default" : "destructive"}>
+          {row.original.paid ? "Yes" : "No"}
+        </Badge>
+      ),
+    },
+    {
+      id: "assets",
+      header: "Assets",
+      enableSorting: false,
+      accessorFn: (s: any) => getAssets(s).length,
+      cell: ({ row }) => {
+        const s = row.original;
+        const assets = getAssets(s);
+        return assets.length > 0 ? (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="gap-1"
+            onClick={() => setAssetsDialog({ sponsor: s, assets })}
+          >
+            <ImageIcon className="h-3 w-3" />
+            {assets.length}
+          </Button>
+        ) : s.logo_url ? (
+          <img src={s.logo_url} alt="Logo" className="h-8 w-8 object-contain rounded" />
+        ) : (
+          <span className="text-muted-foreground text-xs">None</span>
+        );
+      },
+    },
+    {
+      accessorKey: "approved",
+      header: "Approved",
+      cell: ({ row }) => (
+        <Badge variant={row.original.approved ? "default" : "secondary"}>
+          {row.original.approved ? "Yes" : "No"}
+        </Badge>
+      ),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const s = row.original;
+        return (
+          <div className="space-x-1 whitespace-nowrap">
+            <Button
+              size="sm"
+              variant={s.approved ? "destructive" : "default"}
+              onClick={() => toggleApproval.mutate({ id: s.id, approved: !s.approved })}
+            >
+              {s.approved ? <X className="h-3 w-3" /> : <Check className="h-3 w-3" />}
+            </Button>
+            {s.logo_upload_token && !s.logo_url && (
+              <Button
+                size="sm"
+                variant="outline"
+                title="Resend logo upload email"
+                disabled={sendingEmailFor === s.id}
+                onClick={() => handleResendUploadEmail(s)}
+              >
+                {sendingEmailFor === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              title="Copy upload link (for adding/replacing assets)"
+              disabled={generatingLinkFor === s.id}
+              onClick={() => handleCopyUploadLink(s)}
+            >
+              {generatingLinkFor === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <LinkIcon className="h-3 w-3" />}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              title="Resend order confirmation"
+              disabled={resendingOrderFor === s.id}
+              onClick={() => handleResendOrder(s)}
+            >
+              {resendingOrderFor === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <MailCheck className="h-3 w-3" />}
+            </Button>
+            <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteOne.mutate(s.id)}>
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
+        );
+      },
+    },
+  ], [sendingEmailFor, generatingLinkFor, resendingOrderFor, toggleApproval, deleteOne]);
+
   if (isLoading) return <div className="text-center py-8 text-muted-foreground">Loading...</div>;
 
   return (
@@ -428,161 +552,36 @@ export default function SponsorsTab() {
                 <LinkIcon className="h-4 w-4 mr-1" /> Generate Invite Link
               </Button>
               {sponsors && sponsors.length > 0 && (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      exportToCsv("sponsors.csv",
-                        ["Business", "Contact", "Email", "Phone", "Facebook", "Instagram", "Tier", "Amount", "Paid", "Approved", "Assets", "Date"],
-                        sponsors.map((s: any) => [
-                          s.business_name, s.contact_name, s.contact_email, s.contact_phone || "",
-                          s.facebook_handle || "", s.instagram_handle || "",
-                          s.tier_name, String(s.amount), s.paid ? "Yes" : "No", s.approved ? "Yes" : "No",
-                          String(getAssets(s).length),
-                          new Date(s.created_at).toLocaleDateString(),
-                        ])
-                      )
-                    }
-                  >
-                    <Download className="h-4 w-4 mr-1" /> Export CSV
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button size="sm" variant="destructive"><Trash2 className="h-4 w-4 mr-1" /> Delete All</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete all sponsors?</AlertDialogTitle>
-                        <AlertDialogDescription>This will permanently delete all {sponsors.length} sponsor(s). This action cannot be undone.</AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => deleteAll.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete All</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button size="sm" variant="destructive"><Trash2 className="h-4 w-4 mr-1" /> Delete All</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete all sponsors?</AlertDialogTitle>
+                      <AlertDialogDescription>This will permanently delete all {sponsors.length} sponsor(s). This action cannot be undone.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => deleteAll.mutate()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete All</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
             </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {sponsors?.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No sponsors yet.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Business</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Facebook</TableHead>
-                    <TableHead>Instagram</TableHead>
-                    <TableHead>Tier</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Paid</TableHead>
-                    <TableHead>Assets</TableHead>
-                    <TableHead>Approved</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sponsors?.map((s) => {
-                    const assets = getAssets(s);
-                    return (
-                      <TableRow key={s.id}>
-                        <TableCell className="font-medium">{s.business_name}</TableCell>
-                        <TableCell>{s.contact_name}</TableCell>
-                        <TableCell>
-                          <EditableEmail
-                            table="sponsors"
-                            id={s.id}
-                            column="contact_email"
-                            value={s.contact_email}
-                            invalidateKey={["admin-sponsors"]}
-                          />
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-sm">{(s as any).facebook_handle || "—"}</TableCell>
-                        <TableCell className="text-muted-foreground text-sm">{(s as any).instagram_handle || "—"}</TableCell>
-                        <TableCell>{s.tier_name}</TableCell>
-                        <TableCell>${s.amount}</TableCell>
-                        <TableCell>
-                          <Badge variant={s.paid ? "default" : "destructive"}>
-                            {s.paid ? "Yes" : "No"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {assets.length > 0 ? (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="gap-1"
-                              onClick={() => setAssetsDialog({ sponsor: s, assets })}
-                            >
-                              <ImageIcon className="h-3 w-3" />
-                              {assets.length}
-                            </Button>
-                          ) : s.logo_url ? (
-                            <img src={s.logo_url} alt="Logo" className="h-8 w-8 object-contain rounded" />
-                          ) : (
-                            <span className="text-muted-foreground text-xs">None</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={s.approved ? "default" : "secondary"}>
-                            {s.approved ? "Yes" : "No"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="space-x-1">
-                          <Button
-                            size="sm"
-                            variant={s.approved ? "destructive" : "default"}
-                            onClick={() => toggleApproval.mutate({ id: s.id, approved: !s.approved })}
-                          >
-                            {s.approved ? <X className="h-3 w-3" /> : <Check className="h-3 w-3" />}
-                          </Button>
-                          {s.logo_upload_token && !s.logo_url && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              title="Resend logo upload email"
-                              disabled={sendingEmailFor === s.id}
-                              onClick={() => handleResendUploadEmail(s)}
-                            >
-                              {sendingEmailFor === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
-                            </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            title="Copy upload link (for adding/replacing assets)"
-                            disabled={generatingLinkFor === s.id}
-                            onClick={() => handleCopyUploadLink(s)}
-                          >
-                            {generatingLinkFor === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <LinkIcon className="h-3 w-3" />}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            title="Resend order confirmation"
-                            disabled={resendingOrderFor === s.id}
-                            onClick={() => handleResendOrder(s)}
-                          >
-                            {resendingOrderFor === s.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <MailCheck className="h-3 w-3" />}
-                          </Button>
-                          <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteOne.mutate(s.id)}>
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+          <AdminDataTable
+            data={sponsors ?? []}
+            columns={columns}
+            urlStateKey="sponsors"
+            searchPlaceholder="Search business, contact, email…"
+            searchKeys={["business_name", "contact_name", "contact_email", "contact_phone", "tier_name"]}
+            initialSort={{ id: "created_at", desc: true }}
+            emptyMessage="No sponsors yet."
+            exportFilename="sponsors"
+          />
         </CardContent>
       </Card>
 
