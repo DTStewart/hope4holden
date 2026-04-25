@@ -437,7 +437,9 @@ Deno.serve(async (req) => {
               hasRegistration,
               hasSponsorship,
               hasDinner,
+              hasDonation,
               isDinnerOnly: hasDinner && !hasRegistration && !hasSponsorship && !hasDonation,
+              publicDisplayConsent: donationPublicDisplayConsent,
             },
           });
         } catch (err) {
