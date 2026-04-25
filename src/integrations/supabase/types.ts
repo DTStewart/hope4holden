@@ -304,6 +304,8 @@ export type Database = {
           id: string
           method: string
           paid: boolean
+          public_display_consent: boolean
+          public_display_name: string | null
           stripe_session_id: string | null
           team_id: string | null
           tournament_year: number
@@ -322,6 +324,8 @@ export type Database = {
           id?: string
           method?: string
           paid?: boolean
+          public_display_consent?: boolean
+          public_display_name?: string | null
           stripe_session_id?: string | null
           team_id?: string | null
           tournament_year?: number
@@ -340,6 +344,8 @@ export type Database = {
           id?: string
           method?: string
           paid?: boolean
+          public_display_consent?: boolean
+          public_display_name?: string | null
           stripe_session_id?: string | null
           team_id?: string | null
           tournament_year?: number
@@ -1189,6 +1195,14 @@ export type Database = {
           id: string
           notify_outbid_sms: boolean
           phone: string
+        }[]
+      }
+      get_public_recent_donors: {
+        Args: { _limit?: number }
+        Returns: {
+          amount: number
+          created_at: string
+          display_name: string
         }[]
       }
       get_public_sponsors: {
