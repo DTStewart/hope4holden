@@ -13,19 +13,20 @@ const REFRESH_INTERVAL_MS = 60_000;
 const ROTATE_INTERVAL_MS = 4000;
 const FETCH_LIMIT = 10;
 
-const formatRelative = (iso: string): string => {
+const formatRelativeShort = (iso: string): string => {
   const created = new Date(iso);
   const ms = Date.now() - created.getTime();
   if (Number.isNaN(ms)) return "";
   const minutes = Math.floor(ms / 60_000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  if (minutes < 1) return "now";
+  if (minutes < 60) return `${minutes}m`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  if (hours < 24) return `${hours}h`;
   const days = Math.floor(hours / 24);
-  if (days === 1) return "yesterday";
-  if (days < 7) return `${days} days ago`;
-  return created.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+  if (days < 7) return `${days}d`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return `${weeks}w`;
+  return created.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 };
 
 const usePrefersReducedMotion = () => {
@@ -42,15 +43,15 @@ const usePrefersReducedMotion = () => {
 };
 
 const Entry = ({ donor }: { donor: RecentDonor }) => (
-  <div className="flex items-center justify-between gap-4 w-full min-w-0">
-    <p className="text-base md:text-lg text-[#1A1A1A] truncate min-w-0">
-      <span className="font-sans">{donor.display_name} donated </span>
-      <span className="font-heading font-semibold text-primary">
-        ${Number(donor.amount).toLocaleString()}
-      </span>
-    </p>
-    <span className="text-sm text-foreground/50 whitespace-nowrap shrink-0">
-      {formatRelative(donor.created_at)}
+  <div className="flex items-center gap-2 w-full min-w-0">
+    <span className="text-sm md:text-base text-[#1A1A1A]/80 truncate min-w-0">
+      {donor.display_name}
+    </span>
+    <span className="font-heading font-semibold text-sm md:text-base text-primary shrink-0">
+      ${Number(donor.amount).toLocaleString()}
+    </span>
+    <span className="text-xs text-foreground/40 ml-auto shrink-0 tabular-nums">
+      {formatRelativeShort(donor.created_at)}
     </span>
   </div>
 );
