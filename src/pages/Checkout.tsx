@@ -450,7 +450,7 @@ const CheckoutPage = () => {
                     Show my name on the public supporter list at hope4holden.com
                   </Label>
                   <p className="text-xs text-[#1A1A1A]/50 mt-1">
-                    If unchecked, your donation will appear as Anonymous donor.
+                    If unchecked, your donation will appear as "A friend of Holden".
                   </p>
                 </div>
               </div>
