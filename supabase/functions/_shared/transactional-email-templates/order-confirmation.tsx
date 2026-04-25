@@ -237,7 +237,9 @@ export const template = {
     hasRegistration: true,
     hasSponsorship: true,
     hasDinner: true,
+    hasDonation: true,
     isDinnerOnly: false,
+    publicDisplayConsent: true,
   },
 } satisfies TemplateEntry
 
