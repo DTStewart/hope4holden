@@ -57,6 +57,7 @@ const Entry = ({ donor }: { donor: RecentDonor }) => (
 
 const DonationTicker = () => {
   const [donors, setDonors] = useState<RecentDonor[] | null>(null);
+  const [supporterCount, setSupporterCount] = useState<number | null>(null);
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
   const [paused, setPaused] = useState(false);
@@ -70,22 +71,25 @@ const DonationTicker = () => {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const { data, error } = await anonSupabase.rpc("get_public_recent_donors", {
-        _limit: FETCH_LIMIT,
-      });
+      const [donorsRes, countRes] = await Promise.all([
+        anonSupabase.rpc("get_public_recent_donors", { _limit: FETCH_LIMIT }),
+        anonSupabase.rpc("get_public_supporter_count"),
+      ]);
       if (cancelled) return;
-      if (error) {
+      if (donorsRes.error) {
         setDonors((prev) => prev ?? []);
-        return;
+      } else {
+        const next = (donorsRes.data as RecentDonor[]) ?? [];
+        setDonors((prev) => {
+          if (prev && next.length > 0 && indexRef.current >= next.length) {
+            setIndex(0);
+          }
+          return next;
+        });
       }
-      const next = (data as RecentDonor[]) ?? [];
-      setDonors((prev) => {
-        // Keep current index in bounds without resetting position.
-        if (prev && next.length > 0 && indexRef.current >= next.length) {
-          setIndex(0);
-        }
-        return next;
-      });
+      if (!countRes.error) {
+        setSupporterCount(typeof countRes.data === "number" ? countRes.data : 0);
+      }
     };
     load();
     const interval = setInterval(load, REFRESH_INTERVAL_MS);
@@ -115,10 +119,21 @@ const DonationTicker = () => {
   const innerClasses =
     "container min-h-[60px] py-3 flex items-center gap-3";
 
+  const showHeader = supporterCount !== null && supporterCount > 0;
+  const headerLine = showHeader ? (
+    <div className="container pt-4 pb-3">
+      <p className="font-heading font-semibold text-xl md:text-2xl text-[#1A1A1A]">
+        <span className="text-primary">{supporterCount.toLocaleString()}</span>{" "}
+        supporter{supporterCount === 1 ? "" : "s"} this year
+      </p>
+    </div>
+  ) : null;
+
   // Loading: render nothing visible to avoid layout shift / placeholder noise.
   if (donors === null) {
     return (
       <section className={containerClasses} aria-label="Recent donations to Hope 4 Holden">
+        {headerLine}
         <div className={innerClasses}>
           <Heart className="h-4 w-4 text-primary shrink-0" aria-hidden />
           <span className="sr-only">Loading recent donations…</span>
@@ -127,7 +142,7 @@ const DonationTicker = () => {
     );
   }
 
-  // Empty state
+  // Empty state — header hidden by zero count
   if (donors.length === 0) {
     return (
       <section className={containerClasses} aria-label="Recent donations to Hope 4 Holden">
@@ -149,6 +164,7 @@ const DonationTicker = () => {
     const items = donors.slice(0, 3);
     return (
       <section className={containerClasses} aria-label="Recent donations to Hope 4 Holden">
+        {headerLine}
         <div className="container py-3 flex flex-col gap-2">
           {items.map((d, i) => (
             <div key={`${d.created_at}-${i}`} className="flex items-center gap-3">
@@ -170,6 +186,7 @@ const DonationTicker = () => {
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
+      {headerLine}
       <div className={innerClasses}>
         <Heart className="h-4 w-4 text-primary shrink-0" aria-hidden />
         <div
