@@ -132,6 +132,10 @@ const CheckoutPage = () => {
             city: form.city,
             province: form.province,
             postalCode: form.postalCode,
+            publicDisplayConsent,
+            publicDisplayName: publicDisplayConsent
+              ? (publicDisplayName.trim() || null)
+              : null,
           };
           break;
         case "dinner":
