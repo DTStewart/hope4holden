@@ -57,6 +57,7 @@ const Entry = ({ donor }: { donor: RecentDonor }) => (
 
 const DonationTicker = () => {
   const [donors, setDonors] = useState<RecentDonor[] | null>(null);
+  const [supporterCount, setSupporterCount] = useState<number | null>(null);
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
   const [paused, setPaused] = useState(false);
@@ -70,22 +71,25 @@ const DonationTicker = () => {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const { data, error } = await anonSupabase.rpc("get_public_recent_donors", {
-        _limit: FETCH_LIMIT,
-      });
+      const [donorsRes, countRes] = await Promise.all([
+        anonSupabase.rpc("get_public_recent_donors", { _limit: FETCH_LIMIT }),
+        anonSupabase.rpc("get_public_supporter_count"),
+      ]);
       if (cancelled) return;
-      if (error) {
+      if (donorsRes.error) {
         setDonors((prev) => prev ?? []);
-        return;
+      } else {
+        const next = (donorsRes.data as RecentDonor[]) ?? [];
+        setDonors((prev) => {
+          if (prev && next.length > 0 && indexRef.current >= next.length) {
+            setIndex(0);
+          }
+          return next;
+        });
       }
-      const next = (data as RecentDonor[]) ?? [];
-      setDonors((prev) => {
-        // Keep current index in bounds without resetting position.
-        if (prev && next.length > 0 && indexRef.current >= next.length) {
-          setIndex(0);
-        }
-        return next;
-      });
+      if (!countRes.error) {
+        setSupporterCount(typeof countRes.data === "number" ? countRes.data : 0);
+      }
     };
     load();
     const interval = setInterval(load, REFRESH_INTERVAL_MS);
