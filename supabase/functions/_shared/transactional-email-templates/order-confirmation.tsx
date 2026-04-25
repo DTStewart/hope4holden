@@ -38,7 +38,9 @@ interface Props {
   hasRegistration?: boolean
   hasSponsorship?: boolean
   hasDinner?: boolean
+  hasDonation?: boolean
   isDinnerOnly?: boolean
+  publicDisplayConsent?: boolean
 }
 
 const OrderConfirmationEmail = ({
@@ -48,7 +50,9 @@ const OrderConfirmationEmail = ({
   hasRegistration,
   hasSponsorship,
   hasDinner,
+  hasDonation,
   isDinnerOnly,
+  publicDisplayConsent,
 }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
