@@ -532,6 +532,10 @@ const ParticipatePage = () => {
               </div>
             </div>
           </div>
+
+          <div className="mt-8 -mx-4 sm:mx-0">
+            <DonationTicker />
+          </div>
         </div>
       </section>
     </div>
