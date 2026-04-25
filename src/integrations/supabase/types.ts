@@ -1217,6 +1217,7 @@ export type Database = {
           tier_name: string
         }[]
       }
+      get_public_supporter_count: { Args: never; Returns: number }
       get_team_for_management: {
         Args: { _token: string }
         Returns: {
