@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { anonSupabase } from "@/integrations/supabase/anonClient";
 import heroBg from "@/assets/HOME-1C5A0642.jpg";
 import h4hLogo from "@/assets/h4h-logo.png";
+import DonationTicker from "@/components/DonationTicker";
 
 const HomePage = () => {
   const [sponsors, setSponsors] = useState<{ id: string; business_name: string; tier_name: string; logo_url: string | null }[]>([]);
