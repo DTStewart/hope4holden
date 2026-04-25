@@ -52,6 +52,9 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* Recent supporters ticker */}
+      <DonationTicker />
+
       {/* What you can do — asymmetric grid */}
       <section className="section-light">
         <div className="container py-20 md:py-28">
