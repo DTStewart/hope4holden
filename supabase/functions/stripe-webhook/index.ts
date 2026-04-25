@@ -159,6 +159,7 @@ Deno.serve(async (req) => {
       let hasSponsorship = false;
       let hasDinner = false;
       let hasDonation = false;
+      let donationPublicDisplayConsent = false;
 
       for (const item of items) {
         const formData = item.formData || {};
