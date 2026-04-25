@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { anonSupabase } from "@/integrations/supabase/anonClient";
 import { CheckCircle, XCircle, Loader2, ShoppingCart, ExternalLink, Trash2, Heart } from "lucide-react";
