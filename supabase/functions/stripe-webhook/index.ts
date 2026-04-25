@@ -293,6 +293,8 @@ Deno.serve(async (req) => {
               donor_province: formData.province || null,
               donor_postal_code: formData.postalCode || null,
               team_id: teamId,
+              public_display_consent: formData.publicDisplayConsent === true,
+              public_display_name: formData.publicDisplayName || null,
             });
 
             lineItems.push({
