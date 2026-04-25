@@ -14,6 +14,7 @@ import {
   Star, Award, Flag, Utensils, CreditCard, Droplets, Gift, Heart, Trophy, Package, ArrowRight, ArrowDown,
 } from "lucide-react";
 import { anonSupabase } from "@/integrations/supabase/anonClient";
+import DonationTicker from "@/components/DonationTicker";
 
 type RegistrationStatus = "coming_soon" | "open" | "sold_out";
 
@@ -530,6 +531,10 @@ const ParticipatePage = () => {
                 </Button>
               </div>
             </div>
+          </div>
+
+          <div className="mt-8 -mx-4 sm:mx-0">
+            <DonationTicker />
           </div>
         </div>
       </section>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { anonSupabase } from "@/integrations/supabase/anonClient";
 import { CheckCircle, XCircle, Loader2, ShoppingCart, ExternalLink, Trash2, Heart } from "lucide-react";
@@ -46,6 +47,10 @@ const CheckoutPage = () => {
     province: "",
     postalCode: "",
   });
+
+  // Donor public-display opt-in (only used if cart contains a donation)
+  const [publicDisplayConsent, setPublicDisplayConsent] = useState(false);
+  const [publicDisplayName, setPublicDisplayName] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -128,6 +133,10 @@ const CheckoutPage = () => {
             city: form.city,
             province: form.province,
             postalCode: form.postalCode,
+            publicDisplayConsent,
+            publicDisplayName: publicDisplayConsent
+              ? (publicDisplayName.trim() || null)
+              : null,
           };
           break;
         case "dinner":
@@ -324,7 +333,9 @@ const CheckoutPage = () => {
             <div className="bg-white p-8 border border-[#1A1A1A]/10 rounded space-y-4">
               <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40">Mailing Address</p>
               <p className="text-xs text-[#1A1A1A]/50">
-                CRA requires the donor's full name and address for official donation receipts. This information will be passed to the ATCP for tax receipt issuance.
+                {hasDonation
+                  ? "ATCP requires the donor's full name and address to issue your tax receipt following the event."
+                  : "We use this to mail any prizes or follow-up materials."}
               </p>
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -420,6 +431,41 @@ const CheckoutPage = () => {
               >
                 No thanks
               </button>
+            </div>
+          )}
+
+          {/* Donor public-display opt-in — only when a donation is in the cart */}
+          {hasDonation && (
+            <div className="bg-white p-8 border border-[#1A1A1A]/10 rounded space-y-3">
+              <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40">Public Recognition</p>
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="publicDisplayConsent"
+                  checked={publicDisplayConsent}
+                  onCheckedChange={(checked) => setPublicDisplayConsent(!!checked)}
+                  className="mt-0.5"
+                />
+                <div className="flex-1">
+                  <Label htmlFor="publicDisplayConsent" className="text-[#1A1A1A] font-medium cursor-pointer">
+                    Show my name on the public supporter list at hope4holden.com
+                  </Label>
+                  <p className="text-xs text-[#1A1A1A]/50 mt-1">
+                    If unchecked, your donation will appear as Anonymous donor.
+                  </p>
+                </div>
+              </div>
+              {publicDisplayConsent && (
+                <div className="space-y-2 pl-7">
+                  <Label htmlFor="publicDisplayName" className="text-[#1A1A1A] font-medium">Display name (optional)</Label>
+                  <Input
+                    id="publicDisplayName"
+                    value={publicDisplayName}
+                    onChange={(e) => setPublicDisplayName(e.target.value)}
+                    placeholder="Leave blank to use your first name"
+                    className="rounded border-[#1A1A1A]/15"
+                  />
+                </div>
+              )}
             </div>
           )}
 

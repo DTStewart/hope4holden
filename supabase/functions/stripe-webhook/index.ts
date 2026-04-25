@@ -159,6 +159,7 @@ Deno.serve(async (req) => {
       let hasSponsorship = false;
       let hasDinner = false;
       let hasDonation = false;
+      let donationPublicDisplayConsent = false;
 
       for (const item of items) {
         const formData = item.formData || {};
@@ -303,6 +304,9 @@ Deno.serve(async (req) => {
               amount: item.amount,
             });
             hasDonation = true;
+            if (formData.publicDisplayConsent === true) {
+              donationPublicDisplayConsent = true;
+            }
             if (!recipientEmail && formData.donorEmail) {
               recipientEmail = formData.donorEmail;
               recipientName = formData.donorName || "";
@@ -433,7 +437,9 @@ Deno.serve(async (req) => {
               hasRegistration,
               hasSponsorship,
               hasDinner,
+              hasDonation,
               isDinnerOnly: hasDinner && !hasRegistration && !hasSponsorship && !hasDonation,
+              publicDisplayConsent: donationPublicDisplayConsent,
             },
           });
         } catch (err) {

@@ -38,7 +38,9 @@ interface Props {
   hasRegistration?: boolean
   hasSponsorship?: boolean
   hasDinner?: boolean
+  hasDonation?: boolean
   isDinnerOnly?: boolean
+  publicDisplayConsent?: boolean
 }
 
 const OrderConfirmationEmail = ({
@@ -48,7 +50,9 @@ const OrderConfirmationEmail = ({
   hasRegistration,
   hasSponsorship,
   hasDinner,
+  hasDonation,
   isDinnerOnly,
+  publicDisplayConsent,
 }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
@@ -186,6 +190,20 @@ const OrderConfirmationEmail = ({
           </Section>
         )}
 
+        {hasDonation && (
+          <Section style={infoBox}>
+            <Text style={infoTitle}>🧾 Tax receipt</Text>
+            <Text style={infoText}>
+              Your tax receipt will be issued by the Ataxia Telangiectasia Children's Project (ATCP) following the tournament.
+            </Text>
+            {publicDisplayConsent && (
+              <Text style={infoTextNote}>
+                Thank you for letting others see your support — your name now appears on the supporter list at <Link href="https://hope4holden.com" style={calLink}>https://hope4holden.com</Link>
+              </Text>
+            )}
+          </Section>
+        )}
+
         <Text style={closingText}>
           We truly appreciate your support. Every contribution helps make the {SITE_NAME} Golf Tournament a success and supports our mission to make a difference. We look forward to seeing you!
         </Text>
@@ -219,7 +237,9 @@ export const template = {
     hasRegistration: true,
     hasSponsorship: true,
     hasDinner: true,
+    hasDonation: true,
     isDinnerOnly: false,
+    publicDisplayConsent: true,
   },
 } satisfies TemplateEntry
 
