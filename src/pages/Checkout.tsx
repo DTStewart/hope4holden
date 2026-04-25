@@ -333,7 +333,9 @@ const CheckoutPage = () => {
             <div className="bg-white p-8 border border-[#1A1A1A]/10 rounded space-y-4">
               <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40">Mailing Address</p>
               <p className="text-xs text-[#1A1A1A]/50">
-                CRA requires the donor's full name and address for official donation receipts. This information will be passed to the ATCP for tax receipt issuance.
+                {hasDonation
+                  ? "ATCP requires the donor's full name and address to issue your tax receipt following the event."
+                  : "We use this to mail any prizes or follow-up materials."}
               </p>
               <div className="space-y-4">
                 <div className="space-y-2">
