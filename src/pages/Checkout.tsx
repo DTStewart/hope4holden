@@ -47,6 +47,10 @@ const CheckoutPage = () => {
     postalCode: "",
   });
 
+  // Donor public-display opt-in (only used if cart contains a donation)
+  const [publicDisplayConsent, setPublicDisplayConsent] = useState(false);
+  const [publicDisplayName, setPublicDisplayName] = useState("");
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
