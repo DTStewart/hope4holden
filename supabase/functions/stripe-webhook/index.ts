@@ -304,6 +304,9 @@ Deno.serve(async (req) => {
               amount: item.amount,
             });
             hasDonation = true;
+            if (formData.publicDisplayConsent === true) {
+              donationPublicDisplayConsent = true;
+            }
             if (!recipientEmail && formData.donorEmail) {
               recipientEmail = formData.donorEmail;
               recipientName = formData.donorName || "";
