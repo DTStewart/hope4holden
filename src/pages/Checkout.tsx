@@ -434,6 +434,41 @@ const CheckoutPage = () => {
             </div>
           )}
 
+          {/* Donor public-display opt-in — only when a donation is in the cart */}
+          {hasDonation && (
+            <div className="bg-white p-8 border border-[#1A1A1A]/10 rounded space-y-3">
+              <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40">Public Recognition</p>
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="publicDisplayConsent"
+                  checked={publicDisplayConsent}
+                  onCheckedChange={(checked) => setPublicDisplayConsent(!!checked)}
+                  className="mt-0.5"
+                />
+                <div className="flex-1">
+                  <Label htmlFor="publicDisplayConsent" className="text-[#1A1A1A] font-medium cursor-pointer">
+                    Show my name on the public supporter list at hope4holden.com
+                  </Label>
+                  <p className="text-xs text-[#1A1A1A]/50 mt-1">
+                    If unchecked, your donation will appear as Anonymous donor.
+                  </p>
+                </div>
+              </div>
+              {publicDisplayConsent && (
+                <div className="space-y-2 pl-7">
+                  <Label htmlFor="publicDisplayName" className="text-[#1A1A1A] font-medium">Display name (optional)</Label>
+                  <Input
+                    id="publicDisplayName"
+                    value={publicDisplayName}
+                    onChange={(e) => setPublicDisplayName(e.target.value)}
+                    placeholder="Leave blank to use your first name"
+                    className="rounded border-[#1A1A1A]/15"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Order Summary */}
           <div className="bg-white p-8 border border-[#1A1A1A]/10 rounded space-y-4">
             <p className="font-heading font-bold text-xs uppercase tracking-[0.2em] text-[#1A1A1A]/40">Order Summary</p>
