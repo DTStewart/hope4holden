@@ -1,0 +1,33 @@
+-- Tighten EXECUTE grants on lookup_extra_golfer_invite(uuid).
+--
+-- !! FUTURE EDITORS — READ BEFORE TOUCHING THIS FUNCTION !!
+-- If you ever modify lookup_extra_golfer_invite, use CREATE OR REPLACE FUNCTION,
+-- which preserves existing GRANTs and REVOKEs. Do NOT use DROP FUNCTION followed
+-- by CREATE FUNCTION — that path discards the privilege state and Postgres
+-- re-grants EXECUTE to PUBLIC by default on the new definition, silently
+-- reopening the function to anonymous traffic.
+--
+-- If a DROP + CREATE is unavoidable (e.g. signature change), the new migration
+-- MUST also re-apply the REVOKE/GRANT pair below to restore the explicit grant
+-- model. The same caveat applies to any other SECURITY DEFINER function in
+-- this repo.
+--
+-- WHAT: Make the EXECUTE privilege model explicit by revoking the implicit
+-- PUBLIC grant Postgres applies by default to new functions, then granting
+-- EXECUTE to anon and authenticated only.
+--
+-- WHY: Security best practice for SECURITY DEFINER functions. Without an
+-- explicit REVOKE, every PostgREST role (including future roles added to the
+-- project) inherits the PUBLIC grant by default. Mirrors the pattern used by
+-- every other SECURITY DEFINER function in this repo (e.g. get_leaderboard,
+-- submit_team_ugc, add_next_year_interest, get_live_dashboard_state).
+--
+-- HISTORY: These two statements were applied directly to the live database
+-- via the Lovable SQL editor on 2026-04-25. This file exists so the
+-- codebase reflects the live schema. Re-applying via Lovable is a no-op:
+--   - REVOKE on a privilege that's already absent is a no-op (no error).
+--   - GRANT on a privilege that already exists is a no-op (no error).
+-- Postgres treats both as idempotent state assertions.
+
+REVOKE EXECUTE ON FUNCTION public.lookup_extra_golfer_invite(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.lookup_extra_golfer_invite(uuid) TO anon, authenticated;
