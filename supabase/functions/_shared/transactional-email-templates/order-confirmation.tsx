@@ -190,6 +190,20 @@ const OrderConfirmationEmail = ({
           </Section>
         )}
 
+        {hasDonation && (
+          <Section style={infoBox}>
+            <Text style={infoTitle}>🧾 Tax receipt</Text>
+            <Text style={infoText}>
+              Your tax receipt will be issued by the Ataxia Telangiectasia Children's Project (ATCP) following the tournament.
+            </Text>
+            {publicDisplayConsent && (
+              <Text style={infoTextNote}>
+                Thank you for letting others see your support — your name now appears on the supporter list at <Link href="https://hope4holden.com" style={calLink}>https://hope4holden.com</Link>
+              </Text>
+            )}
+          </Section>
+        )}
+
         <Text style={closingText}>
           We truly appreciate your support. Every contribution helps make the {SITE_NAME} Golf Tournament a success and supports our mission to make a difference. We look forward to seeing you!
         </Text>
