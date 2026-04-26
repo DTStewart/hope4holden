@@ -25,7 +25,7 @@ const AuctionWinnerPaidEmail = ({
 }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>You won {itemTitle} — payment confirmed</Preview>
+    <Preview>{`You won ${itemTitle || 'an auction item'} — payment confirmed`}</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={header}>

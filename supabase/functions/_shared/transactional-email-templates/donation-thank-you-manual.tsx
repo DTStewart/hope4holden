@@ -25,7 +25,7 @@ const ManualDonationThankYouEmail = ({ donorName, amount, method, note }: Props)
   return (
     <Html lang="en" dir="ltr">
       <Head />
-      <Preview>Thank you for your ${amount || 0} donation to {SITE_NAME}</Preview>
+      <Preview>{`Thank you for your $${amount || 0} donation to ${SITE_NAME}`}</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={header}>
