@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,7 +34,7 @@ export default function BulkEmailTab() {
   const loadPreview = async () => {
     setLoadingPreview(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-bulk-email", {
+      const { data, error } = await adminSupabase.functions.invoke("admin-bulk-email", {
         body: { recipientGroup, dryRun: true },
       });
       if (error) throw error;
@@ -48,7 +48,7 @@ export default function BulkEmailTab() {
 
   const send = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("admin-bulk-email", {
+      const { data, error } = await adminSupabase.functions.invoke("admin-bulk-email", {
         body: { recipientGroup, subject, body },
       });
       if (error) throw error;

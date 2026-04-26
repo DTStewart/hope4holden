@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ function TiersCard() {
   const { data: tiers, isLoading } = useQuery({
     queryKey: ["admin-tiers"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from("sponsorship_tiers")
         .select("*")
         .order("sort_order", { ascending: true });
@@ -38,7 +38,7 @@ function TiersCard() {
   const { data: sponsors } = useQuery({
     queryKey: ["admin-sponsors-tier-counts"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("sponsors").select("tier_id, approved");
+      const { data, error } = await adminSupabase.from("sponsors").select("tier_id, approved");
       if (error) throw error;
       return data;
     },
@@ -50,7 +50,7 @@ function TiersCard() {
 
   const updateSlots = useMutation({
     mutationFn: async ({ id, max_slots }: { id: string; max_slots: number | null }) => {
-      const { error } = await supabase
+      const { error } = await adminSupabase
         .from("sponsorship_tiers")
         .update({ max_slots } as any)
         .eq("id", id);
@@ -156,7 +156,7 @@ function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
   const { data: tiers } = useQuery({
     queryKey: ["admin-tiers-all"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from("sponsorship_tiers")
         .select("*")
         .eq("active", true)
@@ -177,7 +177,7 @@ function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
       const days = parseInt(expiryDays) || 14;
       const expiresAt = new Date(Date.now() + days * 86400000).toISOString();
 
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from("sponsor_invites")
         .insert({
           tier_id: selectedTier.id,
@@ -292,7 +292,7 @@ export default function SponsorsTab() {
       let token = sponsor.logo_upload_token;
       if (!token) {
         token = crypto.randomUUID();
-        const { error } = await supabase
+        const { error } = await adminSupabase
           .from("sponsors")
           .update({ logo_upload_token: token })
           .eq("id", sponsor.id);
@@ -330,7 +330,7 @@ export default function SponsorsTab() {
     try {
       const siteUrl = "https://hope4holden.com";
       const uploadUrl = `${siteUrl}/sponsor-upload/${sponsor.logo_upload_token}`;
-      const { error } = await supabase.functions.invoke("send-transactional-email", {
+      const { error } = await adminSupabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: "sponsor-logo-upload",
           recipientEmail: sponsor.contact_email,
@@ -361,7 +361,7 @@ export default function SponsorsTab() {
     enabled: yearFilter != null,
     queryFn: async () => {
       console.log("[SponsorsTab] Fetching sponsors for year", yearFilter);
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from("sponsors")
         .select("id, business_name, contact_name, contact_email, contact_phone, facebook_handle, instagram_handle, tier_id, tier_name, amount, paid, approved, brand_assets, logo_url, logo_upload_token, stripe_session_id, created_at, updated_at")
         .eq("tournament_year", yearFilter as number)
@@ -376,7 +376,7 @@ export default function SponsorsTab() {
 
   const toggleApproval = useMutation({
     mutationFn: async ({ id, approved }: { id: string; approved: boolean }) => {
-      const { error } = await supabase.from("sponsors").update({ approved }).eq("id", id);
+      const { error } = await adminSupabase.from("sponsors").update({ approved }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -387,7 +387,7 @@ export default function SponsorsTab() {
 
   const deleteOne = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("sponsors").delete().eq("id", id);
+      const { error } = await adminSupabase.from("sponsors").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -398,7 +398,7 @@ export default function SponsorsTab() {
 
   const deleteAll = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("sponsors").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      const { error } = await adminSupabase.from("sponsors").delete().neq("id", "00000000-0000-0000-0000-000000000000");
       if (error) throw error;
     },
     onSuccess: () => {

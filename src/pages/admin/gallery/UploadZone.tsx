@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Upload, X, ImageIcon } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { toast } from "@/hooks/use-toast";
 import { YEARS, type StagedFile } from "./types";
 
@@ -68,14 +68,14 @@ export default function UploadZone({ onUploadComplete }: UploadZoneProps) {
       const ext = file.name.split(".").pop();
       const fileName = `${year}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-      const { error: uploadError } = await supabase.storage.from("gallery-photos").upload(fileName, file);
+      const { error: uploadError } = await adminSupabase.storage.from("gallery-photos").upload(fileName, file);
       if (uploadError) {
         toast({ title: `Failed: ${file.name}`, description: uploadError.message, variant: "destructive" });
         continue;
       }
 
-      const { data: urlData } = supabase.storage.from("gallery-photos").getPublicUrl(fileName);
-      const { error: insertError } = await supabase.from("gallery_photos").insert({
+      const { data: urlData } = adminSupabase.storage.from("gallery-photos").getPublicUrl(fileName);
+      const { error: insertError } = await adminSupabase.from("gallery_photos").insert({
         year,
         caption: caption || null,
         photo_url: urlData.publicUrl,

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ export default function SubscribersTab() {
     queryKey: ["admin-subscribers"],
     queryFn: async () => {
       await ensureAdminSession();
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from("email_subscribers")
         .select("*")
         .order("created_at", { ascending: false });
@@ -35,7 +35,7 @@ export default function SubscribersTab() {
 
   const deleteOne = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("email_subscribers").delete().eq("id", id);
+      const { error } = await adminSupabase.from("email_subscribers").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -46,7 +46,7 @@ export default function SubscribersTab() {
 
   const deleteAll = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("email_subscribers").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      const { error } = await adminSupabase.from("email_subscribers").delete().neq("id", "00000000-0000-0000-0000-000000000000");
       if (error) throw error;
     },
     onSuccess: () => {

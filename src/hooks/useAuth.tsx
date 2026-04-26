@@ -1,5 +1,5 @@
 import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthContextType {
@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const checkAdmin = useCallback(async (userId: string) => {
-    const { data, error } = await supabase.rpc("has_role", {
+    const { data, error } = await adminSupabase.rpc("has_role", {
       _user_id: userId,
       _role: "admin",
     });
@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let nextSession = incomingSession;
 
     if (!nextSession) {
-      const { data, error } = await supabase.auth.getSession();
+      const { data, error } = await adminSupabase.auth.getSession();
       if (error) throw error;
       nextSession = data.session;
     }
@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (isAuthError(err)) {
         // Real auth failure — try one refresh, and if that fails too wipe state.
         console.warn("[useAuth] auth error in has_role — attempting refresh:", err);
-        const { data, error } = await supabase.auth.refreshSession();
+        const { data, error } = await adminSupabase.auth.refreshSession();
         if (error || !data.session?.user) {
           setSession(null);
           setUser(null);
@@ -125,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [checkAdmin]);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = adminSupabase.auth.onAuthStateChange(
       async (_event, session) => {
         try {
           await resolveSession(session);
@@ -159,12 +159,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [resolveSession]);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await adminSupabase.auth.signInWithPassword({ email, password });
     return { error: error as Error | null };
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await adminSupabase.auth.signOut();
     setUser(null);
     setSession(null);
     setIsAdmin(false);

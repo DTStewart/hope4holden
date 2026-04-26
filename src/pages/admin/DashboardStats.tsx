@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card } from "@/components/ui/card";
 import { DollarSign, Users, Handshake, Heart, UtensilsCrossed, Loader2 } from "lucide-react";
@@ -21,10 +21,10 @@ export default function DashboardStats() {
       await ensureAdminSession();
 
       const [regsRes, sponsorsRes, donationsRes, dinnersRes] = await Promise.all([
-        supabase.from("registrations").select("id, paid").eq("paid", true),
-        supabase.from("sponsors").select("id, amount, paid").eq("paid", true),
-        supabase.from("donations").select("id, amount, paid").eq("paid", true),
-        supabase.from("dinners").select("id, amount, quantity, paid").eq("paid", true),
+        adminSupabase.from("registrations").select("id, paid").eq("paid", true),
+        adminSupabase.from("sponsors").select("id, amount, paid").eq("paid", true),
+        adminSupabase.from("donations").select("id, amount, paid").eq("paid", true),
+        adminSupabase.from("dinners").select("id, amount, quantity, paid").eq("paid", true),
       ]);
 
       if (regsRes.error) throw regsRes.error;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -47,7 +47,7 @@ export default function WalkUpDonationDialog({ open, onOpenChange }: Props) {
       if (!name.trim()) throw new Error("Name is required");
       if (!Number.isFinite(amt) || amt <= 0) throw new Error("Enter a positive whole-dollar amount");
 
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from("donations")
         .insert({
           donor_name: name.trim(),
@@ -68,7 +68,7 @@ export default function WalkUpDonationDialog({ open, onOpenChange }: Props) {
 
       if (sendThankYou && email.trim()) {
         try {
-          await supabase.functions.invoke("send-transactional-email", {
+          await adminSupabase.functions.invoke("send-transactional-email", {
             body: {
               templateName: "donation-thank-you-manual",
               recipientEmail: email.trim(),

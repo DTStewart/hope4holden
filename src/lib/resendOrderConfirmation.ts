@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 
 interface LineItem {
   type: string;
@@ -20,7 +20,7 @@ interface BasePayload {
 
 async function send(payload: BasePayload) {
   const { recipientEmail, idempotencySource, ...rest } = payload;
-  const { error } = await supabase.functions.invoke("send-transactional-email", {
+  const { error } = await adminSupabase.functions.invoke("send-transactional-email", {
     body: {
       templateName: "order-confirmation",
       recipientEmail,

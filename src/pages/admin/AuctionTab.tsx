@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,7 +76,7 @@ export default function AuctionTab() {
     queryKey: ["admin-auction-settings"],
     queryFn: async () => {
       await ensureAdminSession();
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from("auction_settings")
         .select("*")
         .eq("id", 1)
@@ -90,7 +90,7 @@ export default function AuctionTab() {
     queryKey: ["admin-auction-items"],
     queryFn: async () => {
       await ensureAdminSession();
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from("auction_items")
         .select("*")
         .order("sort_order", { ascending: true })
@@ -102,7 +102,7 @@ export default function AuctionTab() {
 
   const saveSettings = useMutation({
     mutationFn: async (updates: Partial<Settings>) => {
-      const { error } = await supabase
+      const { error } = await adminSupabase
         .from("auction_settings")
         .update(updates)
         .eq("id", 1);
@@ -119,7 +119,7 @@ export default function AuctionTab() {
 
   const deleteItem = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("auction_items").delete().eq("id", id);
+      const { error } = await adminSupabase.from("auction_items").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -438,11 +438,11 @@ function ItemDialog({
         const f = files[i];
         const ext = f.name.split(".").pop()?.toLowerCase() || "jpg";
         const path = `${crypto.randomUUID()}.${ext}`;
-        const { error } = await supabase.storage
+        const { error } = await adminSupabase.storage
           .from("auction-items")
           .upload(path, f, { contentType: f.type, upsert: false });
         if (error) throw error;
-        const { data } = supabase.storage.from("auction-items").getPublicUrl(path);
+        const { data } = adminSupabase.storage.from("auction-items").getPublicUrl(path);
         uploaded.push({ url: data.publicUrl });
       }
       setImages((prev) => [...prev, ...uploaded]);
@@ -478,10 +478,10 @@ function ItemDialog({
         sort_order: Number(sortOrder) || 0,
       };
       if (mode === "edit" && item) {
-        const { error } = await supabase.from("auction_items").update(payload).eq("id", item.id);
+        const { error } = await adminSupabase.from("auction_items").update(payload).eq("id", item.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("auction_items").insert(payload);
+        const { error } = await adminSupabase.from("auction_items").insert(payload);
         if (error) throw error;
       }
       toast({ title: mode === "edit" ? "Item updated" : "Item created" });

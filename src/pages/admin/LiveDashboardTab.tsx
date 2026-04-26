@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ export default function LiveDashboardTab() {
     queryKey: ["admin-live-dashboard-settings"],
     queryFn: async () => {
       await ensureAdminSession();
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from("live_dashboard_settings")
         .select("*")
         .eq("id", 1)
@@ -53,7 +53,7 @@ export default function LiveDashboardTab() {
     queryKey: ["admin-rainbow-winners"],
     queryFn: async () => {
       await ensureAdminSession();
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from("rainbow_auction_winners")
         .select("*")
         .order("sort_order", { ascending: true })
@@ -65,7 +65,7 @@ export default function LiveDashboardTab() {
 
   const updateSettings = useMutation({
     mutationFn: async (patch: Partial<Settings>) => {
-      const { error } = await supabase
+      const { error } = await adminSupabase
         .from("live_dashboard_settings")
         .update(patch)
         .eq("id", 1);
@@ -89,7 +89,7 @@ export default function LiveDashboardTab() {
         throw new Error("Prize and winner name are required");
       }
       const maxSort = winners?.reduce((m, w) => Math.max(m, w.sort_order), 0) ?? 0;
-      const { error } = await supabase.from("rainbow_auction_winners").insert({
+      const { error } = await adminSupabase.from("rainbow_auction_winners").insert({
         prize_description: newPrize.trim(),
         winner_name: newWinner.trim(),
         amount: newAmount ? Math.round(Number(newAmount)) : null,
@@ -111,7 +111,7 @@ export default function LiveDashboardTab() {
 
   const deleteWinner = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("rainbow_auction_winners").delete().eq("id", id);
+      const { error } = await adminSupabase.from("rainbow_auction_winners").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

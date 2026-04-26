@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ export default function UGCTab() {
     queryKey: ["admin-ugc", filter],
     queryFn: async () => {
       await ensureAdminSession();
-      let query = supabase
+      let query = adminSupabase
         .from("ugc_photos")
         .select("*, registrations(team_name)")
         .order("created_at", { ascending: false });
@@ -53,7 +53,7 @@ export default function UGCTab() {
 
   const setStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: "approved" | "rejected" }) => {
-      const { error } = await supabase.from("ugc_photos").update({ status }).eq("id", id);
+      const { error } = await adminSupabase.from("ugc_photos").update({ status }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -66,7 +66,7 @@ export default function UGCTab() {
 
   const deleteOne = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("ugc_photos").delete().eq("id", id);
+      const { error } = await adminSupabase.from("ugc_photos").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

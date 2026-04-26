@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +29,7 @@ export default function MessagesTab() {
     queryKey: ["admin-messages"],
     queryFn: async () => {
       await ensureAdminSession();
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from("messages")
         .select("*")
         .order("created_at", { ascending: false });
@@ -40,7 +40,7 @@ export default function MessagesTab() {
 
   const markRead = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("messages").update({ read: true }).eq("id", id);
+      const { error } = await adminSupabase.from("messages").update({ read: true }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -51,7 +51,7 @@ export default function MessagesTab() {
 
   const deleteOne = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("messages").delete().eq("id", id);
+      const { error } = await adminSupabase.from("messages").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -62,7 +62,7 @@ export default function MessagesTab() {
 
   const deleteAll = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("messages").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      const { error } = await adminSupabase.from("messages").delete().neq("id", "00000000-0000-0000-0000-000000000000");
       if (error) throw error;
     },
     onSuccess: () => {

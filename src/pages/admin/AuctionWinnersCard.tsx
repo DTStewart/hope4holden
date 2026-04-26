@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,7 +53,7 @@ export default function AuctionWinnersCard() {
     queryKey: ["admin-auction-invoices"],
     queryFn: async () => {
       await ensureAdminSession();
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from("auction_invoices")
         .select(
           "*, items:auction_items(title, pickup_option), bidders:auction_bidders(display_name, email, attending_event)"
@@ -76,7 +76,7 @@ export default function AuctionWinnersCard() {
 
   const clearCard = useMutation({
     mutationFn: async (bidderId: string) => {
-      const { error } = await supabase.rpc("admin_clear_bidder_payment_method", { _bidder_id: bidderId });
+      const { error } = await adminSupabase.rpc("admin_clear_bidder_payment_method", { _bidder_id: bidderId });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -90,7 +90,7 @@ export default function AuctionWinnersCard() {
 
   const runClose = useMutation({
     mutationFn: async (dryRun: boolean) => {
-      const { data, error } = await supabase.functions.invoke("auction-close", { body: { dryRun } });
+      const { data, error } = await adminSupabase.functions.invoke("auction-close", { body: { dryRun } });
       if (error) throw error;
       return data as { stats: any; details: any[] };
     },
@@ -114,7 +114,7 @@ export default function AuctionWinnersCard() {
       const templateName = inv.status === "charged"
         ? "auction-winner-paid"
         : "auction-winner-action-required";
-      const { error } = await supabase.functions.invoke("send-transactional-email", {
+      const { error } = await adminSupabase.functions.invoke("send-transactional-email", {
         body: {
           templateName,
           recipientEmail: inv.bidders?.email,

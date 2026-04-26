@@ -4,7 +4,7 @@ import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { Image as ImageIcon, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { toast } from "@/hooks/use-toast";
 import SortablePhoto from "./SortablePhoto";
 import type { GalleryPhoto } from "./types";
@@ -48,11 +48,11 @@ export default function PhotoGrid({ photos, setPhotos, loading, fetchPhotos }: P
       .filter(Boolean);
 
     if (storagePaths.length > 0) {
-      await supabase.storage.from("gallery-photos").remove(storagePaths);
+      await adminSupabase.storage.from("gallery-photos").remove(storagePaths);
     }
 
     const ids = toDelete.map((p) => p.id);
-    const { error } = await supabase.from("gallery_photos").delete().in("id", ids);
+    const { error } = await adminSupabase.from("gallery_photos").delete().in("id", ids);
 
     if (error) {
       toast({ title: "Error deleting photos", description: error.message, variant: "destructive" });
@@ -68,9 +68,9 @@ export default function PhotoGrid({ photos, setPhotos, loading, fetchPhotos }: P
   const handleDelete = async (photo: GalleryPhoto) => {
     const urlParts = photo.photo_url.split("/gallery-photos/");
     const storagePath = urlParts[1];
-    if (storagePath) await supabase.storage.from("gallery-photos").remove([storagePath]);
+    if (storagePath) await adminSupabase.storage.from("gallery-photos").remove([storagePath]);
 
-    const { error } = await supabase.from("gallery_photos").delete().eq("id", photo.id);
+    const { error } = await adminSupabase.from("gallery_photos").delete().eq("id", photo.id);
     if (error) {
       toast({ title: "Error deleting photo", description: error.message, variant: "destructive" });
     } else {
@@ -80,7 +80,7 @@ export default function PhotoGrid({ photos, setPhotos, loading, fetchPhotos }: P
   };
 
   const handleCaptionUpdate = async (id: string, newCaption: string) => {
-    const { error } = await supabase.from("gallery_photos").update({ caption: newCaption || null }).eq("id", id);
+    const { error } = await adminSupabase.from("gallery_photos").update({ caption: newCaption || null }).eq("id", id);
     if (error) {
       toast({ title: "Error updating caption", description: error.message, variant: "destructive" });
     } else {
@@ -101,7 +101,7 @@ export default function PhotoGrid({ photos, setPhotos, loading, fetchPhotos }: P
     reordered.splice(newIndex, 0, moved);
     setPhotos(reordered);
 
-    const updates = reordered.map((p, i) => supabase.from("gallery_photos").update({ sort_order: i }).eq("id", p.id));
+    const updates = reordered.map((p, i) => adminSupabase.from("gallery_photos").update({ sort_order: i }).eq("id", p.id));
     const results = await Promise.all(updates);
     if (results.some((r) => r.error)) {
       toast({ title: "Error saving order", variant: "destructive" });

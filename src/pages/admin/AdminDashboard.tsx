@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image, ShoppingCart, ClipboardList, UtensilsCrossed, Send, Megaphone, Gavel, Trophy, Tv, Camera, CalendarDays, PartyPopper } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { useToast } from "@/hooks/use-toast";
 import RegistrationsTab from "./RegistrationsTab";
 import SponsorsTab from "./SponsorsTab";
@@ -46,12 +46,12 @@ export default function AdminDashboard() {
     let cancelled = false;
 
     const check = async () => {
-      const { data, error } = await supabase.auth.getSession();
+      const { data, error } = await adminSupabase.auth.getSession();
       let session = data?.session ?? null;
       const now = Math.floor(Date.now() / 1000);
 
       if (session?.expires_at && session.expires_at - now < 30) {
-        const { data: refreshed } = await supabase.auth.refreshSession();
+        const { data: refreshed } = await adminSupabase.auth.refreshSession();
         session = refreshed?.session ?? null;
       }
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,7 @@ export default function PostEventTab() {
     queryKey: ["admin-fundraising-total"],
     queryFn: async () => {
       await ensureAdminSession();
-      const { data, error } = await supabase.rpc("get_fundraising_total");
+      const { data, error } = await adminSupabase.rpc("get_fundraising_total");
       if (error) throw error;
       return data as unknown as FundraisingTotal;
     },
@@ -63,7 +63,7 @@ export default function PostEventTab() {
   const loadPreview = async () => {
     setLoadingPreview(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-bulk-email", {
+      const { data, error } = await adminSupabase.functions.invoke("admin-bulk-email", {
         body: { recipientGroup, dryRun: true },
       });
       if (error) throw error;
@@ -81,7 +81,7 @@ export default function PostEventTab() {
       if (!Number.isFinite(total) || total < 0) throw new Error("Enter a valid total raised");
       const saveTheDateUrl = `${window.location.origin}/save-the-date`;
 
-      const { data, error } = await supabase.functions.invoke("admin-bulk-email", {
+      const { data, error } = await adminSupabase.functions.invoke("admin-bulk-email", {
         body: {
           recipientGroup,
           templateName: "event-recap",

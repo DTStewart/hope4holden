@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
 import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -49,7 +49,7 @@ export function EditableEmail({ table, id, column, value, invalidateKey }: Edita
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from(table).update({ [column]: next } as any).eq("id", id);
+    const { error } = await adminSupabase.from(table).update({ [column]: next } as any).eq("id", id);
     setSaving(false);
     if (error) {
       toast({ title: "Failed to update email", description: error.message, variant: "destructive" });

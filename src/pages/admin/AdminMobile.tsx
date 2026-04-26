@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -108,7 +108,7 @@ function SmsAlertDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
   const checkCount = async () => {
     setChecking(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-bulk-sms", {
+      const { data, error } = await adminSupabase.functions.invoke("admin-bulk-sms", {
         body: { recipientGroup, dryRun: true },
       });
       if (error) throw error;
@@ -126,7 +126,7 @@ function SmsAlertDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
 
   const send = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke("admin-bulk-sms", {
+      const { data, error } = await adminSupabase.functions.invoke("admin-bulk-sms", {
         body: { recipientGroup, message },
       });
       if (error) throw error;

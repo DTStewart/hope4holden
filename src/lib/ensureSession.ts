@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 
 /**
  * Ensures there is a valid Supabase session before running an authenticated query.
@@ -8,14 +8,14 @@ import { supabase } from "@/integrations/supabase/client";
  * empty/blank rows when RLS silently strips fields after token expiry.
  */
 export async function ensureAdminSession(): Promise<void> {
-  const { data, error } = await supabase.auth.getSession();
+  const { data, error } = await adminSupabase.auth.getSession();
 
   let session = data?.session ?? null;
 
   // If the access token is expired (or about to expire in <30s), force a refresh.
   const now = Math.floor(Date.now() / 1000);
   if (session && session.expires_at && session.expires_at - now < 30) {
-    const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+    const { data: refreshed, error: refreshError } = await adminSupabase.auth.refreshSession();
     if (refreshError) {
       redirectToLogin();
       throw new Error("Session expired");

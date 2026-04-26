@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -53,7 +53,7 @@ export default function OrdersTab() {
     enabled: yearFilter != null,
     queryFn: async () => {
       await ensureAdminSession();
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from("pending_orders")
         .select("*")
         .eq("status", "completed")
@@ -69,7 +69,7 @@ export default function OrdersTab() {
 
   const deleteOne = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("pending_orders").delete().eq("id", id);
+      const { error } = await adminSupabase.from("pending_orders").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -80,7 +80,7 @@ export default function OrdersTab() {
 
   const deleteAll = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("pending_orders").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      const { error } = await adminSupabase.from("pending_orders").delete().neq("id", "00000000-0000-0000-0000-000000000000");
       if (error) throw error;
     },
     onSuccess: () => {

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,7 +60,7 @@ export default function ScoresTab() {
     queryKey: ["admin-scorecards"],
     queryFn: async () => {
       await ensureAdminSession();
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from("scorecard_submissions")
         .select("*, registrations(team_name, business_name, captain_email, score_token)")
         .order("final_score", { ascending: true });
@@ -73,7 +73,7 @@ export default function ScoresTab() {
     queryKey: ["admin-paid-teams"],
     queryFn: async () => {
       await ensureAdminSession();
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from("registrations")
         .select("id, team_name, business_name, captain_name, captain_email, score_token, paid")
         .eq("paid", true)
@@ -85,7 +85,7 @@ export default function ScoresTab() {
 
   const verify = useMutation({
     mutationFn: async ({ id, verified }: { id: string; verified: boolean }) => {
-      const { error } = await supabase
+      const { error } = await adminSupabase
         .from("scorecard_submissions")
         .update({ verified, disqualified: false })
         .eq("id", id);
@@ -100,7 +100,7 @@ export default function ScoresTab() {
 
   const disqualify = useMutation({
     mutationFn: async ({ id, disqualified }: { id: string; disqualified: boolean }) => {
-      const { error } = await supabase
+      const { error } = await adminSupabase
         .from("scorecard_submissions")
         .update({ disqualified, verified: disqualified ? false : undefined })
         .eq("id", id);
@@ -114,7 +114,7 @@ export default function ScoresTab() {
 
   const updateScore = useMutation({
     mutationFn: async ({ id, score }: { id: string; score: number }) => {
-      const { error } = await supabase
+      const { error } = await adminSupabase
         .from("scorecard_submissions")
         .update({ final_score: score })
         .eq("id", id);
@@ -474,7 +474,7 @@ function AdminScoreEntryDialog({
       const photoUrl = await uploadPhoto();
 
       if (mode === "create") {
-        const { error } = await supabase.from("scorecard_submissions").insert({
+        const { error } = await adminSupabase.from("scorecard_submissions").insert({
           registration_id: team.id,
           final_score: Number(score),
           photo_url: photoUrl,
@@ -486,7 +486,7 @@ function AdminScoreEntryDialog({
         toast({ title: "Score saved", description: `${team.team_name}: ${score}` });
       } else {
         if (!existingSubmissionId) throw new Error("No existing submission to replace photo for");
-        const { error } = await supabase
+        const { error } = await adminSupabase
           .from("scorecard_submissions")
           .update({ photo_url: photoUrl })
           .eq("id", existingSubmissionId);

@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -57,7 +57,7 @@ export default function EmailsTab() {
     try {
       const templateData =
         (row.metadata && typeof row.metadata === "object" && (row.metadata as any).templateData) || {};
-      const { error } = await supabase.functions.invoke("send-transactional-email", {
+      const { error } = await adminSupabase.functions.invoke("send-transactional-email", {
         body: {
           templateName: row.template_name,
           recipientEmail: row.recipient_email,
@@ -78,7 +78,7 @@ export default function EmailsTab() {
     queryKey: ["admin-emails"],
     queryFn: async () => {
       await ensureAdminSession();
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from("email_send_log")
         .select("*")
         .order("created_at", { ascending: false });

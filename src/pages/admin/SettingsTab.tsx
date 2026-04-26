@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ export default function SettingsTab() {
     queryKey: ["admin-settings"],
     queryFn: async () => {
       await ensureAdminSession();
-      const { data, error } = await supabase.from("settings").select("*");
+      const { data, error } = await adminSupabase.from("settings").select("*");
       if (error) throw error;
       return data;
     },
@@ -52,13 +52,13 @@ export default function SettingsTab() {
     mutationFn: async ({ key, value }: { key: string; value: any }) => {
       const existing = settings?.find((s) => s.key === key);
       if (existing) {
-        const { error } = await supabase
+        const { error } = await adminSupabase
           .from("settings")
           .update({ value: value as any })
           .eq("key", key);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { error } = await adminSupabase
           .from("settings")
           .insert({ key, value: value as any });
         if (error) throw error;

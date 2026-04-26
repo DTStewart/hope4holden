@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
@@ -16,7 +16,7 @@ export default function GalleryTab() {
     setLoading(true);
     try {
       await ensureAdminSession();
-      let query = supabase
+      let query = adminSupabase
         .from("gallery_photos")
         .select("*")
         .order("year", { ascending: false })

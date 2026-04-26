@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 
 /** Reads the current tournament year from public settings (no auth required). */
 export function useCurrentTournamentYear() {
   return useQuery({
     queryKey: ["current-tournament-year"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await adminSupabase
         .from("settings")
         .select("value")
         .eq("key", "current_tournament_year")
@@ -25,7 +25,7 @@ export function useDistinctTournamentYears(table: "registrations" | "sponsors" |
   return useQuery({
     queryKey: ["distinct-tournament-years", table],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await (adminSupabase as any)
         .from(table)
         .select("tournament_year");
       if (error) throw error;
