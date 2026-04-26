@@ -280,6 +280,29 @@ documented in [GO_LIVE_CHECKLIST.md](GO_LIVE_CHECKLIST.md).
 
 ---
 
+## Deprecated columns to drop (post-tournament)
+
+Session 1.5 introduced cents-denominated and normalized replacements alongside
+existing legacy columns, leaving both in place for backwards compat with the
+current UI. Once every consumer is migrated, these can be dropped:
+
+- `auction_items.market_value` (replaced by `retail_value_cents` — backfilled in Session 1.5)
+- `rainbow_auction_winners.amount` (replaced by `winning_amount_cents` — backfilled in Session 1.5 where amount was non-null)
+- `rainbow_auction_winners.prize_description` (replaced by `prize_id` linking to `rainbow_auction_prizes.prize_name`)
+
+**Trigger condition:** drop only after all UI consumers
+(`Auction.tsx`, `AuctionTab.tsx`, `LiveDashboardTab.tsx`, `LiveDashboard.tsx`)
+have been migrated to read from the cents columns and from `prize_id`-based
+joins.
+
+**Schedule:** post-June-19-2026 cleanup. Don't touch before the tournament.
+
+The columns are marked `DEPRECATED` in their `COMMENT ON COLUMN` metadata
+(applied in `supabase/migrations/20260426140235_a177f19e-…sql`) — IDE tooling
+and `\d+` in psql will show the warning.
+
+---
+
 ## Already shipped (as of this backlog)
 
 See recent commits for details. Short version:
