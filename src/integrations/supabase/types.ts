@@ -167,15 +167,18 @@ export type Database = {
       auction_items: {
         Row: {
           bid_increment: number | null
+          cost_to_event_cents: number | null
           created_at: string
           description: string | null
           donated_by: string | null
+          donated_item_id: string | null
           ends_at: string | null
           id: string
           images: Json
           market_value: number
           pickup_notes: string | null
           pickup_option: string
+          retail_value_cents: number | null
           sort_order: number
           starting_bid: number
           status: string
@@ -184,15 +187,18 @@ export type Database = {
         }
         Insert: {
           bid_increment?: number | null
+          cost_to_event_cents?: number | null
           created_at?: string
           description?: string | null
           donated_by?: string | null
+          donated_item_id?: string | null
           ends_at?: string | null
           id?: string
           images?: Json
           market_value?: number
           pickup_notes?: string | null
           pickup_option?: string
+          retail_value_cents?: number | null
           sort_order?: number
           starting_bid?: number
           status?: string
@@ -201,22 +207,33 @@ export type Database = {
         }
         Update: {
           bid_increment?: number | null
+          cost_to_event_cents?: number | null
           created_at?: string
           description?: string | null
           donated_by?: string | null
+          donated_item_id?: string | null
           ends_at?: string | null
           id?: string
           images?: Json
           market_value?: number
           pickup_notes?: string | null
           pickup_option?: string
+          retail_value_cents?: number | null
           sort_order?: number
           starting_bid?: number
           status?: string
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "auction_items_donated_item_id_fkey"
+            columns: ["donated_item_id"]
+            isOneToOne: false
+            referencedRelation: "donated_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       auction_settings: {
         Row: {
@@ -258,18 +275,24 @@ export type Database = {
           auction_bid_id: string | null
           auction_invoice_id: string | null
           contact_id: string
+          cost_of_goods_cents: number | null
           created_at: string
           dinner_id: string | null
+          donated_item_id: string | null
           donation_id: string | null
           event_type: string
           id: string
           notes: string | null
+          payment_processor: string | null
+          processor_fee_cents: number | null
+          receipt_requested: boolean
           registration_id: string | null
           role_detail: string | null
           source_id: string | null
           source_table: string | null
           sponsor_id: string | null
           tax_receipt_amount_cents: number | null
+          tax_receipt_eligible: boolean
           tournament_year: number | null
         }
         Insert: {
@@ -278,18 +301,24 @@ export type Database = {
           auction_bid_id?: string | null
           auction_invoice_id?: string | null
           contact_id: string
+          cost_of_goods_cents?: number | null
           created_at?: string
           dinner_id?: string | null
+          donated_item_id?: string | null
           donation_id?: string | null
           event_type?: string
           id?: string
           notes?: string | null
+          payment_processor?: string | null
+          processor_fee_cents?: number | null
+          receipt_requested?: boolean
           registration_id?: string | null
           role_detail?: string | null
           source_id?: string | null
           source_table?: string | null
           sponsor_id?: string | null
           tax_receipt_amount_cents?: number | null
+          tax_receipt_eligible?: boolean
           tournament_year?: number | null
         }
         Update: {
@@ -298,18 +327,24 @@ export type Database = {
           auction_bid_id?: string | null
           auction_invoice_id?: string | null
           contact_id?: string
+          cost_of_goods_cents?: number | null
           created_at?: string
           dinner_id?: string | null
+          donated_item_id?: string | null
           donation_id?: string | null
           event_type?: string
           id?: string
           notes?: string | null
+          payment_processor?: string | null
+          processor_fee_cents?: number | null
+          receipt_requested?: boolean
           registration_id?: string | null
           role_detail?: string | null
           source_id?: string | null
           source_table?: string | null
           sponsor_id?: string | null
           tax_receipt_amount_cents?: number | null
+          tax_receipt_eligible?: boolean
           tournament_year?: number | null
         }
         Relationships: [
@@ -369,6 +404,13 @@ export type Database = {
             referencedRelation: "sponsors"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_contact_activities_donated_item"
+            columns: ["donated_item_id"]
+            isOneToOne: false
+            referencedRelation: "donated_items"
+            referencedColumns: ["id"]
+          },
         ]
       }
       contacts: {
@@ -388,6 +430,9 @@ export type Database = {
           province: string | null
           public_display_consent: boolean
           public_display_name: string | null
+          sms_consent: boolean
+          sms_consent_recorded_at: string | null
+          sms_consent_source: string | null
           street: string | null
           tags: string[]
           unsubscribed_at: string | null
@@ -409,6 +454,9 @@ export type Database = {
           province?: string | null
           public_display_consent?: boolean
           public_display_name?: string | null
+          sms_consent?: boolean
+          sms_consent_recorded_at?: string | null
+          sms_consent_source?: string | null
           street?: string | null
           tags?: string[]
           unsubscribed_at?: string | null
@@ -430,6 +478,9 @@ export type Database = {
           province?: string | null
           public_display_consent?: boolean
           public_display_name?: string | null
+          sms_consent?: boolean
+          sms_consent_recorded_at?: string | null
+          sms_consent_source?: string | null
           street?: string | null
           tags?: string[]
           unsubscribed_at?: string | null
@@ -475,6 +526,82 @@ export type Database = {
           tournament_year?: number
         }
         Relationships: []
+      }
+      donated_items: {
+        Row: {
+          auction_item_id: string | null
+          created_at: string
+          donor_contact_id: string | null
+          donor_fmv_basis: string | null
+          event_type: string
+          fair_market_value_cents: number
+          id: string
+          intended_format: string | null
+          item_description: string | null
+          item_name: string
+          notes: string | null
+          rainbow_prize_id: string | null
+          receipt_requested: boolean
+          tournament_year: number
+          updated_at: string
+        }
+        Insert: {
+          auction_item_id?: string | null
+          created_at?: string
+          donor_contact_id?: string | null
+          donor_fmv_basis?: string | null
+          event_type?: string
+          fair_market_value_cents: number
+          id?: string
+          intended_format?: string | null
+          item_description?: string | null
+          item_name: string
+          notes?: string | null
+          rainbow_prize_id?: string | null
+          receipt_requested?: boolean
+          tournament_year: number
+          updated_at?: string
+        }
+        Update: {
+          auction_item_id?: string | null
+          created_at?: string
+          donor_contact_id?: string | null
+          donor_fmv_basis?: string | null
+          event_type?: string
+          fair_market_value_cents?: number
+          id?: string
+          intended_format?: string | null
+          item_description?: string | null
+          item_name?: string
+          notes?: string | null
+          rainbow_prize_id?: string | null
+          receipt_requested?: boolean
+          tournament_year?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donated_items_donor_contact_id_fkey"
+            columns: ["donor_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_donated_items_auction_item"
+            columns: ["auction_item_id"]
+            isOneToOne: false
+            referencedRelation: "auction_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_donated_items_rainbow_prize"
+            columns: ["rainbow_prize_id"]
+            isOneToOne: false
+            referencedRelation: "rainbow_auction_prizes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       donations: {
         Row: {
@@ -649,6 +776,54 @@ export type Database = {
           id?: string
           token?: string
           used_at?: string | null
+        }
+        Relationships: []
+      }
+      event_expenses: {
+        Row: {
+          amount_cents: number
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          expense_date: string
+          id: string
+          notes: string | null
+          payment_method: string | null
+          receipt_url: string | null
+          tournament_year: number
+          updated_at: string
+          vendor: string
+        }
+        Insert: {
+          amount_cents: number
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expense_date: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          receipt_url?: string | null
+          tournament_year: number
+          updated_at?: string
+          vendor: string
+        }
+        Update: {
+          amount_cents?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expense_date?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          receipt_url?: string | null
+          tournament_year?: number
+          updated_at?: string
+          vendor?: string
         }
         Relationships: []
       }
@@ -832,35 +1007,109 @@ export type Database = {
         }
         Relationships: []
       }
+      rainbow_auction_prizes: {
+        Row: {
+          created_at: string
+          donated_item_id: string | null
+          id: string
+          is_displayed: boolean
+          prize_description: string | null
+          prize_name: string
+          retail_value_cents: number | null
+          sort_order: number
+          tournament_year: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          donated_item_id?: string | null
+          id?: string
+          is_displayed?: boolean
+          prize_description?: string | null
+          prize_name: string
+          retail_value_cents?: number | null
+          sort_order?: number
+          tournament_year: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          donated_item_id?: string | null
+          id?: string
+          is_displayed?: boolean
+          prize_description?: string | null
+          prize_name?: string
+          retail_value_cents?: number | null
+          sort_order?: number
+          tournament_year?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rainbow_auction_prizes_donated_item_id_fkey"
+            columns: ["donated_item_id"]
+            isOneToOne: false
+            referencedRelation: "donated_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rainbow_auction_winners: {
         Row: {
           amount: number | null
           created_at: string
           id: string
           prize_description: string
+          prize_id: string | null
           sort_order: number
+          tournament_year: number | null
           updated_at: string
+          winner_contact_id: string | null
           winner_name: string
+          winning_amount_cents: number | null
         }
         Insert: {
           amount?: number | null
           created_at?: string
           id?: string
           prize_description: string
+          prize_id?: string | null
           sort_order?: number
+          tournament_year?: number | null
           updated_at?: string
+          winner_contact_id?: string | null
           winner_name: string
+          winning_amount_cents?: number | null
         }
         Update: {
           amount?: number | null
           created_at?: string
           id?: string
           prize_description?: string
+          prize_id?: string | null
           sort_order?: number
+          tournament_year?: number | null
           updated_at?: string
+          winner_contact_id?: string | null
           winner_name?: string
+          winning_amount_cents?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "rainbow_auction_winners_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
+            referencedRelation: "rainbow_auction_prizes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rainbow_auction_winners_winner_contact_id_fkey"
+            columns: ["winner_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       registrations: {
         Row: {
@@ -1358,6 +1607,10 @@ export type Database = {
         }[]
       }
       get_current_tournament_year: { Args: never; Returns: number }
+      get_financial_summary: {
+        Args: { p_tournament_year: number }
+        Returns: Json
+      }
       get_fundraising_total: { Args: never; Returns: Json }
       get_leaderboard: {
         Args: never
@@ -1371,6 +1624,7 @@ export type Database = {
         }[]
       }
       get_live_dashboard_state: { Args: never; Returns: Json }
+      get_live_display_state: { Args: never; Returns: Json }
       get_my_bidder_profile: {
         Args: never
         Returns: {
@@ -1566,7 +1820,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "volunteer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1694,7 +1948,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "volunteer"],
     },
   },
 } as const
