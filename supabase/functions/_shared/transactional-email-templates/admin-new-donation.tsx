@@ -15,7 +15,7 @@ interface Props {
 const AdminNewDonationEmail = ({ donorName, donorEmail, amount }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>New donation: ${amount || 0} from {donorName || 'Anonymous'}</Preview>
+    <Preview>{`New donation: $${amount || 0} from ${donorName || 'Anonymous'}`}</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={header}>

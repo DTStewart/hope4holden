@@ -16,7 +16,7 @@ interface Props {
 const AdminNewDinnerEmail = ({ guestName, guestEmail, quantity, amount }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>New dinner purchase: {quantity || 1} ticket{(quantity || 1) > 1 ? 's' : ''} from {guestName || 'Unknown'}</Preview>
+    <Preview>{`New dinner purchase: ${quantity || 1} ticket${(quantity || 1) > 1 ? 's' : ''} from ${guestName || 'Unknown'}`}</Preview>
     <Body style={main}>
       <Container style={container}>
         <Section style={header}>
