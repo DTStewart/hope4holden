@@ -251,6 +251,192 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_activities: {
+        Row: {
+          activity_type: string
+          amount_cents: number | null
+          auction_bid_id: string | null
+          auction_invoice_id: string | null
+          contact_id: string
+          created_at: string
+          dinner_id: string | null
+          donation_id: string | null
+          event_type: string
+          id: string
+          notes: string | null
+          registration_id: string | null
+          role_detail: string | null
+          source_id: string | null
+          source_table: string | null
+          sponsor_id: string | null
+          tax_receipt_amount_cents: number | null
+          tournament_year: number | null
+        }
+        Insert: {
+          activity_type: string
+          amount_cents?: number | null
+          auction_bid_id?: string | null
+          auction_invoice_id?: string | null
+          contact_id: string
+          created_at?: string
+          dinner_id?: string | null
+          donation_id?: string | null
+          event_type?: string
+          id?: string
+          notes?: string | null
+          registration_id?: string | null
+          role_detail?: string | null
+          source_id?: string | null
+          source_table?: string | null
+          sponsor_id?: string | null
+          tax_receipt_amount_cents?: number | null
+          tournament_year?: number | null
+        }
+        Update: {
+          activity_type?: string
+          amount_cents?: number | null
+          auction_bid_id?: string | null
+          auction_invoice_id?: string | null
+          contact_id?: string
+          created_at?: string
+          dinner_id?: string | null
+          donation_id?: string | null
+          event_type?: string
+          id?: string
+          notes?: string | null
+          registration_id?: string | null
+          role_detail?: string | null
+          source_id?: string | null
+          source_table?: string | null
+          sponsor_id?: string | null
+          tax_receipt_amount_cents?: number | null
+          tournament_year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_activities_auction_bid_id_fkey"
+            columns: ["auction_bid_id"]
+            isOneToOne: false
+            referencedRelation: "auction_bid_display"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_activities_auction_bid_id_fkey"
+            columns: ["auction_bid_id"]
+            isOneToOne: false
+            referencedRelation: "auction_bids"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_activities_auction_invoice_id_fkey"
+            columns: ["auction_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "auction_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_activities_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_activities_dinner_id_fkey"
+            columns: ["dinner_id"]
+            isOneToOne: false
+            referencedRelation: "dinners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_activities_donation_id_fkey"
+            columns: ["donation_id"]
+            isOneToOne: false
+            referencedRelation: "donations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_activities_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "registrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_activities_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          city: string | null
+          consent_recorded_at: string | null
+          consent_source: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          id: string
+          marketing_consent: boolean
+          name: string
+          notes: string | null
+          phone: string | null
+          postal_code: string | null
+          province: string | null
+          public_display_consent: boolean
+          public_display_name: string | null
+          street: string | null
+          tags: string[]
+          unsubscribed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          consent_recorded_at?: string | null
+          consent_source?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          marketing_consent?: boolean
+          name: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          province?: string | null
+          public_display_consent?: boolean
+          public_display_name?: string | null
+          street?: string | null
+          tags?: string[]
+          unsubscribed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          consent_recorded_at?: string | null
+          consent_source?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          marketing_consent?: boolean
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          province?: string | null
+          public_display_consent?: boolean
+          public_display_name?: string | null
+          street?: string | null
+          tags?: string[]
+          unsubscribed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       dinners: {
         Row: {
           amount: number
@@ -1362,6 +1548,21 @@ export type Database = {
       update_team_details: {
         Args: { _team_members: Json; _team_photo_url: string; _token: string }
         Returns: boolean
+      }
+      upsert_contact: {
+        Args: {
+          p_city?: string
+          p_consent_source?: string
+          p_country?: string
+          p_email: string
+          p_marketing_consent?: boolean
+          p_name: string
+          p_phone?: string
+          p_postal_code?: string
+          p_province?: string
+          p_street?: string
+        }
+        Returns: string
       }
     }
     Enums: {
