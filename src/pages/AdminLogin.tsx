@@ -1,22 +1,45 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { lovable } from "@/integrations/lovable/index";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Lock } from "lucide-react";
+import { Lock, Mail } from "lucide-react";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [isResetMode, setIsResetMode] = useState(false);
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const { signIn, user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const { data: { subscription } } = adminSupabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setIsRecoveryMode(true);
+        setIsResetMode(false);
+      }
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    if (params.get("type") === "recovery" || hashParams.get("type") === "recovery") {
+      setIsRecoveryMode(true);
+      setIsResetMode(false);
+    }
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // If already logged in as admin, redirect
   if (user && isAdmin) {
@@ -42,6 +65,53 @@ export default function AdminLogin() {
     }
   };
 
+  const handleResetRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetLoading(true);
+    const { error } = await adminSupabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/admin/login`,
+    });
+    setResetLoading(false);
+
+    if (error) {
+      toast({
+        title: "Reset email failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Check your email",
+      description: "A password reset link has been sent if that admin account exists.",
+    });
+  };
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetLoading(true);
+    const { error } = await adminSupabase.auth.updateUser({ password: newPassword });
+    setResetLoading(false);
+
+    if (error) {
+      toast({
+        title: "Password update failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Password updated",
+      description: "Sign in with your new password.",
+    });
+    setPassword("");
+    setNewPassword("");
+    setIsRecoveryMode(false);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
       <Card className="w-full max-w-md">
@@ -49,12 +119,60 @@ export default function AdminLogin() {
           <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
             <Lock className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-heading">Admin Login</CardTitle>
+          <CardTitle className="text-2xl font-heading">
+            {isRecoveryMode ? "Set New Password" : isResetMode ? "Reset Password" : "Admin Login"}
+          </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Sign in to manage the Hope 4 Holden tournament
+            {isRecoveryMode
+              ? "Choose a new password for your admin account"
+              : isResetMode
+                ? "Send a secure reset link to your admin email"
+                : "Sign in to manage the Hope 4 Holden tournament"}
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
+          {isRecoveryMode ? (
+            <form onSubmit={handlePasswordUpdate} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">New password</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={resetLoading}>
+                {resetLoading ? "Updating..." : "Update Password"}
+              </Button>
+            </form>
+          ) : isResetMode ? (
+            <form onSubmit={handleResetRequest} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Admin email</Label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="admin@hope4holden.com"
+                  autoComplete="email"
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={resetLoading}>
+                <Mail className="h-4 w-4" />
+                {resetLoading ? "Sending..." : "Send Reset Link"}
+              </Button>
+              <Button type="button" variant="ghost" className="w-full" onClick={() => setIsResetMode(false)}>
+                Back to login
+              </Button>
+            </form>
+          ) : (
+            <>
           <Button
             variant="outline"
             className="w-full"
@@ -112,7 +230,12 @@ export default function AdminLogin() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
+            <Button type="button" variant="link" className="w-full" onClick={() => setIsResetMode(true)}>
+              Forgot password?
+            </Button>
           </form>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
