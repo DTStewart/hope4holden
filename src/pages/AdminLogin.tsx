@@ -42,13 +42,6 @@ export default function AdminLogin() {
       }
     });
 
-    const params = new URLSearchParams(window.location.search);
-    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-    if (params.get("type") === "recovery" || hashParams.get("type") === "recovery") {
-      setIsRecoveryMode(true);
-      setIsResetMode(false);
-    }
-
     return () => subscription.unsubscribe();
   }, [navigate]);
 
