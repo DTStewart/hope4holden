@@ -18,12 +18,23 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false);
-  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
+  const [isRecoveryMode, setIsRecoveryMode] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    return params.get("type") === "recovery" || hashParams.get("type") === "recovery" || params.has("code");
+  });
   const { signIn, user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    if (params.get("type") === "recovery" || hashParams.get("type") === "recovery" || params.has("code")) {
+      navigate(`/reset-password${window.location.search}${window.location.hash}`, { replace: true });
+      return;
+    }
+
     const { data: { subscription } } = adminSupabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setIsRecoveryMode(true);
@@ -31,18 +42,11 @@ export default function AdminLogin() {
       }
     });
 
-    const params = new URLSearchParams(window.location.search);
-    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-    if (params.get("type") === "recovery" || hashParams.get("type") === "recovery") {
-      setIsRecoveryMode(true);
-      setIsResetMode(false);
-    }
-
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   // If already logged in as admin, redirect
-  if (user && isAdmin) {
+  if (user && isAdmin && !isRecoveryMode) {
     navigate("/admin", { replace: true });
     return null;
   }
@@ -69,7 +73,7 @@ export default function AdminLogin() {
     e.preventDefault();
     setResetLoading(true);
     const { error } = await adminSupabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/admin/login`,
+      redirectTo: `${window.location.origin}/reset-password`,
     });
     setResetLoading(false);
 
