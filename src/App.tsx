@@ -19,6 +19,7 @@ import FAQ from "./pages/FAQ";
 import Contact from "./pages/Contact";
 import Checkout from "./pages/Checkout";
 import AdminLogin from "./pages/AdminLogin";
+import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Unsubscribe from "./pages/Unsubscribe";
 import SponsorUpload from "./pages/SponsorUpload";
@@ -76,6 +77,7 @@ const App = () => (
                 <Route path="/terms" element={<Terms />} />
               </Route>
               <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route
                 path="/admin"
                 element={
