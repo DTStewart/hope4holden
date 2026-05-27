@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { adminLovable } from "@/integrations/lovable/admin";
+import { adminLovableAuth } from "@/lib/adminLovableAuth";
 import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -182,7 +182,7 @@ export default function AdminLogin() {
             className="w-full"
             type="button"
             onClick={async () => {
-              const result = await adminLovable.auth.signInWithOAuth("google", {
+              const result = await adminLovableAuth.signInWithOAuth("google", {
                 redirect_uri: window.location.origin + "/admin",
               });
               if (result.error) {
