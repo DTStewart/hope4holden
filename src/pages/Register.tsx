@@ -319,16 +319,37 @@ const ParticipatePage = () => {
               <div className="flex items-end gap-3 flex-wrap">
                 <div className="space-y-1">
                   <Label htmlFor="dinnerQty" className="text-[#1A1A1A] font-medium text-sm">Tickets</Label>
-                  <Input
-                    id="dinnerQty"
-                    type="number"
-                    min={1}
-                    value={dinnerQty}
-                    onChange={(e) => setDinnerQty(Math.max(1, Number(e.target.value)))}
-                    className="rounded border-[#1A1A1A]/15 w-20 text-sm"
-                  />
+                  <div className="flex items-center rounded border border-[#1A1A1A]/15 overflow-hidden">
+                    <button
+                      type="button"
+                      aria-label="Decrease tickets"
+                      onClick={() => setDinnerQty((q) => Math.max(1, q - 1))}
+                      className="px-3 py-2 text-[#1A1A1A] hover:bg-[#1A1A1A]/5 disabled:opacity-40 text-lg leading-none"
+                      disabled={dinnerQty <= 1}
+                    >
+                      −
+                    </button>
+                    <Input
+                      id="dinnerQty"
+                      type="number"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      min={1}
+                      value={dinnerQty}
+                      onChange={(e) => setDinnerQty(Math.max(1, Number(e.target.value) || 1))}
+                      className="rounded-none border-0 w-14 text-center text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+                    />
+                    <button
+                      type="button"
+                      aria-label="Increase tickets"
+                      onClick={() => setDinnerQty((q) => q + 1)}
+                      className="px-3 py-2 text-[#1A1A1A] hover:bg-[#1A1A1A]/5 text-lg leading-none"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
-                <span className="text-[#1A1A1A]/50 text-sm pb-1">
+                <span className="text-[#1A1A1A]/50 text-sm pb-3">
                   {dinnerQty} × ${DINNER_PRICE} = <span className="text-[#1A1A1A] font-bold">${dinnerQty * DINNER_PRICE}</span>
                 </span>
                 <Button onClick={handleAddDinner} className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-sm" size="default">
