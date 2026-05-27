@@ -1,0 +1,1 @@
+REVOKE SELECT (session_token, stripe_customer_id, payment_method_id) ON public.auction_bidders FROM anon, authenticated;
