@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { clearPasswordRecoveryMarker } from "@/components/PasswordRecoveryRedirect";
 import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,11 +18,25 @@ export default function ResetPassword() {
   const { toast } = useToast();
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+
     const { data: { subscription } } = adminSupabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY" || session) {
         setSessionReady(true);
       }
     });
+
+    if (code) {
+      adminSupabase.auth.exchangeCodeForSession(code).then(({ data, error }) => {
+        if (data.session) setSessionReady(true);
+        if (error) {
+          adminSupabase.auth.getSession().then(({ data: sessionData }) => {
+            if (sessionData.session) setSessionReady(true);
+          });
+        }
+      });
+    }
 
     adminSupabase.auth.getSession().then(({ data }) => {
       if (data.session) setSessionReady(true);
@@ -56,6 +71,7 @@ export default function ResetPassword() {
     }
 
     await adminSupabase.auth.signOut();
+    clearPasswordRecoveryMarker();
     toast({
       title: "Password updated",
       description: "Sign in with your new password.",

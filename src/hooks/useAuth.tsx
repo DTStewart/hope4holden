@@ -127,6 +127,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const { data: { subscription } } = adminSupabase.auth.onAuthStateChange(
       async (_event, session) => {
+        if (_event === "PASSWORD_RECOVERY" && window.location.pathname !== "/reset-password") {
+          window.location.replace("/reset-password");
+          return;
+        }
+
         try {
           await resolveSession(session);
         } catch (err) {
