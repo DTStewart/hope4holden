@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/hooks/useAuth";
 import Layout from "@/components/Layout";
+import PasswordRecoveryRedirect from "@/components/PasswordRecoveryRedirect";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import About from "./pages/About";
@@ -50,6 +51,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <PasswordRecoveryRedirect />
             <ScrollToTop />
             <Routes>
               <Route element={<Layout />}>
