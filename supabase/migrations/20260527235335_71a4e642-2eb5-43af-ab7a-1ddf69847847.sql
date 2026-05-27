@@ -1,0 +1,1 @@
+UPDATE public.sponsorship_tiers SET active = true WHERE name = '50/50 Sponsor';
