@@ -4,15 +4,16 @@ import { adminSupabase } from "@/integrations/supabase/adminClient";
 
 const RECOVERY_STORAGE_KEY = "h4h-password-recovery-active";
 
-function hasRecoveryParams(search: string, hash: string) {
+function hasRecoveryParams(pathname: string, search: string, hash: string) {
   const params = new URLSearchParams(search);
   const hashParams = new URLSearchParams(hash.replace(/^#/, ""));
+  const isAdminRecoveryPath = pathname === "/admin/login" || pathname === "/reset-password";
 
   return (
     params.get("type") === "recovery" ||
     hashParams.get("type") === "recovery" ||
-    params.has("code") ||
-    hashParams.has("access_token")
+    (isAdminRecoveryPath && params.has("code")) ||
+    (isAdminRecoveryPath && hashParams.has("access_token"))
   );
 }
 
@@ -27,7 +28,7 @@ export default function PasswordRecoveryRedirect() {
   useEffect(() => {
     const target = `/reset-password${location.search}${location.hash}`;
 
-    if (hasRecoveryParams(location.search, location.hash)) {
+    if (hasRecoveryParams(location.pathname, location.search, location.hash)) {
       sessionStorage.setItem(RECOVERY_STORAGE_KEY, String(Date.now()));
       if (location.pathname !== "/reset-password") {
         navigate(target, { replace: true });
