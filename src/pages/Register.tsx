@@ -58,8 +58,8 @@ interface Tier { id: string; name: string; price: number; benefits: string[]; so
 const suggestedAmounts = [25, 50, 100, 250, 500];
 
 const overviewCards = [
-  { anchor: "#register", icon: Users, title: "Register Your Team", price: "$600", desc: "Dinner + golf for 4" },
   { anchor: "#dinner", icon: UtensilsCrossed, title: "Dinner Only", price: "$45/ticket", desc: "Thursday evening at the Victoria Inn" },
+  { anchor: "#register", icon: Users, title: "Register Your Team", price: "$600", desc: "Dinner + golf for 4" },
   { anchor: "#sponsor", icon: Star, title: "Become a Sponsor", price: "From $150", desc: "Put your brand front and center" },
   { anchor: "#donate", icon: Heart, title: "Make a Donation", price: "Any amount", desc: "Every dollar funds A-T research" },
 ];
@@ -223,7 +223,7 @@ const ParticipatePage = () => {
                 <div className="space-y-3 mb-4">
                   <div className="bg-destructive rounded p-4 text-center">
                     <p className="font-heading font-extrabold uppercase tracking-wider text-white text-[18px]">
-                      Registration is Sold Out
+                      Golf Registration is Sold Out
                     </p>
                   </div>
                   <a
