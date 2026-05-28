@@ -95,7 +95,67 @@ const ALL_SOURCES: SourceName[] = [
   "extra_golfers",
 ];
 
-const EXPECTED_BAND: [number, number] = [86, 96]; // 91 ± 5
+// Maximum allowed drift between the dynamic preflight (distinct normalized
+// emails across the requested sources) and unique_contacts_seen reported by
+// the walkers. Used as the dry-run hard-stop gate, replacing the old static
+// [86, 96] band which went stale as soon as new paid rows landed.
+const PREFLIGHT_DRIFT_TOLERANCE = 0.05; // ±5%
+
+function normEmail(e: string | null | undefined): string | null {
+  if (!e) return null;
+  const t = e.trim().toLowerCase();
+  return t.length === 0 ? null : t;
+}
+
+async function computePreflightEmailCount(
+  supabase: SupabaseClient,
+  sources: SourceName[],
+): Promise<number> {
+  const emails = new Set<string>();
+  const add = (e: string | null | undefined) => {
+    const n = normEmail(e);
+    if (n) emails.add(n);
+  };
+
+  for (const src of sources) {
+    if (src === "donations") {
+      const { data } = await supabase
+        .from("donations").select("donor_email").eq("paid", true).limit(10000);
+      for (const r of data ?? []) add(r.donor_email);
+    } else if (src === "sponsors") {
+      const { data } = await supabase
+        .from("sponsors").select("contact_email").eq("paid", true).limit(10000);
+      for (const r of data ?? []) add(r.contact_email);
+    } else if (src === "dinners") {
+      const { data } = await supabase
+        .from("dinners").select("guest_email").eq("paid", true).limit(10000);
+      for (const r of data ?? []) add(r.guest_email);
+    } else if (src === "registrations") {
+      const { data } = await supabase
+        .from("registrations").select("captain_email")
+        .eq("paid", true).eq("is_extra_golfers", false).limit(10000);
+      for (const r of data ?? []) add(r.captain_email);
+    } else if (src === "extra_golfers") {
+      const { data } = await supabase
+        .from("registrations").select("captain_email")
+        .eq("paid", true).eq("is_extra_golfers", true).limit(10000);
+      for (const r of data ?? []) add(r.captain_email);
+    } else if (src === "auction_invoices") {
+      const { data: invs } = await supabase
+        .from("auction_invoices").select("bidder_id")
+        .not("paid_at", "is", null).limit(10000);
+      const bidderIds = Array.from(
+        new Set((invs ?? []).map((i) => i.bidder_id).filter(Boolean)),
+      );
+      if (bidderIds.length > 0) {
+        const { data: bidders } = await supabase
+          .from("auction_bidders").select("email").in("id", bidderIds);
+        for (const b of bidders ?? []) add(b.email);
+      }
+    }
+  }
+  return emails.size;
+}
 
 type SourceReport = {
   rows_scanned: number;
@@ -269,8 +329,14 @@ Deno.serve(async (req) => {
     totalErrors += ctx.perSource[s].errors.length;
   }
   const uniqueEmails = ctx.allEmailsSeen.size;
-  const inBand = uniqueEmails >= EXPECTED_BAND[0] &&
-    uniqueEmails <= EXPECTED_BAND[1];
+  const preflightCount = await computePreflightEmailCount(
+    supabase,
+    sourcesRequested,
+  );
+  const drift = preflightCount === 0
+    ? (uniqueEmails === 0 ? 0 : 1)
+    : Math.abs(uniqueEmails - preflightCount) / preflightCount;
+  const inBand = drift <= PREFLIGHT_DRIFT_TOLERANCE;
 
   // Spot-check helpers: contacts that appeared in 2+ sources, capped at 10.
   const multiSource: { email: string; sources: SourceName[] }[] = [];
@@ -295,7 +361,9 @@ Deno.serve(async (req) => {
       total_errors: totalErrors,
     },
     validation: {
-      unique_contacts_expected_band: EXPECTED_BAND,
+      preflight_unique_contacts: preflightCount,
+      drift_observed: Number(drift.toFixed(4)),
+      drift_tolerance: PREFLIGHT_DRIFT_TOLERANCE,
       unique_contacts_in_band: inBand,
       hard_stop_required: !inBand,
     },
@@ -305,7 +373,7 @@ Deno.serve(async (req) => {
         "Pick 5 of these (or any from per_source) and verify by email lookup before invoking with dry_run=false.",
     },
     note: dryRun
-      ? "Dry run. No rows written. Re-invoke with { \"dry_run\": false } to commit. Hard stop if unique_contacts_in_band is false."
+      ? "Dry run. No rows written. Re-invoke with { \"dry_run\": false } to commit. Hard stop if unique_contacts_seen drifts >5% from preflight."
       : "Committed. Run the verification SQL queries from the Session 2 spec to confirm.",
   });
 });
