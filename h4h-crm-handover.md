@@ -4,6 +4,8 @@
 
 **Revision 2 changes (May 2026):** Added outbound_links table for sent-link tracking, added payment_method and link-attribution columns to contact_activities, added Session 1.5 (link tracking schema), expanded Session 6 (manual-entry dialogs and outbound links admin tab). Supersedes BACKLOG.md item #2 (walk-up donations).
 
+**Revision 3 reconciliation (2026-05-27):** Sessions 1, 1.5, and 2 are now shipped. The actually-shipped 1.5 drifted from the Rev 2 plan — it covered the schema floor needed to unblock the Session 2 backfill (activity_type CHECK enum, cents-only amount column, payment_processor column, prize_id linkage on auction activities) but did NOT build the outbound_links table or any of the link-attribution columns on contact_activities. The link-tracking schema is now deferred to Session 1.6 (described below), and the 35 pre-launch Stripe Payment Link rows are split out as Session 2.5, which depends on 1.6 shipping first. Session 2 itself shipped with a dynamic preflight gate (±5% drift tolerance against live source counts) in place of the original static row-count band.
+
 ---
 
 ## What I want to build
@@ -35,6 +37,25 @@ In the conversation that preceded this one, I:
 - Identified that email uniqueness is inconsistent across tables, case-sensitive in some, case-insensitive in others (this is part of the CRM work)
 
 The donation ticker work currently uses `donations.public_display_consent` and `donations.public_display_name` columns. When the CRM is built, this consent should migrate to live on the `contacts` row instead of per-transaction. That's one of the planned migration steps.
+
+## What's actually shipped (Sessions 1, 1.5, 2)
+
+The schema and code on `main` as of 2026-05-27 has drifted from the Rev 2 plan above. Recording the deltas so the next session works from reality, not from the original document.
+
+**Session 1 (shipped):** `contacts` and `contact_activities` tables exist with the column shapes described above for the core fields. The `upsert_contact` helper is in place and is the canonical insertion path used by the backfill.
+
+**Session 1.5 (shipped, drifted from plan):** What landed was the minimum schema to unblock the backfill, not the link-tracking layer. Specifically:
+
+- `payment_method` was named `payment_processor` in the shipped column (functionally equivalent — the enum is still `'stripe' | 'cash' | 'cheque' | 'eft' | 'in_kind' | 'other'`, just the column name differs). The backfill writes `payment_processor: 'stripe'` on every row.
+- The `outbound_links` table was NOT created.
+- The five link-tracking columns on `contact_activities` were NOT added: `outbound_link_id`, `sent_to_contact_id`, `entered_manually`, `entered_by`, `payment_reference`.
+- The `source_table` whitelist (CHECK constraint or enum guarding which legacy tables can be referenced) contains only `'stewart_event_future'` as a placeholder. The live source tables (`donations`, `sponsors`, `dinners`, `auction_invoices`, `registrations`, `extra_golfer_invites`) are not whitelisted and the backfill uses the direct FK columns instead.
+- The `activity_type` CHECK enum gained `'silent_auction_win'` as a more specific value alongside the generic `'auction_win'`; H4H is silent-auction-only so the backfill writes the specific value.
+- `tax_receipt_eligible` and `receipt_requested` boolean columns landed on `contact_activities` and are written together (both true iff above-FMV tax-receipt amount > 0) for auction wins.
+
+**Session 2 (shipped 2026-05-27):** Backfill edge function at `supabase/functions/backfill-contacts/` walked donations, sponsors, dinners, auction_invoices, and registrations (including extra-golfer registrations via `parent_token`). Final live numbers: **107 contacts, 137 contact_activities**. The originally planned static row-count band was replaced with a dynamic preflight gate that queries live source-table counts at run time and fails the run if observed activity inserts drift more than ±5% from expected. The 35 pre-launch Stripe Payment Link enrichment was NOT included in Session 2 — it has been split out as Session 2.5 (see below) because it needs `sent_to_contact_id` from Session 1.6 to stamp link recipients correctly.
+
+The `silent_auction_win` walker in `backfill-contacts/index.ts` derives `tournament_year` from `paid_at` as a temporary measure because `auction_invoices` has no `tournament_year` column. The code carries an inline comment pointing to Session 1.6 to add the real column and remove the derivation.
 
 ## CASL framing for pre-tournament outreach
 
@@ -268,11 +289,21 @@ Refine if the audit reveals anything that contradicts this shape.
 
 The work splits into distinct sessions. Pre-tournament consent collection still drives the early ordering. Link tracking is inserted as Session 1.5.
 
-**Session 1**: Audit refresh + schema migrations for contacts and contact_activities. Pull the latest data state with a quick `git fetch`, re-confirm the audit findings (the data may have moved since), write and apply the contacts + contact_activities migrations, write the upsert_contact helper. Don't add the link-attribution columns yet, those come in 1.5 alongside the outbound_links table.
+**Session 1** *(shipped)*: Audit refresh + schema migrations for contacts and contact_activities. Pull the latest data state with a quick `git fetch`, re-confirm the audit findings (the data may have moved since), write and apply the contacts + contact_activities migrations, write the upsert_contact helper.
 
-**Session 1.5** (new in Rev 2): outbound_links table migration. Add `payment_method`, `payment_reference`, `outbound_link_id`, `sent_to_contact_id`, `entered_manually`, `entered_by` columns to contact_activities. Write the void_outbound_link, mark_link_opened, redeem_outbound_link RPCs. Build before backfill so Session 2 can stamp `sent_to_contact_id` on activities for the 35 pre-launch Stripe Payment Link recipients where I remember who I sent each one to.
+**Session 1.5** *(shipped, drifted — see "What's actually shipped" above)*: Originally planned as the outbound_links + link-attribution layer; what landed was the minimum schema floor for the Session 2 backfill (activity_type enum extension, cents-only amount, `payment_processor`, prize_id linkage, `tax_receipt_eligible` / `receipt_requested`, `source_table` placeholder). Link-tracking work has moved to Session 1.6.
 
-**Session 2**: Backfill from existing data. Walk every registration, donation, sponsor, dinner, auction_bid, auction_invoice row and create corresponding contact + activity rows. Use the upsert_contact helper. Convert dollars to cents at write time. Stamp `payment_method='stripe'` on everything (it's all Stripe to date), `entered_manually=false`. For the 35 pre-launch imports, also create outbound_links rows where I can identify the recipient, and stamp sent_to_contact_id on those activities. Test against the live database in dry-run mode first before doing the real backfill. Backfill from Stripe API for the 35 pre-launch imports (one-time edge function in `supabase/functions/_admin/`, dry-run flag, real run with explicit flag).
+**Session 1.6** *(new — unified schema patch, replaces the deferred half of the original Session 1.5)*: One migration covering all three of the link-tracking and tournament-year gaps:
+
+1. **Create the `outbound_links` table** per the schema above. Add the void_outbound_link, mark_link_opened, redeem_outbound_link RPCs.
+2. **Add the six missing link-tracking columns on `contact_activities`**: `outbound_link_id`, `sent_to_contact_id`, `entered_manually`, `entered_by`, `payment_reference`, plus reconciling the `payment_processor` column back to `payment_method` (or aliasing — pick one canonical name and stop carrying both forward).
+3. **Add a real `tournament_year` column on `auction_invoices`** and backfill it from `paid_at` for existing rows. Then remove the `deriveYearFromTimestamp(row.paid_at)` temporary derivation in the silent_auction_win walker of `supabase/functions/backfill-contacts/index.ts` (the code there carries an inline comment pointing at this session).
+
+Session 1.6 is a prerequisite for Session 2.5 (needs `sent_to_contact_id`) and Session 4 (forward-looking writes need the redeem_outbound_link RPC).
+
+**Session 2** *(shipped — 2026-05-27, 107 contacts / 137 activities)*: Backfill from existing data. Walked every registration, donation, sponsor, dinner, and auction_invoice row and created corresponding contact + activity rows via the upsert_contact helper. Dollars converted to cents at write time. Stamped `payment_processor='stripe'` on everything (it's all Stripe to date). The originally planned static row-count band was replaced with a **dynamic preflight gate**: the function queries live source-table counts at run time and fails if observed activity inserts drift more than ±5% from expected. The 35 pre-launch Stripe Payment Link enrichment was split out as Session 2.5 because it requires Session 1.6 first.
+
+**Session 2.5** *(new — depends on Session 1.6)*: 35-row pre-launch Stripe Payment Link enrichment. One-time edge function (under `supabase/functions/_admin/`, dry-run flag, real run with explicit flag) that retrieves each pre-launch Stripe checkout session via `stripe.checkout.sessions.retrieve(id, { expand: ['custom_fields', 'customer_details', 'line_items'] })`, creates `outbound_links` rows for the ones where I can identify the recipient I sent the link to, and stamps `sent_to_contact_id` on the corresponding `contact_activities` row. Blocked on Session 1.6 because `sent_to_contact_id` and the `outbound_links` table don't exist yet.
 
 **Session 3**: Build the consent-collection email and tokenized one-click consent page. Each existing contact gets an email asking if they'd like to receive future communications about Hope 4 Holden and other Stewart family fundraising. One-click yes button on a tokenized landing page. Sets `contact.marketing_consent = true`, `consent_source = 'pre_tournament_email_2026'`, records timestamp. Same pattern as the existing unsubscribe and team-manage flows. Run this BEFORE updating forward-looking writes so the consent flow is tested in isolation.
 
@@ -299,9 +330,11 @@ The build is sequential, don't try to compress it. Each session takes 1-3 hours 
 ## Tool split (Rev 2)
 
 **Claude Code** (precise, multi-file, schema-touching):
-- Session 1: contacts + contact_activities migrations, upsert_contact helper
-- Session 1.5: outbound_links migration, contact_activities column additions, link RPCs
-- Session 2: backfill scripts and dry-run edge function
+- Session 1 *(shipped)*: contacts + contact_activities migrations, upsert_contact helper
+- Session 1.5 *(shipped, drifted)*: minimum schema floor for backfill (activity_type enum, cents column, payment_processor, prize_id, source_table placeholder, tax-receipt flags)
+- Session 1.6 *(next)*: outbound_links table + RPCs, six missing link-tracking columns on contact_activities, real tournament_year column on auction_invoices
+- Session 2 *(shipped)*: backfill edge function (107 contacts / 137 activities, dynamic ±5% preflight)
+- Session 2.5: 35-row pre-launch Stripe Payment Link enrichment (depends on 1.6)
 - Session 4: stripe-webhook edits, create-checkout edits, team-manage edits, extra-golfer edits
 - Session 5: donation_ticker consent migration
 
@@ -309,7 +342,7 @@ The build is sequential, don't try to compress it. Each session takes 1-3 hours 
 - Session 3: consent-collection email template + tokenized landing page
 - Session 6: Contacts tab, Send Link dialog, Manual Entry dialog, Outbound Links tab
 
-**Sequencing rule**: do not run a Lovable session until all preceding Claude Code sessions are merged AND Lovable has pulled the new schema. Specifically, Session 3 needs Session 1 + 1.5 merged. Session 6 needs Sessions 1, 1.5, 2, 4, 5 all merged. Otherwise Lovable will write UI against a schema that doesn't exist yet and credits will burn on rework.
+**Sequencing rule**: do not run a Lovable session until all preceding Claude Code sessions are merged AND Lovable has pulled the new schema. Specifically, Session 3 needs Sessions 1, 1.5, and 1.6 merged. Session 6 needs Sessions 1, 1.5, 1.6, 2, 2.5, 4, 5 all merged. Otherwise Lovable will write UI against a schema that doesn't exist yet and credits will burn on rework.
 
 ## What this supersedes
 
@@ -352,4 +385,4 @@ When I ask for changes, determine which tool fits and provide a ready-to-paste p
 
 Paste this handover document as the first message. Then:
 
-> Read this handover doc. Confirm you understand the architectural decisions including the Rev 2 additions for outbound_links and manual-entry. Then start with Session 1: run `git fetch && git status`, then verify the schema findings still match what's in the codebase today (some time may have passed). Report any drift, and once verified, write the migration files for contacts + contact_activities + the upsert_contact helper. Do not apply them, I'll have Lovable apply. Session 1.5 (outbound_links) will follow as a separate migration once Session 1 is merged.
+> Read this handover doc, especially the "What's actually shipped" section and the Rev 3 reconciliation note. Sessions 1, 1.5, and 2 are done (107 contacts / 137 activities backfilled with a dynamic ±5% preflight gate). Start with Session 1.6: run `git fetch && git status`, then write a unified migration that (a) creates the `outbound_links` table and its RPCs, (b) adds the six missing link-tracking columns on `contact_activities` (`outbound_link_id`, `sent_to_contact_id`, `entered_manually`, `entered_by`, `payment_reference`, plus reconciling `payment_processor` ↔ `payment_method`), and (c) adds a real `tournament_year` column on `auction_invoices` and backfills it from `paid_at`. Then remove the `deriveYearFromTimestamp(row.paid_at)` derivation in `supabase/functions/backfill-contacts/index.ts` (look for the comment pointing at Session 1.6). Do not apply the migration, I'll have Lovable apply. Session 2.5 (35-row pre-launch Stripe Payment Link enrichment) follows once 1.6 is merged.
