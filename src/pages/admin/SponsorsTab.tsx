@@ -753,6 +753,9 @@ export default function SponsorsTab() {
               <Button size="sm" variant="outline" onClick={() => setInviteOpen(true)}>
                 <LinkIcon className="h-4 w-4 mr-1" /> Generate Invite Link
               </Button>
+              <Button size="sm" variant="outline" onClick={() => setOfflineOpen(true)}>
+                <LinkIcon className="h-4 w-4 mr-1" /> Add Offline Sponsor
+              </Button>
               {sponsors && sponsors.length > 0 && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
