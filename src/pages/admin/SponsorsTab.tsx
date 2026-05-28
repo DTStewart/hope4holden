@@ -283,8 +283,10 @@ export default function SponsorsTab() {
   const [sendingEmailFor, setSendingEmailFor] = useState<string | null>(null);
   const [resendingOrderFor, setResendingOrderFor] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [offlineOpen, setOfflineOpen] = useState(false);
   const [generatingLinkFor, setGeneratingLinkFor] = useState<string | null>(null);
   const [yearFilter, setYearFilter] = useState<number | null>(null);
+
 
   const handleCopyUploadLink = async (sponsor: any) => {
     setGeneratingLinkFor(sponsor.id);
