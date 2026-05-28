@@ -812,6 +812,10 @@ export default function SponsorsTab() {
       </Dialog>
 
       <InviteDialog open={inviteOpen} onOpenChange={setInviteOpen} />
+      <OfflineSponsorDialog open={offlineOpen} onOpenChange={setOfflineOpen} />
+    </div>
+  );
+}
     </div>
   );
 }
