@@ -329,8 +329,14 @@ Deno.serve(async (req) => {
     totalErrors += ctx.perSource[s].errors.length;
   }
   const uniqueEmails = ctx.allEmailsSeen.size;
-  const inBand = uniqueEmails >= EXPECTED_BAND[0] &&
-    uniqueEmails <= EXPECTED_BAND[1];
+  const preflightCount = await computePreflightEmailCount(
+    supabase,
+    sourcesRequested,
+  );
+  const drift = preflightCount === 0
+    ? (uniqueEmails === 0 ? 0 : 1)
+    : Math.abs(uniqueEmails - preflightCount) / preflightCount;
+  const inBand = drift <= PREFLIGHT_DRIFT_TOLERANCE;
 
   // Spot-check helpers: contacts that appeared in 2+ sources, capped at 10.
   const multiSource: { email: string; sources: SourceName[] }[] = [];
@@ -355,7 +361,9 @@ Deno.serve(async (req) => {
       total_errors: totalErrors,
     },
     validation: {
-      unique_contacts_expected_band: EXPECTED_BAND,
+      preflight_unique_contacts: preflightCount,
+      drift_observed: Number(drift.toFixed(4)),
+      drift_tolerance: PREFLIGHT_DRIFT_TOLERANCE,
       unique_contacts_in_band: inBand,
       hard_stop_required: !inBand,
     },
@@ -365,7 +373,7 @@ Deno.serve(async (req) => {
         "Pick 5 of these (or any from per_source) and verify by email lookup before invoking with dry_run=false.",
     },
     note: dryRun
-      ? "Dry run. No rows written. Re-invoke with { \"dry_run\": false } to commit. Hard stop if unique_contacts_in_band is false."
+      ? "Dry run. No rows written. Re-invoke with { \"dry_run\": false } to commit. Hard stop if unique_contacts_seen drifts >5% from preflight."
       : "Committed. Run the verification SQL queries from the Session 2 spec to confirm.",
   });
 });
