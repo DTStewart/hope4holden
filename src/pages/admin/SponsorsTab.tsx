@@ -276,6 +276,206 @@ function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
   );
 }
 
+function OfflineSponsorDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [tierId, setTierId] = useState("");
+  const [businessName, setBusinessName] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [customAmount, setCustomAmount] = useState("");
+  const [paymentNote, setPaymentNote] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [generatedUrl, setGeneratedUrl] = useState("");
+  const [createdSponsor, setCreatedSponsor] = useState<any>(null);
+
+  const { data: tiers } = useQuery({
+    queryKey: ["admin-tiers-all"],
+    queryFn: async () => {
+      const { data, error } = await adminSupabase
+        .from("sponsorship_tiers")
+        .select("*")
+        .eq("active", true)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 30_000,
+  });
+
+  const selectedTier = tiers?.find((t) => t.id === tierId);
+
+  const reset = () => {
+    setTierId(""); setBusinessName(""); setContactName(""); setContactEmail("");
+    setContactPhone(""); setCustomAmount(""); setPaymentNote(""); setGeneratedUrl("");
+    setCreatedSponsor(null);
+  };
+
+  const handleClose = (o: boolean) => { if (!o) reset(); onOpenChange(o); };
+
+  const handleCreate = async () => {
+    if (!selectedTier || !businessName.trim() || !contactName.trim() || !contactEmail.trim()) {
+      toast({ title: "Missing required fields", variant: "destructive" });
+      return;
+    }
+    setCreating(true);
+    try {
+      const amount = customAmount ? parseInt(customAmount) : selectedTier.price;
+      const token = crypto.randomUUID();
+      const { data, error } = await adminSupabase
+        .from("sponsors")
+        .insert({
+          business_name: businessName.trim(),
+          contact_name: contactName.trim(),
+          contact_email: contactEmail.trim().toLowerCase(),
+          contact_phone: contactPhone.trim() || null,
+          tier_id: selectedTier.id,
+          tier_name: selectedTier.name,
+          amount,
+          paid: true,
+          approved: true,
+          logo_upload_token: token,
+          stripe_session_id: paymentNote.trim() ? `offline:${paymentNote.trim()}` : "offline",
+          brand_assets: [],
+        } as any)
+        .select()
+        .single();
+      if (error) throw error;
+      const url = `https://hope4holden.com/sponsor-upload/${token}`;
+      setGeneratedUrl(url);
+      setCreatedSponsor(data);
+      queryClient.invalidateQueries({ queryKey: ["admin-sponsors"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-sponsors-tier-counts"] });
+      toast({ title: "Offline sponsor created!" });
+    } catch (err: any) {
+      toast({ title: "Failed to create sponsor", description: err.message, variant: "destructive" });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(generatedUrl);
+    toast({ title: "Copied to clipboard!" });
+  };
+
+  const handleEmail = async () => {
+    if (!createdSponsor) return;
+    setSendingEmail(true);
+    try {
+      const { error } = await adminSupabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "sponsor-logo-upload",
+          recipientEmail: createdSponsor.contact_email,
+          idempotencyKey: `sponsor-upload-offline-${createdSponsor.id}`,
+          templateData: {
+            businessName: createdSponsor.business_name,
+            tierName: createdSponsor.tier_name,
+            uploadUrl: generatedUrl,
+          },
+        },
+      });
+      if (error) throw error;
+      toast({ title: "Email sent!", description: `Upload link sent to ${createdSponsor.contact_email}` });
+    } catch (err: any) {
+      toast({ title: "Failed to send email", description: err.message, variant: "destructive" });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add Offline Sponsor</DialogTitle>
+        </DialogHeader>
+        {generatedUrl ? (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Sponsor created. Share this link so they can upload their logo and brand assets:
+            </p>
+            <div className="flex gap-2">
+              <Input readOnly value={generatedUrl} className="text-xs" />
+              <Button size="sm" variant="outline" onClick={handleCopy}>
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button className="w-full" onClick={handleEmail} disabled={sendingEmail}>
+              {sendingEmail ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
+              Email link to {createdSponsor?.contact_email}
+            </Button>
+            <Button className="w-full" variant="outline" onClick={reset}>
+              Add Another
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              For sponsors who paid outside the website (cheque, e-transfer, cash). Creates a paid sponsor record and an upload link for their logo and brand assets.
+            </p>
+            <div className="space-y-2">
+              <Label>Tier *</Label>
+              <select
+                value={tierId}
+                onChange={(e) => setTierId(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">Select a tier</option>
+                {tiers?.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name} — ${t.price}</option>
+                ))}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label>Business Name *</Label>
+                <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)} maxLength={150} />
+              </div>
+              <div className="space-y-1">
+                <Label>Contact Name *</Label>
+                <Input value={contactName} onChange={(e) => setContactName(e.target.value)} maxLength={100} />
+              </div>
+              <div className="space-y-1">
+                <Label>Contact Email *</Label>
+                <Input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} maxLength={255} />
+              </div>
+              <div className="space-y-1">
+                <Label>Phone</Label>
+                <Input type="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} maxLength={30} />
+              </div>
+              <div className="space-y-1">
+                <Label>Amount Paid</Label>
+                <Input
+                  type="number" min="0"
+                  placeholder={selectedTier ? `Default: $${selectedTier.price}` : "Select tier"}
+                  value={customAmount}
+                  onChange={(e) => setCustomAmount(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Payment Note</Label>
+                <Input
+                  placeholder="e.g. Cheque #1234"
+                  value={paymentNote}
+                  onChange={(e) => setPaymentNote(e.target.value)}
+                  maxLength={100}
+                />
+              </div>
+            </div>
+            <Button className="w-full" onClick={handleCreate} disabled={creating}>
+              {creating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Create Sponsor & Generate Link
+            </Button>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function SponsorsTab() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -283,8 +483,10 @@ export default function SponsorsTab() {
   const [sendingEmailFor, setSendingEmailFor] = useState<string | null>(null);
   const [resendingOrderFor, setResendingOrderFor] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [offlineOpen, setOfflineOpen] = useState(false);
   const [generatingLinkFor, setGeneratingLinkFor] = useState<string | null>(null);
   const [yearFilter, setYearFilter] = useState<number | null>(null);
+
 
   const handleCopyUploadLink = async (sponsor: any) => {
     setGeneratingLinkFor(sponsor.id);
@@ -551,6 +753,9 @@ export default function SponsorsTab() {
               <Button size="sm" variant="outline" onClick={() => setInviteOpen(true)}>
                 <LinkIcon className="h-4 w-4 mr-1" /> Generate Invite Link
               </Button>
+              <Button size="sm" variant="outline" onClick={() => setOfflineOpen(true)}>
+                <LinkIcon className="h-4 w-4 mr-1" /> Add Offline Sponsor
+              </Button>
               {sponsors && sponsors.length > 0 && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -607,6 +812,7 @@ export default function SponsorsTab() {
       </Dialog>
 
       <InviteDialog open={inviteOpen} onOpenChange={setInviteOpen} />
+      <OfflineSponsorDialog open={offlineOpen} onOpenChange={setOfflineOpen} />
     </div>
   );
 }
