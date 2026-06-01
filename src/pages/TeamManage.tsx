@@ -125,7 +125,7 @@ export default function TeamManage() {
     if (!token || !team) return;
     const v = validate();
     if (!v.ok) {
-      toast({ title: "Missing info", description: v.msg, variant: "destructive" });
+      toast({ title: "Missing info", description: (v as { ok: false; msg: string }).msg, variant: "destructive" });
       return;
     }
     setSaving(true);
