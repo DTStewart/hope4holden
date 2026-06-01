@@ -75,7 +75,7 @@ export default function TeamManage() {
       // Rows 2..count = teammates (from saved team_members[1..] if present, else blank).
       const teammates: GolferRow[] = [];
       for (let i = 1; i < count; i++) {
-        const e = existing[i] || {};
+        const e: Partial<GolferRow> = existing[i] || {};
         teammates.push({
           name: e.name || "",
           email: e.email || "",
