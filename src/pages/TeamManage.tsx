@@ -50,7 +50,7 @@ export default function TeamManage() {
       if (error) throw error;
       const first = Array.isArray(data) ? data[0] : data;
       if (!first) { setStatus("invalid"); return; }
-      const t = first as Team;
+      const t = first as unknown as Team;
       setTeam(t);
       setMembers(Array.isArray(t.team_members) ? t.team_members : []);
       setStatus("ready");
