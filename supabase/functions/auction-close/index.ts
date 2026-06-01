@@ -39,6 +39,13 @@ type Stats = {
   skipped_no_bids: number
 }
 
+// Thrown when the post-charge invoice update fails. By that point the charge
+// has already succeeded at Stripe, so the per-item catch below must NOT mark
+// the invoice 'failed' (that would mask a real charge). We rethrow this out of
+// the loop instead, aborting loudly so the inconsistency is investigated
+// rather than silently left for a rerun to charge a second time.
+class InvoiceUpdateError extends Error {}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
 
@@ -227,24 +234,30 @@ Deno.serve(async (req) => {
 
     // Off-session charge
     try {
-      const pi = await stripe.paymentIntents.create({
-        amount: winningBid.amount * 100, // cents
-        currency: 'cad',
-        customer: bidder.stripe_customer_id,
-        payment_method: bidder.payment_method_id,
-        off_session: true,
-        confirm: true,
-        description: `Hope 4 Holden Silent Auction — ${item.title}`,
-        metadata: {
-          invoice_id: invoice.id,
-          item_id: item.id,
-          bidder_id: bidder.id,
-          bidder_email: bidder.email,
+      const pi = await stripe.paymentIntents.create(
+        {
+          amount: winningBid.amount * 100, // cents
+          currency: 'cad',
+          customer: bidder.stripe_customer_id,
+          payment_method: bidder.payment_method_id,
+          off_session: true,
+          confirm: true,
+          description: `Hope 4 Holden Silent Auction — ${item.title}`,
+          metadata: {
+            invoice_id: invoice.id,
+            item_id: item.id,
+            bidder_id: bidder.id,
+            bidder_email: bidder.email,
+          },
         },
-      })
+        // Keyed on the invoice so a retry (DB update failed, function timed
+        // out, etc.) reuses the same PaymentIntent instead of creating a second
+        // charge against the winner.
+        { idempotencyKey: `auction-invoice-${invoice.id}` }
+      )
 
       if (pi.status === 'succeeded') {
-        await supabase
+        const { error: chargedUpdateErr } = await supabase
           .from('auction_invoices')
           .update({
             status: 'charged',
@@ -253,6 +266,13 @@ Deno.serve(async (req) => {
             error_message: null,
           })
           .eq('id', invoice.id)
+        if (chargedUpdateErr) {
+          // Charge succeeded but we could not record it. Do not swallow this:
+          // a rerun would see a non-charged invoice and double-charge.
+          throw new InvoiceUpdateError(
+            `Charged invoice ${invoice.id} (PI ${pi.id}) but failed to record it: ${chargedUpdateErr.message}`
+          )
+        }
         stats.charged++
         details.push({ item_id: item.id, outcome: 'charged', amount: winningBid.amount })
         await notifyWinner(supabase, SUPABASE_URL, SERVICE_KEY, SITE_URL, invoice, item, bidder, 'charged', pi.id)
@@ -282,6 +302,9 @@ Deno.serve(async (req) => {
         await notifyWinner(supabase, SUPABASE_URL, SERVICE_KEY, SITE_URL, invoice, item, bidder, 'requires_action')
       }
     } catch (err: any) {
+      // A failed post-charge invoice update is not a charge failure: rethrow it
+      // so it surfaces instead of being recorded as 'failed' over a real charge.
+      if (err instanceof InvoiceUpdateError) throw err
       const errorMsg = err?.raw?.message || err?.message || 'Charge failed'
       const errorCode = err?.code || err?.raw?.code
       const piId = err?.raw?.payment_intent?.id || err?.payment_intent?.id
