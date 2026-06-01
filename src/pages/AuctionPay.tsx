@@ -172,7 +172,7 @@ export default function AuctionPay() {
   );
 }
 
-function PayForm({ onPaid }: { onPaid: () => void }) {
+function PayForm({ onPaid }: { onPaid: (paymentIntentId: string) => void }) {
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
@@ -192,12 +192,12 @@ function PayForm({ onPaid }: { onPaid: () => void }) {
       }
       if (paymentIntent?.status === "succeeded") {
         toast({ title: "Payment successful" });
-        onPaid();
+        onPaid(paymentIntent.id);
         return;
       }
       if (paymentIntent?.status === "processing") {
         toast({ title: "Processing", description: "Your payment is being processed." });
-        onPaid();
+        onPaid(paymentIntent.id);
         return;
       }
       toast({ title: "Payment not complete", description: `Status: ${paymentIntent?.status || "unknown"}`, variant: "destructive" });
