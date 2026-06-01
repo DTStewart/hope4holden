@@ -1664,6 +1664,8 @@ export type Database = {
           business_name: string
           captain_email: string
           captain_name: string
+          captain_phone: string
+          golfer_count: number
           registration_id: string
           team_fundraising_total: number
           team_members: Json
@@ -1800,7 +1802,14 @@ export type Database = {
         Returns: boolean
       }
       update_team_details: {
-        Args: { _team_members: Json; _team_photo_url: string; _token: string }
+        Args: {
+          _captain_email?: string
+          _captain_name?: string
+          _captain_phone?: string
+          _team_members: Json
+          _team_photo_url: string
+          _token: string
+        }
         Returns: boolean
       }
       upsert_contact: {
