@@ -331,6 +331,7 @@ See recent commits for details. Short version:
 - Inline editable notes and tags on each contact
 - Contact detail view showing full transaction history across all years
 - CSV export for contacts
+- redeem_outbound_link does not enforce expires_at. A link past its expiry but still status 'sent' will redeem. Add an expires_at check inside the RPC if/when outbound link expiry dates are actually used (Session 6 UI). Deferred: no expiry dates set for 2026.
 
 ## Pipeline & Stages (post-tournament)
 
