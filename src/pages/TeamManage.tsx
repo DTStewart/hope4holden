@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { anonSupabase } from "@/integrations/supabase/anonClient";
 import { Button } from "@/components/ui/button";
@@ -7,15 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import {
-  Loader2, AlertCircle, Users, Camera, Save, Copy, Trophy, ExternalLink, Plus, X, Upload, ImageIcon,
+  Loader2, AlertCircle, Users, Camera, Save, Copy, Trophy, ExternalLink, X, Upload, ImageIcon, Star,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
-type TeamMember = {
+type GolferRow = {
   name: string;
-  email?: string;
+  email: string;
+  phone?: string;
   dietary?: string;
-  shirt_size?: string;
 };
 
 type Team = {
@@ -23,24 +23,31 @@ type Team = {
   team_name: string;
   business_name: string | null;
   team_slug: string;
-  team_members: TeamMember[];
+  team_members: any;
   team_photo_url: string | null;
   captain_name: string;
   captain_email: string;
+  captain_phone: string | null;
+  golfer_count: number | null;
   team_fundraising_total: number;
 };
 
-const MAX_TEAMMATES = 3; // captain + 3 = 4 golfers
+const DEFAULT_GOLFER_COUNT = 4;
 
 export default function TeamManage() {
   const { token } = useParams<{ token: string }>();
   const [status, setStatus] = useState<"loading" | "ready" | "invalid" | "error">("loading");
   const [team, setTeam] = useState<Team | null>(null);
-  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [rows, setRows] = useState<GolferRow[]>([]);
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  const golferCount = useMemo(
+    () => (team?.golfer_count && team.golfer_count > 0 ? team.golfer_count : DEFAULT_GOLFER_COUNT),
+    [team]
+  );
 
   const load = useCallback(async () => {
     if (!token) { setStatus("invalid"); return; }
@@ -52,7 +59,32 @@ export default function TeamManage() {
       if (!first) { setStatus("invalid"); return; }
       const t = first as unknown as Team;
       setTeam(t);
-      setMembers(Array.isArray(t.team_members) ? t.team_members : []);
+
+      const count = t.golfer_count && t.golfer_count > 0 ? t.golfer_count : DEFAULT_GOLFER_COUNT;
+      const existing: GolferRow[] = Array.isArray(t.team_members) ? t.team_members : [];
+
+      // Row 1 = captain (prefilled from captain_* columns, but prefer existing team_members[0]
+      // if it already carries dietary info the captain entered previously).
+      const captainRow: GolferRow = {
+        name: existing[0]?.name?.trim() || t.captain_name || "",
+        email: existing[0]?.email?.trim() || t.captain_email || "",
+        phone: existing[0]?.phone?.trim() || t.captain_phone || "",
+        dietary: existing[0]?.dietary || "",
+      };
+
+      // Rows 2..count = teammates (from saved team_members[1..] if present, else blank).
+      const teammates: GolferRow[] = [];
+      for (let i = 1; i < count; i++) {
+        const e = existing[i] || {};
+        teammates.push({
+          name: e.name || "",
+          email: e.email || "",
+          phone: e.phone || "",
+          dietary: e.dietary || "",
+        });
+      }
+
+      setRows([captainRow, ...teammates]);
       setStatus("ready");
     } catch (err: any) {
       console.error("[TeamManage] load failed:", err);
@@ -75,21 +107,27 @@ export default function TeamManage() {
     setPhotoPreview(URL.createObjectURL(f));
   };
 
-  const addMember = () => {
-    if (members.length >= MAX_TEAMMATES) return;
-    setMembers([...members, { name: "", email: "", dietary: "", shirt_size: "" }]);
+  const updateRow = (idx: number, patch: Partial<GolferRow>) => {
+    setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
   };
 
-  const updateMember = (idx: number, patch: Partial<TeamMember>) => {
-    setMembers((prev) => prev.map((m, i) => (i === idx ? { ...m, ...patch } : m)));
-  };
-
-  const removeMember = (idx: number) => {
-    setMembers((prev) => prev.filter((_, i) => i !== idx));
+  const validate = (): { ok: true } | { ok: false; msg: string } => {
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const label = i === 0 ? "Captain" : `Golfer ${i + 1}`;
+      if (!r.name?.trim()) return { ok: false, msg: `${label}: name is required.` };
+      if (!r.email?.trim()) return { ok: false, msg: `${label}: email is required.` };
+    }
+    return { ok: true };
   };
 
   const save = async () => {
     if (!token || !team) return;
+    const v = validate();
+    if (!v.ok) {
+      toast({ title: "Missing info", description: v.msg, variant: "destructive" });
+      return;
+    }
     setSaving(true);
     try {
       let photoUrl: string | null = team.team_photo_url;
@@ -116,20 +154,22 @@ export default function TeamManage() {
         photoUrl = body.url;
       }
 
-      // Keep only members with a name
-      const cleanMembers = members
-        .map((m) => ({
-          name: m.name.trim(),
-          email: m.email?.trim() || undefined,
-          dietary: m.dietary?.trim() || undefined,
-          shirt_size: m.shirt_size?.trim() || undefined,
-        }))
-        .filter((m) => m.name.length > 0);
+      const cleanRows = rows.map((r) => ({
+        name: r.name.trim(),
+        email: r.email.trim(),
+        phone: r.phone?.trim() || undefined,
+        dietary: r.dietary?.trim() || undefined,
+      }));
+
+      const captain = cleanRows[0];
 
       const { error } = await anonSupabase.rpc("update_team_details", {
         _token: token,
-        _team_members: cleanMembers,
+        _team_members: cleanRows,
         _team_photo_url: photoUrl,
+        _captain_name: captain.name,
+        _captain_email: captain.email,
+        _captain_phone: captain.phone ?? null,
       });
       if (error) throw error;
 
@@ -192,7 +232,7 @@ export default function TeamManage() {
   if (!team) return null;
 
   return (
-    <div>
+    <div className="pb-24 md:pb-0">
       <section className="section-dark relative overflow-hidden">
         <div className="container py-12 md:py-16 animate-fade-in relative z-10">
           <p className="section-label">Manage your team</p>
@@ -200,7 +240,7 @@ export default function TeamManage() {
             {team.team_name}
           </h1>
           <p className="text-white/60 mt-2 text-sm">
-            Captain: {team.captain_name}
+            {golferCount} golfers on this team
           </p>
         </div>
       </section>
@@ -285,79 +325,104 @@ export default function TeamManage() {
             </CardContent>
           </Card>
 
-          {/* Team members */}
+          {/* Roster */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Trophy className="h-5 w-5" />
-                Your teammates
+                Your roster ({golferCount} golfers)
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-foreground/70">
-                Add up to {MAX_TEAMMATES} golfers playing with you. Email is optional (helps us keep them looped in).
-                Dietary restrictions help us plan the dinner.
+                Name and email are required for every golfer. Phone and dietary restrictions are optional —
+                dietary info helps us plan dinner.
               </p>
 
-              {members.map((m, idx) => (
-                <div key={idx} className="space-y-2 bg-muted/20 rounded p-3">
-                  <div className="flex items-center justify-between">
-                    <p className="font-heading font-bold text-sm text-foreground">Golfer {idx + 2}</p>
-                    <Button size="sm" variant="ghost" onClick={() => removeMember(idx)}>
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div>
-                      <Label htmlFor={`name-${idx}`} className="text-xs">Name *</Label>
-                      <Input
-                        id={`name-${idx}`}
-                        value={m.name}
-                        onChange={(e) => updateMember(idx, { name: e.target.value })}
-                        placeholder="Alex Smith"
-                      />
+              {rows.map((r, idx) => {
+                const isCaptain = idx === 0;
+                return (
+                  <div
+                    key={idx}
+                    className={`space-y-3 rounded-lg p-4 border ${
+                      isCaptain
+                        ? "bg-primary/5 border-primary/30"
+                        : "bg-muted/20 border-transparent"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {isCaptain ? (
+                        <>
+                          <Star className="h-4 w-4 text-primary fill-primary" />
+                          <p className="font-heading font-bold text-sm text-foreground">
+                            Captain / team contact
+                          </p>
+                        </>
+                      ) : (
+                        <p className="font-heading font-bold text-sm text-foreground">
+                          Golfer {idx + 1}
+                        </p>
+                      )}
                     </div>
-                    <div>
-                      <Label htmlFor={`email-${idx}`} className="text-xs">Email</Label>
-                      <Input
-                        id={`email-${idx}`}
-                        type="email"
-                        value={m.email || ""}
-                        onChange={(e) => updateMember(idx, { email: e.target.value })}
-                        placeholder="alex@example.com"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor={`diet-${idx}`} className="text-xs">Dietary</Label>
-                      <Input
-                        id={`diet-${idx}`}
-                        value={m.dietary || ""}
-                        onChange={(e) => updateMember(idx, { dietary: e.target.value })}
-                        placeholder="e.g., Vegetarian, GF"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor={`shirt-${idx}`} className="text-xs">Shirt size</Label>
-                      <Input
-                        id={`shirt-${idx}`}
-                        value={m.shirt_size || ""}
-                        onChange={(e) => updateMember(idx, { shirt_size: e.target.value })}
-                        placeholder="M / L / XL"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
 
-              {members.length < MAX_TEAMMATES && (
-                <Button variant="outline" size="sm" onClick={addMember} className="w-full">
-                  <Plus className="h-3.5 w-3.5 mr-1" /> Add a teammate
-                </Button>
-              )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor={`name-${idx}`} className="text-xs">
+                          Name <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          id={`name-${idx}`}
+                          value={r.name}
+                          onChange={(e) => updateRow(idx, { name: e.target.value })}
+                          placeholder="Full name"
+                          autoComplete="name"
+                          inputMode="text"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`email-${idx}`} className="text-xs">
+                          Email <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          id={`email-${idx}`}
+                          type="email"
+                          value={r.email}
+                          onChange={(e) => updateRow(idx, { email: e.target.value })}
+                          placeholder="email@example.com"
+                          autoComplete="email"
+                          inputMode="email"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`phone-${idx}`} className="text-xs">Phone</Label>
+                        <Input
+                          id={`phone-${idx}`}
+                          type="tel"
+                          value={r.phone || ""}
+                          onChange={(e) => updateRow(idx, { phone: e.target.value })}
+                          placeholder="(555) 123-4567"
+                          autoComplete="tel"
+                          inputMode="tel"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`diet-${idx}`} className="text-xs">Dietary</Label>
+                        <Input
+                          id={`diet-${idx}`}
+                          value={r.dietary || ""}
+                          onChange={(e) => updateRow(idx, { dietary: e.target.value })}
+                          placeholder="e.g., Vegetarian, GF"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
 
-          <Button onClick={save} disabled={saving} className="w-full" size="lg">
+          {/* Inline save (desktop / end of form) */}
+          <Button onClick={save} disabled={saving} className="w-full hidden md:flex" size="lg">
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
             {saving ? "Saving…" : "Save team details"}
           </Button>
@@ -365,6 +430,14 @@ export default function TeamManage() {
           {token && <UGCUploadSection token={token} />}
         </div>
       </section>
+
+      {/* Sticky mobile save bar — always reachable on phones */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-background/95 backdrop-blur border-t border-border p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+        <Button onClick={save} disabled={saving} className="w-full" size="lg">
+          {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+          {saving ? "Saving…" : "Save team details"}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -392,7 +465,7 @@ function UGCUploadSection({ token }: { token: string }) {
       ...prev,
       ...accepted.map((file) => ({ file, preview: URL.createObjectURL(file), caption: "" })),
     ]);
-    e.target.value = ""; // allow re-selecting same file
+    e.target.value = "";
   };
 
   const removeAt = (i: number) => {
@@ -448,7 +521,6 @@ function UGCUploadSection({ token }: { token: string }) {
         failed++;
       }
     }
-    // Clean up object URLs
     for (const item of queue) URL.revokeObjectURL(item.preview);
     setQueue([]);
     setUploadedCount((prev) => prev + ok);
