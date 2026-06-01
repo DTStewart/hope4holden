@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image, ShoppingCart, ClipboardList, UtensilsCrossed, Send, Megaphone, Gavel, Trophy, Tv, Camera, CalendarDays, PartyPopper } from "lucide-react";
 import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminSessionRefresh } from "@/hooks/useAdminSessionRefresh";
 import RegistrationsTab from "./RegistrationsTab";
 import SponsorsTab from "./SponsorsTab";
 import DonationsTab from "./DonationsTab";
@@ -30,6 +31,10 @@ export default function AdminDashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Refresh the admin session whenever this tab regains focus, so the first
+  // query after refocus runs with a live token instead of blank rows.
+  useAdminSessionRefresh();
 
   // On narrow viewports, auto-redirect to the mobile admin page. Honored only
   // on first load; if the user navigates back from /admin/mobile they land here.
