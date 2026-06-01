@@ -61,8 +61,15 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Auth: service-role callers (stripe-webhook, queue processors) pass directly.
-  // Authenticated users pass only if they have the admin role.
+  // Auth model — verify_jwt is false, so the gateway does NOT validate the
+  // token; an unsigned `role` claim is forgeable and must never grant access:
+  //   - Service-role callers (stripe-webhook, auction-close, admin-bulk-email,
+  //     sponsor-upload) must present the REAL service-role key.
+  //   - Authenticated users pass only if has_role() confirms admin against the
+  //     database — that re-check does not rely on the unverified claim.
+  //   - Any other (anon/public) caller is unauthorized and may send ONLY the
+  //     public sponsor-logo-upload template (enforced below, once the body and
+  //     templateName are parsed).
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -73,7 +80,7 @@ Deno.serve(async (req) => {
 
   const token = authHeader.slice("Bearer ".length).trim();
   const claims = parseJwtClaims(token);
-  let isAuthorized = claims?.role === "service_role" || token === supabaseServiceKey;
+  let isAuthorized = token === supabaseServiceKey;
 
   if (!isAuthorized && claims?.role === "authenticated" && typeof claims.sub === "string") {
     const authClient = createClient(supabaseUrl, supabaseServiceKey);
@@ -85,13 +92,6 @@ Deno.serve(async (req) => {
       console.error("has_role check failed:", roleErr.message);
     }
     isAuthorized = isAdmin === true;
-  }
-
-  if (!isAuthorized) {
-    return new Response(JSON.stringify({ error: "Forbidden" }), {
-      status: 403,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
   }
 
   // Parse request body
@@ -119,6 +119,19 @@ Deno.serve(async (req) => {
   if (!templateName) {
     return new Response(JSON.stringify({ error: "templateName is required" }), {
       status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Authorization carve-out: unauthorized (anon/public) callers may send ONLY
+  // the public sponsor logo-upload email (the success-page "email me the upload
+  // link" feature). Every other template requires the real service-role key or
+  // an admin session. Reject before the registry lookup so template existence
+  // is not disclosed to unauthorized callers.
+  const PUBLIC_TEMPLATE = "sponsor-logo-upload";
+  if (!isAuthorized && templateName !== PUBLIC_TEMPLATE) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

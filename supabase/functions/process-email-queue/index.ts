@@ -35,24 +35,6 @@ function getRetryAfterSeconds(error: unknown): number {
   return 60
 }
 
-function parseJwtClaims(token: string): Record<string, unknown> | null {
-  const parts = token.split('.')
-  if (parts.length < 2) {
-    return null
-  }
-
-  try {
-    const payload = parts[1]
-      .replaceAll('-', '+')
-      .replaceAll('_', '/')
-      .padEnd(Math.ceil(parts[1].length / 4) * 4, '=')
-
-    return JSON.parse(atob(payload)) as Record<string, unknown>
-  } catch {
-    return null
-  }
-}
-
 // Move a message to the dead letter queue and log the reason.
 async function moveToDlq(
   supabase: any,
@@ -100,13 +82,13 @@ Deno.serve(async (req) => {
     )
   }
 
-  // Defense in depth: only service-role callers can trigger queue processing.
-  // Check both JWT claims and direct key comparison for edge-to-edge calls.
+  // Only service-role callers can trigger queue processing. verify_jwt is false
+  // for this function, so the gateway does NOT validate the token — an unsigned
+  // `role` claim is forgeable and must not be trusted. The only accepted proof
+  // is presenting the real service-role key. The sole caller is pg_cron, which
+  // sends the Vault-stored service-role key.
   const token = authHeader.slice('Bearer '.length).trim()
-  const claims = parseJwtClaims(token)
-  const isServiceRole =
-    claims?.role === 'service_role' ||
-    token === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  const isServiceRole = token === supabaseServiceKey
   if (!isServiceRole) {
     return new Response(
       JSON.stringify({ error: 'Forbidden' }),
