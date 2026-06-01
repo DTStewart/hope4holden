@@ -79,7 +79,8 @@ Deno.serve(async (req) => {
             );
           }
           const tier = tierMap.get(tierId)!;
-          const hasInviteToken = !!item.formData?.inviteToken;
+          const inviteToken = item.formData?.inviteToken;
+          const hasInviteToken = !!inviteToken;
 
           // If no invite token, block sold-out tiers (max_slots === 0)
           if (!hasInviteToken && tier.max_slots !== null && tier.max_slots <= 0) {
@@ -89,12 +90,44 @@ Deno.serve(async (req) => {
             );
           }
 
-          // For invite-based purchases, use the amount from formData (already validated by invite).
-          // Otherwise, allow the buyer to pay AT OR ABOVE the tier price (e.g., Fairway Friend
-          // is $250 minimum but supporters can choose to give more). Never allow less than tier.price.
           if (hasInviteToken) {
-            serverAmount = Number(item.amount) || tier.price;
+            // Invite-based purchase: the amount is whatever the admin set on the
+            // invite (deliberately hand-adjusted, e.g. a tier split between two
+            // co-sponsors). The tier price is NOT authoritative here, and the
+            // client-supplied amount is ignored entirely — we read the invite
+            // server-side and trust only its stored amount. The invite is burned
+            // (used = true) by stripe-webhook on confirmed payment, not here.
+            const { data: invite } = await supabase
+              .from("sponsor_invites")
+              .select("amount, used, expires_at")
+              .eq("token", inviteToken)
+              .maybeSingle();
+
+            if (!invite) {
+              return new Response(
+                JSON.stringify({ error: "Sponsorship invite not found." }),
+                { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
+            if (invite.used) {
+              return new Response(
+                JSON.stringify({ error: "This sponsorship invite has already been used." }),
+                { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
+            if (new Date(invite.expires_at).getTime() < Date.now()) {
+              return new Response(
+                JSON.stringify({ error: "This sponsorship invite has expired." }),
+                { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
+
+            // amount is stored in dollars, same units as tier.price.
+            serverAmount = invite.amount;
           } else {
+            // No invite: allow the buyer to pay AT OR ABOVE the tier price (e.g.,
+            // Fairway Friend is $250 minimum but supporters can choose to give
+            // more). Never allow less than tier.price.
             const requested = Number(item.amount);
             serverAmount = requested && requested > tier.price ? requested : tier.price;
           }
