@@ -621,7 +621,7 @@ async function walkAuctionInvoices(ctx: WalkCtx): Promise<void> {
   // boolean. Treat paid_at IS NOT NULL as the paid filter.
   const { data, error } = await ctx.supabase
     .from("auction_invoices")
-    .select("id, bidder_id, amount, tax_receipt_amount, paid_at")
+    .select("id, bidder_id, amount, tax_receipt_amount, paid_at, tournament_year")
     .not("paid_at", "is", null)
     .limit(10000);
   if (error) throw error;
@@ -677,16 +677,13 @@ async function walkAuctionInvoices(ctx: WalkCtx): Promise<void> {
             // H4H is silent-auction only; use the specific value over the
             // generic 'auction_win' (still valid in the CHECK enum).
             activity_type: "silent_auction_win",
-            // TEMPORARY DERIVATION: tournament_year is not stored on
-            // auction_invoices or auction_items directly. We derive it from
-            // paid_at (the timestamp we filter on, so always present here).
-            // Edge case: a 2026 invoice paid in 2027 would be tagged 2027.
-            // Not a real risk for H4H given the close-to-payment turnaround,
-            // and the tournament has only run in 2026 so far. Session 1.6
-            // backlog: add a real tournament_year column on auction_invoices
-            // (bundle with the outbound_links migration) and remove this
-            // derivation in favor of the column read.
-            tournament_year: deriveYearFromTimestamp(row.paid_at),
+            // tournament_year now reads from the real auction_invoices column
+            // added in Session 1.6 (migration
+            // 20260528000003_session_1_6_auction_invoices_tournament_year.sql),
+            // which backfilled it from paid_at. The earlier temporary
+            // deriveYearFromTimestamp(paid_at) derivation was removed when that
+            // column landed.
+            tournament_year: row.tournament_year ?? null,
             amount_cents: cents,
             tax_receipt_amount_cents: taxCents,
             payment_processor: "stripe",
@@ -1088,16 +1085,6 @@ function parseTeamMembers(value: unknown): { name?: string; email?: string }[] {
     }
   }
   return [];
-}
-
-// Derive a tournament_year integer from a timestamptz string. Used by the
-// auction_invoices walker as a temporary measure until Session 1.6 adds a
-// real tournament_year column. Returns null when the input is unparseable.
-function deriveYearFromTimestamp(ts: string | null | undefined): number | null {
-  if (!ts) return null;
-  const d = new Date(ts);
-  if (Number.isNaN(d.getTime())) return null;
-  return d.getUTCFullYear();
 }
 
 function errMsg(err: unknown): string {
