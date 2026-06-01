@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image, Shopp
 import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminSessionRefresh } from "@/hooks/useAdminSessionRefresh";
+import { SessionExpiredBanner } from "@/components/admin/SessionExpiredBanner";
 import RegistrationsTab from "./RegistrationsTab";
 import SponsorsTab from "./SponsorsTab";
 import DonationsTab from "./DonationsTab";
@@ -35,6 +37,20 @@ export default function AdminDashboard() {
   // Refresh the admin session whenever this tab regains focus, so the first
   // query after refocus runs with a live token instead of blank rows.
   useAdminSessionRefresh();
+
+  // Lightweight probe so the dashboard can tell a genuinely empty result from
+  // a blank-because-the-session-died one. A dead session makes RLS return zero
+  // rows, so this comes back empty; the SessionExpiredBanner then confirms
+  // against getSession() before showing. Does NOT call ensureAdminSession on
+  // purpose: we want to detect the dead session here, not redirect away from it.
+  const { data: probeCount, refetch: refetchProbe } = useQuery({
+    queryKey: ["admin-session-probe"],
+    queryFn: async () => {
+      const { data } = await adminSupabase.from("registrations").select("id").limit(1);
+      return data?.length ?? 0;
+    },
+    refetchOnWindowFocus: true,
+  });
 
   // On narrow viewports, auto-redirect to the mobile admin page. Honored only
   // on first load; if the user navigates back from /admin/mobile they land here.
@@ -95,6 +111,10 @@ export default function AdminDashboard() {
       </header>
 
       <div className="p-6 max-w-7xl mx-auto">
+        <SessionExpiredBanner
+          isEmpty={(probeCount ?? 0) === 0}
+          onRefetch={() => refetchProbe()}
+        />
         <DashboardStats />
         <Tabs defaultValue="registrations" className="space-y-6">
           <TabsList className="flex flex-wrap h-auto gap-1 w-full justify-start">
