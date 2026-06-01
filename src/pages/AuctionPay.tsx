@@ -70,17 +70,35 @@ export default function AuctionPay() {
     })();
   }, [token]);
 
-  const onPaid = async () => {
+  const onPaid = async (paymentIntentId: string) => {
     if (!token) return;
     try {
-      await anonSupabase.rpc("mark_auction_invoice_paid", {
-        _token: token,
-        _payment_intent_id: null,
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auction-verify-fallback-payment`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token, payment_intent_id: paymentIntentId }),
       });
-    } catch (err) {
-      console.warn("mark_auction_invoice_paid failed (non-fatal — Stripe already has the payment):", err);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        const message = data?.error || "We couldn't verify your payment. Please contact us.";
+        console.error("auction-verify-fallback-payment failed:", data);
+        setErrorMessage(message);
+        setStatus("error");
+        toast({ title: "Verification failed", description: message, variant: "destructive" });
+        return;
+      }
+      setStatus("success");
+    } catch (err: any) {
+      console.error("auction-verify-fallback-payment request failed:", err);
+      const message = err?.message || "We couldn't verify your payment. Please contact us.";
+      setErrorMessage(message);
+      setStatus("error");
+      toast({ title: "Verification failed", description: message, variant: "destructive" });
     }
-    setStatus("success");
   };
 
   if (status === "loading") {
@@ -154,7 +172,7 @@ export default function AuctionPay() {
   );
 }
 
-function PayForm({ onPaid }: { onPaid: () => void }) {
+function PayForm({ onPaid }: { onPaid: (paymentIntentId: string) => void }) {
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
@@ -174,12 +192,12 @@ function PayForm({ onPaid }: { onPaid: () => void }) {
       }
       if (paymentIntent?.status === "succeeded") {
         toast({ title: "Payment successful" });
-        onPaid();
+        onPaid(paymentIntent.id);
         return;
       }
       if (paymentIntent?.status === "processing") {
         toast({ title: "Processing", description: "Your payment is being processed." });
-        onPaid();
+        onPaid(paymentIntent.id);
         return;
       }
       toast({ title: "Payment not complete", description: `Status: ${paymentIntent?.status || "unknown"}`, variant: "destructive" });
