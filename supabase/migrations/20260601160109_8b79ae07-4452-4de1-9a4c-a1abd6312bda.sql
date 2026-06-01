@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.mark_auction_invoice_paid(TEXT, TEXT) FROM anon, authenticated;
