@@ -31,6 +31,9 @@ const RosterRequestEmail = ({ subject, body, recipientName, teamName, manageUrl 
 
           <Heading style={h1}>{subject}</Heading>
           {recipientName ? <Text style={text}>Hi {recipientName},</Text> : null}
+          <Text style={text}>
+            We need your roster for {teamName ? <strong>{teamName}</strong> : 'your team'} before the tournament on June 18 and 19.
+          </Text>
           {paragraphs.map((p, i) => (
             <Text key={i} style={text}>
               {p.split('\n').map((line, j) => (
@@ -65,7 +68,10 @@ const RosterRequestEmail = ({ subject, body, recipientName, teamName, manageUrl 
 
 export const template = {
   component: RosterRequestEmail,
-  subject: (data: Record<string, any>) => data.subject || `Add your golfers for ${SITE_NAME}`,
+  subject: (data: Record<string, any>) => {
+    const base = data.subject || `Add your golfers for ${SITE_NAME}`
+    return data.teamName ? `${base}: ${data.teamName}` : base
+  },
   displayName: 'Roster Request',
   previewData: {
     subject: 'Add your golfers for the 2026 tournament',
