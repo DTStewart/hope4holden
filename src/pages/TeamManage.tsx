@@ -318,7 +318,6 @@ export default function TeamManage() {
                 id="team-photo"
                 type="file"
                 accept="image/*"
-                capture="environment"
                 className="hidden"
                 onChange={onPhotoSelect}
               />
@@ -560,7 +559,6 @@ function UGCUploadSection({ token }: { token: string }) {
           id="ugc-files"
           type="file"
           accept="image/*"
-          capture="environment"
           multiple
           className="hidden"
           onChange={onSelect}
