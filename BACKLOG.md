@@ -136,6 +136,18 @@ dashboard (ties into #4).
 
 ---
 
+## Wire up approved UGC display surface (before event day)
+
+The UGC pipeline (upload, moderate, approve in admin UGCTab) is complete, but approving a photo currently goes nowhere visible. No front-end consumes approved photos.
+
+- Backend is ready: get_approved_ugc(_limit) RPC exists, SECURITY DEFINER, granted anon/authenticated, returns id/photo_url/caption/team_name/created_at for status='approved'. No backend change needed.
+- Gap: nothing calls it. /gallery reads a different table (gallery_photos). LiveDashboard shows team photos, not UGC.
+- Fix (Lovable, front-end only): add a consumer that calls get_approved_ugc. Best home is a rotating ticker/section on the LiveDashboard (/live) so approved attendee photos show on the projector at the dinner, and optionally a section on /gallery.
+- Timing: do this as part of day-of dashboard prep the weekend before the event, not standalone. Bundle with other LiveDashboard work.
+- Also flag (separate small polish): the UGC upload Submit step is easy to miss. Selecting photos only queues them; nothing uploads until the user taps "Submit N photos." Make the queued-but-unsent state more prominent so captains/attendees do not select photos and leave without submitting.
+
+---
+
 ## #2 · Walk-up donation capture (admin)
 
 **Goal:** Thursday night someone walks up with a $500 cheque or cash. Admin
