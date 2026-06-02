@@ -20,6 +20,7 @@ import { template as auctionWinnerPaid } from './auction-winner-paid.tsx'
 import { template as auctionWinnerActionRequired } from './auction-winner-action-required.tsx'
 import { template as donationThankYouManual } from './donation-thank-you-manual.tsx'
 import { template as eventRecap } from './event-recap.tsx'
+import { template as rosterRequest } from './roster-request.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'admin-new-registration': adminNewRegistration,
@@ -33,4 +34,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'auction-winner-action-required': auctionWinnerActionRequired,
   'donation-thank-you-manual': donationThankYouManual,
   'event-recap': eventRecap,
+  'roster-request': rosterRequest,
 }

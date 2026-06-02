@@ -20,7 +20,10 @@ function parseJwtClaims(token: string): Record<string, unknown> | null {
   }
 }
 
-type Recipient = { email: string; name?: string }
+// idKey disambiguates recipients within a run for idempotency. It defaults to
+// the email; roster modes set it to the unique score_token so that test rows
+// sharing one captain_email (or a captain managing two teams) each still send.
+type Recipient = { email: string; name?: string; data?: Record<string, unknown>; idKey?: string }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -98,9 +101,11 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
-  // For bulk-announcement subject+body are required; other templates rely
-  // solely on templateData so only enforce when using the default.
-  if (!dryRun && templateName === 'bulk-announcement' && (!subject || !body)) {
+  // bulk-announcement and roster-request both render a caller-controlled
+  // subject + body, so require them. Other templates rely solely on
+  // templateData, so the requirement is only enforced for these two.
+  const requiresSubjectBody = templateName === 'bulk-announcement' || templateName === 'roster-request'
+  if (!dryRun && requiresSubjectBody && (!subject || !body)) {
     return new Response(JSON.stringify({ error: 'subject and body are required' }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -121,11 +126,56 @@ Deno.serve(async (req) => {
     }
   }
 
-  const includeRegs = recipientGroup === 'registrations' || recipientGroup === 'all_attendees'
-  const includeSponsors = recipientGroup === 'sponsors' || recipientGroup === 'all_attendees'
-  const includeDinners = recipientGroup === 'dinners' || recipientGroup === 'all_attendees'
-  const includeDonations = recipientGroup === 'donations'
-  const includeSubscribers = recipientGroup === 'subscribers'
+  // Roster-request modes are a separate path: they target paid 2026 team
+  // captains, deduplicated by team (score_token) rather than by email, and
+  // carry per-recipient teamName + manageUrl. These do NOT mix with the
+  // announcement groups below and never touch recipientMap.
+  //   roster_2026      -> the real captains (test rows + placeholder excluded)
+  //   roster_2026_test -> ONLY the zzz-test- rows, for a safe end-to-end test
+  const isRosterProd = recipientGroup === 'roster_2026'
+  const isRosterTest = recipientGroup === 'roster_2026_test'
+  const isRoster = isRosterProd || isRosterTest
+
+  const includeRegs = !isRoster && (recipientGroup === 'registrations' || recipientGroup === 'all_attendees')
+  const includeSponsors = !isRoster && (recipientGroup === 'sponsors' || recipientGroup === 'all_attendees')
+  const includeDinners = !isRoster && (recipientGroup === 'dinners' || recipientGroup === 'all_attendees')
+  const includeDonations = !isRoster && recipientGroup === 'donations'
+  const includeSubscribers = !isRoster && recipientGroup === 'subscribers'
+
+  // Built only for roster modes; deduplicated by score_token below.
+  const rosterByToken = new Map<string, Recipient>()
+  if (isRoster) {
+    let query = supabase
+      .from('registrations')
+      .select('captain_name, captain_email, team_name, score_token, golfer_count')
+      .eq('paid', true)
+      .eq('tournament_year', 2026)
+      .eq('is_extra_golfers', false)
+      .neq('captain_email', 'sneath-pending@hope4holden.com')
+
+    // Production: exclude the test rows. Test: target ONLY the test rows.
+    query = isRosterTest
+      ? query.like('team_slug', 'zzz-test-%')
+      : query.not('team_slug', 'like', 'zzz-test-%')
+
+    const { data } = await query
+    for (const r of data ?? []) {
+      const row = r as Record<string, any>
+      const email = typeof row.captain_email === 'string' ? row.captain_email.trim().toLowerCase() : ''
+      const token = typeof row.score_token === 'string' ? row.score_token.trim() : ''
+      if (!email || !email.includes('@') || !token) continue
+      if (rosterByToken.has(token)) continue
+      rosterByToken.set(token, {
+        email,
+        idKey: token,
+        name: typeof row.captain_name === 'string' && row.captain_name.trim() ? row.captain_name.trim() : undefined,
+        data: {
+          teamName: row.team_name ?? undefined,
+          manageUrl: `https://hope4holden.com/team/manage/${token}`,
+        },
+      })
+    }
+  }
 
   if (includeRegs) {
     const { data } = await supabase
@@ -160,7 +210,9 @@ Deno.serve(async (req) => {
     for (const s of data ?? []) add((s as any).email)
   }
 
-  const recipients = Array.from(recipientMap.values())
+  const recipients = isRoster
+    ? Array.from(rosterByToken.values())
+    : Array.from(recipientMap.values())
 
   if (dryRun) {
     return new Response(JSON.stringify({ count: recipients.length }), {
@@ -191,15 +243,17 @@ Deno.serve(async (req) => {
             body: JSON.stringify({
               templateName,
               recipientEmail: r.email,
-              idempotencyKey: `bulk-${runId}-${r.email}`,
+              idempotencyKey: `bulk-${runId}-${r.idKey ?? r.email}`,
               templateData: {
-                // bulk-announcement fields — ignored by other templates
+                // bulk-announcement / roster-request fields (ignored by other templates)
                 subject,
                 body,
                 // shared: every template reads recipientName for the greeting
                 recipientName: r.name,
                 // caller-provided overrides (event-recap totalRaised, etc.)
                 ...templateData,
+                // per-recipient merge (roster-request teamName + manageUrl) must win
+                ...(r.data ?? {}),
               },
             }),
           })

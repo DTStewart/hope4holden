@@ -21,7 +21,15 @@ const RECIPIENT_GROUPS = [
   { value: "donations", label: "Donors (paid donations)" },
   { value: "dinners", label: "Dinner ticket holders (paid)" },
   { value: "subscribers", label: "Newsletter subscribers" },
+  { value: "roster_2026", label: "Roster request: 2026 paid captains (team-manage link)" },
+  { value: "roster_2026_test", label: "Roster request: TEST rows only (zzz-test teams)" },
 ];
+
+// Roster-request groups send each captain their own team-manage button via the
+// dedicated template. Every other group uses the default bulk-announcement.
+const ROSTER_GROUPS = new Set(["roster_2026", "roster_2026_test"]);
+const templateForGroup = (group: string) =>
+  ROSTER_GROUPS.has(group) ? "roster-request" : undefined;
 
 export default function BulkEmailTab() {
   const { toast } = useToast();
@@ -49,7 +57,7 @@ export default function BulkEmailTab() {
   const send = useMutation({
     mutationFn: async () => {
       const { data, error } = await adminSupabase.functions.invoke("admin-bulk-email", {
-        body: { recipientGroup, subject, body },
+        body: { recipientGroup, subject, body, templateName: templateForGroup(recipientGroup) },
       });
       if (error) throw error;
       return data as { queued: number; failed: number; total: number; runId: string };
@@ -131,6 +139,12 @@ export default function BulkEmailTab() {
             The recipient's name is added automatically as &ldquo;Hi [Name],&rdquo; at the top.
             Use a blank line to separate paragraphs. Recipients who have unsubscribed won't receive this.
           </p>
+          {ROSTER_GROUPS.has(recipientGroup) && (
+            <p className="text-xs text-muted-foreground">
+              An &ldquo;Add Your Golfers&rdquo; button linking to each captain's own team page is
+              added automatically below your message. Write the intro copy only; the link is per recipient.
+            </p>
+          )}
         </div>
 
         <AlertDialog>
