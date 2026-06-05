@@ -32,7 +32,7 @@ export default function ExtraGolfer() {
 
   const [contact, setContact] = useState({ name: "", email: "", phone: "" });
   const [golfingWith, setGolfingWith] = useState("");
-  const [golfers, setGolfers] = useState<{ name: string }[]>([]);
+  const [golfers, setGolfers] = useState<{ name: string; email: string }[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -63,7 +63,7 @@ export default function ExtraGolfer() {
       }
       setInvite(row as Invite);
       setGolfingWith(row.golfing_with ?? "");
-      setGolfers(Array.from({ length: row.golfer_count }, () => ({ name: "" })));
+      setGolfers(Array.from({ length: row.golfer_count }, () => ({ name: "", email: "" })));
       setLoading(false);
     })();
   }, [token]);
@@ -74,7 +74,11 @@ export default function ExtraGolfer() {
   }, [invite]);
 
   const updateGolferName = (idx: number, name: string) => {
-    setGolfers((prev) => prev.map((g, i) => (i === idx ? { name } : g)));
+    setGolfers((prev) => prev.map((g, i) => (i === idx ? { ...g, name } : g)));
+  };
+
+  const updateGolferEmail = (idx: number, email: string) => {
+    setGolfers((prev) => prev.map((g, i) => (i === idx ? { ...g, email } : g)));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -102,7 +106,7 @@ export default function ExtraGolfer() {
               formData: {
                 inviteToken: invite.token,
                 golferCount: invite.golfer_count,
-                golfers: golfers.map((g) => ({ name: g.name.trim() })),
+                golfers: golfers.map((g) => ({ name: g.name.trim(), email: g.email.trim() || undefined })),
                 golfingWith: golfingWith.trim() || null,
                 contactName: contact.name.trim(),
                 contactEmail: contact.email.trim(),
@@ -210,15 +214,27 @@ export default function ExtraGolfer() {
               <div className="space-y-3">
                 <h3 className="font-semibold">Golfer name{invite.golfer_count > 1 ? "s" : ""}</h3>
                 {golfers.map((g, i) => (
-                  <div key={i}>
-                    <Label htmlFor={`golfer-${i}`}>Golfer {i + 1} *</Label>
-                    <Input
-                      id={`golfer-${i}`}
-                      value={g.name}
-                      onChange={(e) => updateGolferName(i, e.target.value)}
-                      placeholder="Full name"
-                      required
-                    />
+                  <div key={i} className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor={`golfer-${i}`}>Golfer {i + 1} *</Label>
+                      <Input
+                        id={`golfer-${i}`}
+                        value={g.name}
+                        onChange={(e) => updateGolferName(i, e.target.value)}
+                        placeholder="Full name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`golfer-email-${i}`}>Email (optional)</Label>
+                      <Input
+                        id={`golfer-email-${i}`}
+                        type="email"
+                        value={g.email}
+                        onChange={(e) => updateGolferEmail(i, e.target.value)}
+                        placeholder="email@example.com"
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
