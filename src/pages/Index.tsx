@@ -86,11 +86,11 @@ const HomePage = () => {
               50/50 Raffle, Win Big and Support Holden
             </h2>
             {rafflePot !== null && (
-              <div className="inline-block bg-white/15 backdrop-blur-sm rounded-lg px-6 py-4 border border-white/20">
-                <div className="text-white/80 text-xs md:text-sm font-heading uppercase tracking-wider mb-1">
+              <div className="inline-block bg-white/20 backdrop-blur-sm rounded-xl px-8 py-5 md:px-12 md:py-7 border-2 border-white/30 shadow-[0_0_40px_rgba(255,255,255,0.15)]">
+                <div className="text-white/90 text-sm md:text-base font-heading uppercase tracking-widest mb-2">
                   Current Jackpot
                 </div>
-                <div className="text-white font-heading font-extrabold text-3xl md:text-5xl tabular-nums">
+                <div className="text-white font-heading font-extrabold text-4xl md:text-6xl lg:text-7xl tabular-nums drop-shadow-lg">
                   ${rafflePot.toLocaleString("en-US")}
                 </div>
               </div>
@@ -102,7 +102,7 @@ const HomePage = () => {
               href="https://hope4holden5050.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded bg-white text-[#1A1A1A] font-heading font-bold uppercase tracking-wider px-8 py-3 text-sm hover:bg-white/90 transition-colors"
+              className="inline-flex items-center justify-center rounded-lg bg-white text-[#1A1A1A] font-heading font-bold uppercase tracking-wider px-10 py-4 md:px-14 md:py-5 text-base md:text-lg hover:bg-white/90 hover:scale-105 transition-all shadow-lg"
             >
               Buy 50/50 Tickets
             </a>
