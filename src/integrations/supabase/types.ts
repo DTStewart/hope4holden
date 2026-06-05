@@ -1134,6 +1134,7 @@ export type Database = {
           team_members: Json
           team_name: string
           team_photo_url: string | null
+          team_size: number
           team_slug: string
           tournament_year: number
           updated_at: string
@@ -1160,6 +1161,7 @@ export type Database = {
           team_members?: Json
           team_name: string
           team_photo_url?: string | null
+          team_size?: number
           team_slug: string
           tournament_year?: number
           updated_at?: string
@@ -1186,6 +1188,7 @@ export type Database = {
           team_members?: Json
           team_name?: string
           team_photo_url?: string | null
+          team_size?: number
           team_slug?: string
           tournament_year?: number
           updated_at?: string
@@ -1635,6 +1638,13 @@ export type Database = {
           id: string
           notify_outbid_sms: boolean
           phone: string
+        }[]
+      }
+      get_player_headcount: {
+        Args: never
+        Returns: {
+          total_dinner_tickets: number
+          total_players: number
         }[]
       }
       get_public_recent_donors: {
