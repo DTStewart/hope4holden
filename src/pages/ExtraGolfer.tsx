@@ -63,7 +63,7 @@ export default function ExtraGolfer() {
       }
       setInvite(row as Invite);
       setGolfingWith(row.golfing_with ?? "");
-      setGolfers(Array.from({ length: row.golfer_count }, () => ({ name: "" })));
+      setGolfers(Array.from({ length: row.golfer_count }, () => ({ name: "", email: "" })));
       setLoading(false);
     })();
   }, [token]);
