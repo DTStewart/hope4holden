@@ -214,15 +214,27 @@ export default function ExtraGolfer() {
               <div className="space-y-3">
                 <h3 className="font-semibold">Golfer name{invite.golfer_count > 1 ? "s" : ""}</h3>
                 {golfers.map((g, i) => (
-                  <div key={i}>
-                    <Label htmlFor={`golfer-${i}`}>Golfer {i + 1} *</Label>
-                    <Input
-                      id={`golfer-${i}`}
-                      value={g.name}
-                      onChange={(e) => updateGolferName(i, e.target.value)}
-                      placeholder="Full name"
-                      required
-                    />
+                  <div key={i} className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor={`golfer-${i}`}>Golfer {i + 1} *</Label>
+                      <Input
+                        id={`golfer-${i}`}
+                        value={g.name}
+                        onChange={(e) => updateGolferName(i, e.target.value)}
+                        placeholder="Full name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`golfer-email-${i}`}>Email (optional)</Label>
+                      <Input
+                        id={`golfer-email-${i}`}
+                        type="email"
+                        value={g.email}
+                        onChange={(e) => updateGolferEmail(i, e.target.value)}
+                        placeholder="email@example.com"
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
