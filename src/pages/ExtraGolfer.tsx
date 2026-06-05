@@ -106,7 +106,7 @@ export default function ExtraGolfer() {
               formData: {
                 inviteToken: invite.token,
                 golferCount: invite.golfer_count,
-                golfers: golfers.map((g) => ({ name: g.name.trim() })),
+                golfers: golfers.map((g) => ({ name: g.name.trim(), email: g.email.trim() || undefined })),
                 golfingWith: golfingWith.trim() || null,
                 contactName: contact.name.trim(),
                 contactEmail: contact.email.trim(),
