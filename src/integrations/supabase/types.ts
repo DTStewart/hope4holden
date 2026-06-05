@@ -497,6 +497,7 @@ export type Database = {
           guest_phone: string
           id: string
           paid: boolean
+          payment_method: string | null
           quantity: number
           stripe_session_id: string | null
           tournament_year: number
@@ -509,6 +510,7 @@ export type Database = {
           guest_phone: string
           id?: string
           paid?: boolean
+          payment_method?: string | null
           quantity?: number
           stripe_session_id?: string | null
           tournament_year?: number
@@ -521,6 +523,7 @@ export type Database = {
           guest_phone?: string
           id?: string
           paid?: boolean
+          payment_method?: string | null
           quantity?: number
           stripe_session_id?: string | null
           tournament_year?: number

@@ -41,8 +41,77 @@ interface Registration {
   golfer_count: number | null;
   golfing_with: string | null;
   team_members?: any;
+  team_size: number;
   created_at: string;
 }
+
+function TeamSizeCell({ reg }: { reg: Registration }) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(String(reg.team_size ?? 4));
+  const [saving, setSaving] = useState(false);
+  const named = Array.isArray(reg.team_members)
+    ? reg.team_members.filter((m: any) => m && (m.name?.trim?.() || "")).length
+    : 0;
+
+  const save = async () => {
+    if (saving) return;
+    const n = parseInt(draft, 10);
+    if (!Number.isFinite(n) || n < 1 || n > 20) {
+      toast({ title: "Invalid team size", description: "Enter a number 1–20.", variant: "destructive" });
+      setDraft(String(reg.team_size));
+      setEditing(false);
+      return;
+    }
+    if (n === reg.team_size) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    const { error } = await adminSupabase.from("registrations").update({ team_size: n }).eq("id", reg.id);
+    setSaving(false);
+    setEditing(false);
+    if (error) {
+      toast({ title: "Failed to update", description: error.message, variant: "destructive" });
+      setDraft(String(reg.team_size));
+    } else {
+      toast({ title: "Team size updated" });
+      queryClient.invalidateQueries({ queryKey: ["admin-registrations"] });
+    }
+  };
+
+  if (editing) {
+    return (
+      <Input
+        type="number"
+        min={1}
+        max={20}
+        autoFocus
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { e.preventDefault(); save(); }
+          if (e.key === "Escape") { setDraft(String(reg.team_size)); setEditing(false); }
+        }}
+        disabled={saving}
+        className="h-7 w-20"
+      />
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => setEditing(true)}
+      className="text-left hover:underline whitespace-nowrap"
+      title="Click to edit team size"
+    >
+      {reg.team_size ?? 4} <span className="text-muted-foreground">({named} named)</span>
+    </button>
+  );
+}
+
 
 export default function RegistrationsTab() {
   const queryClient = useQueryClient();
@@ -185,6 +254,12 @@ export default function RegistrationsTab() {
       ),
     },
     { accessorKey: "captain_phone", header: "Phone" },
+    {
+      id: "team_size",
+      accessorKey: "team_size",
+      header: "Team Size",
+      cell: ({ row }) => <TeamSizeCell reg={row.original} />,
+    },
     {
       accessorKey: "status",
       header: "Status",
