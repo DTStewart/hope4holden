@@ -12,6 +12,8 @@ type Stats = {
   sponsors: number;
   donations: number;
   dinnerTickets: number;
+  totalPlayers: number;
+  totalDinnerTicketsYear: number;
 };
 
 export default function DashboardStats() {
