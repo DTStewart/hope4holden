@@ -9,6 +9,7 @@ import DonationTicker from "@/components/DonationTicker";
 
 const HomePage = () => {
   const [sponsors, setSponsors] = useState<{ id: string; business_name: string; tier_name: string; logo_url: string | null }[]>([]);
+  const [rafflePot, setRafflePot] = useState<number | null>(null);
 
   useEffect(() => {
     anonSupabase
@@ -17,6 +18,31 @@ const HomePage = () => {
       .then(({ data }: any) => {
         if (data) setSponsors(data);
       });
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchPot = async () => {
+      try {
+        const res = await fetch(
+          "https://public-raffles.ca-4.ascendfs.net/rest/v1/wheatkingsraffle.5050central.com/getpot/",
+          { cache: "no-store" }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled && typeof data?.currentEventPot === "number") {
+          setRafflePot(data.currentEventPot);
+        }
+      } catch {
+        // silently ignore — banner still renders without the live total
+      }
+    };
+    fetchPot();
+    const interval = setInterval(fetchPot, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, []);
 
   return (
@@ -59,6 +85,16 @@ const HomePage = () => {
             <h2 className="font-heading font-extrabold text-2xl md:text-4xl text-white leading-tight">
               50/50 Raffle, Win Big and Support Holden
             </h2>
+            {rafflePot !== null && (
+              <div className="inline-block bg-white/15 backdrop-blur-sm rounded-lg px-6 py-4 border border-white/20">
+                <div className="text-white/80 text-xs md:text-sm font-heading uppercase tracking-wider mb-1">
+                  Current Jackpot
+                </div>
+                <div className="text-white font-heading font-extrabold text-3xl md:text-5xl tabular-nums">
+                  ${rafflePot.toLocaleString("en-US")}
+                </div>
+              </div>
+            )}
             <p className="text-white/90 text-base md:text-lg leading-relaxed">
               Half the pot goes to one lucky winner, half supports the fight against A-T.
             </p>
