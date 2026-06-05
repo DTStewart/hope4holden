@@ -79,6 +79,8 @@ export default function DashboardStats() {
     { label: "Sponsors", value: String(data.sponsors), icon: Handshake },
     { label: "Donations", value: String(data.donations), icon: Heart },
     { label: "Dinner Tickets", value: String(data.dinnerTickets), icon: UtensilsCrossed },
+    { label: "Players (Year)", value: String(data.totalPlayers), icon: UserCheck },
+    { label: "Dinner Tix (Year)", value: String(data.totalDinnerTicketsYear), icon: UtensilsCrossed },
   ];
 
   return (
