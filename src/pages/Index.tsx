@@ -108,7 +108,7 @@ const HomePage = () => {
                 href="https://hope4holden5050.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-lg bg-white text-[#1A1A1A] font-heading font-bold uppercase tracking-wider px-10 py-4 md:px-14 md:py-5 text-base md:text-lg hover:bg-white/90 hover:scale-105 transition-all shadow-lg"
+                className="inline-flex items-center justify-center rounded-xl bg-white text-[#1A1A1A] font-heading font-bold uppercase tracking-wider px-8 py-5 md:px-10 md:py-6 text-base md:text-lg hover:bg-white/90 hover:scale-105 transition-all shadow-lg border-2 border-white/30"
               >
                 Buy 50/50 Tickets
               </a>
