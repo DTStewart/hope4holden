@@ -9,6 +9,7 @@ import DonationTicker from "@/components/DonationTicker";
 
 const HomePage = () => {
   const [sponsors, setSponsors] = useState<{ id: string; business_name: string; tier_name: string; logo_url: string | null }[]>([]);
+  const [rafflePot, setRafflePot] = useState<number | null>(null);
 
   useEffect(() => {
     anonSupabase
@@ -17,6 +18,31 @@ const HomePage = () => {
       .then(({ data }: any) => {
         if (data) setSponsors(data);
       });
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchPot = async () => {
+      try {
+        const res = await fetch(
+          "https://public-raffles.ca-4.ascendfs.net/rest/v1/wheatkingsraffle.5050central.com/getpot/",
+          { cache: "no-store" }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled && typeof data?.currentEventPot === "number") {
+          setRafflePot(data.currentEventPot);
+        }
+      } catch {
+        // silently ignore — banner still renders without the live total
+      }
+    };
+    fetchPot();
+    const interval = setInterval(fetchPot, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, []);
 
   return (
