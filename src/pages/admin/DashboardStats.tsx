@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card } from "@/components/ui/card";
-import { DollarSign, Users, Handshake, Heart, UtensilsCrossed, Loader2 } from "lucide-react";
+import { DollarSign, Users, Handshake, Heart, UtensilsCrossed, Loader2, UserCheck } from "lucide-react";
 
 const TEAM_PRICE = 600;
 
