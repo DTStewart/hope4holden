@@ -384,6 +384,7 @@ Deno.serve(async (req) => {
               is_extra_golfers: true,
               golfing_with: formData.golfingWith || null,
               golfer_count: golferCount,
+              team_size: golferCount,
               parent_token: formData.inviteToken || null,
             });
 
