@@ -6,17 +6,25 @@ import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Mail, Loader2 } from "lucide-react";
+import { Trash2, Mail, Loader2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EditableEmail } from "@/components/admin/EditableEmail";
 import { resendForDinner } from "@/lib/resendOrderConfirmation";
 import { YearFilter } from "@/components/admin/YearFilter";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
+
+const DINNER_PRICE = 50;
 
 interface Dinner {
   id: string;
@@ -26,14 +34,32 @@ interface Dinner {
   quantity: number;
   amount: number;
   paid: boolean;
+  stripe_session_id: string | null;
+  payment_method: string | null;
+  tournament_year: number;
   created_at: string;
 }
+
+type PaymentMethod = "cash" | "cheque" | "eft" | "other";
 
 export default function DinnersTab() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [yearFilter, setYearFilter] = useState<number | null>(null);
+
+  const [addOpen, setAddOpen] = useState(false);
+  const [form, setForm] = useState({
+    guest_name: "",
+    guest_email: "",
+    guest_phone: "",
+    quantity: 1,
+    payment_method: "cash" as PaymentMethod,
+  });
+  const [saving, setSaving] = useState(false);
+
+  const resetForm = () =>
+    setForm({ guest_name: "", guest_email: "", guest_phone: "", quantity: 1, payment_method: "cash" });
 
   const handleResend = async (d: Dinner) => {
     setResendingId(d.id);
@@ -84,8 +110,51 @@ export default function DinnersTab() {
     },
   });
 
+  const handleAdd = async () => {
+    if (!form.guest_name.trim()) {
+      toast({ title: "Guest name required", variant: "destructive" });
+      return;
+    }
+    const qty = Math.max(1, Number(form.quantity) || 1);
+    setSaving(true);
+    const { error } = await adminSupabase.from("dinners").insert({
+      guest_name: form.guest_name.trim(),
+      guest_email: form.guest_email.trim() || "",
+      guest_phone: form.guest_phone.trim() || "",
+      quantity: qty,
+      amount: qty * DINNER_PRICE,
+      paid: true,
+      payment_method: form.payment_method,
+      tournament_year: yearFilter ?? new Date().getFullYear(),
+    } as any);
+    setSaving(false);
+    if (error) {
+      toast({ title: "Failed to add dinner ticket", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Dinner ticket added" });
+    setAddOpen(false);
+    resetForm();
+    queryClient.invalidateQueries({ queryKey: ["admin-dinners"] });
+  };
+
   const columns = useMemo<ColumnDef<Dinner>[]>(() => [
-    { accessorKey: "guest_name", header: "Guest", cell: ({ row }) => <span className="font-medium">{row.original.guest_name}</span> },
+    {
+      accessorKey: "guest_name",
+      header: "Guest",
+      cell: ({ row }) => {
+        const d = row.original;
+        const isManual = !d.stripe_session_id && d.payment_method;
+        return (
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{d.guest_name}</span>
+            {isManual && (
+              <Badge variant="secondary" className="text-xs uppercase">{d.payment_method}</Badge>
+            )}
+          </div>
+        );
+      },
+    },
     {
       accessorKey: "guest_email",
       header: "Email",
@@ -126,14 +195,35 @@ export default function DinnersTab() {
               size="sm"
               variant="outline"
               title="Resend order confirmation"
-              disabled={resendingId === d.id}
+              disabled={resendingId === d.id || !d.guest_email}
               onClick={() => handleResend(d)}
             >
               {resendingId === d.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
             </Button>
-            <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => deleteOne.mutate(d.id)}>
-              <Trash2 className="h-3 w-3" />
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive">
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete this dinner ticket?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {d.guest_name} — {d.quantity} ticket(s), ${d.amount}. This cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => deleteOne.mutate(d.id)}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         );
       },
@@ -152,6 +242,64 @@ export default function DinnersTab() {
           <span>Dinner Tickets ({totalTickets} tickets, {dinners?.length ?? 0} orders) — ${totalRevenue} total</span>
           <div className="flex gap-2 flex-wrap items-center">
             <YearFilter table="dinners" value={yearFilter} onChange={setYearFilter} />
+            <Dialog open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) resetForm(); }}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline">
+                  <Plus className="h-4 w-4 mr-1" /> Add dinner ticket
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add dinner ticket</DialogTitle>
+                  <DialogDescription>
+                    Record a dinner ticket paid outside Stripe (cash, cheque, EFT, etc.).
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-3 py-2">
+                  <div>
+                    <Label htmlFor="dn-name">Guest name *</Label>
+                    <Input id="dn-name" value={form.guest_name} onChange={(e) => setForm({ ...form, guest_name: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label htmlFor="dn-email">Guest email (optional)</Label>
+                    <Input id="dn-email" type="email" value={form.guest_email} onChange={(e) => setForm({ ...form, guest_email: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label htmlFor="dn-phone">Guest phone (optional)</Label>
+                    <Input id="dn-phone" value={form.guest_phone} onChange={(e) => setForm({ ...form, guest_phone: e.target.value })} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="dn-qty">Quantity</Label>
+                      <Input id="dn-qty" type="number" min={1} value={form.quantity}
+                        onChange={(e) => setForm({ ...form, quantity: Math.max(1, Number(e.target.value) || 1) })} />
+                    </div>
+                    <div>
+                      <Label htmlFor="dn-method">Payment method</Label>
+                      <Select value={form.payment_method} onValueChange={(v) => setForm({ ...form, payment_method: v as PaymentMethod })}>
+                        <SelectTrigger id="dn-method"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cash">Cash</SelectItem>
+                          <SelectItem value="cheque">Cheque</SelectItem>
+                          <SelectItem value="eft">EFT</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Total: ${form.quantity * DINNER_PRICE} ({form.quantity} × ${DINNER_PRICE})
+                  </p>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setAddOpen(false)} disabled={saving}>Cancel</Button>
+                  <Button onClick={handleAdd} disabled={saving}>
+                    {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                    Save
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
             {dinners && dinners.length > 0 && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
