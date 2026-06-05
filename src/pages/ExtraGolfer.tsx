@@ -32,7 +32,7 @@ export default function ExtraGolfer() {
 
   const [contact, setContact] = useState({ name: "", email: "", phone: "" });
   const [golfingWith, setGolfingWith] = useState("");
-  const [golfers, setGolfers] = useState<{ name: string }[]>([]);
+  const [golfers, setGolfers] = useState<{ name: string; email: string }[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
