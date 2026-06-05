@@ -24,7 +24,7 @@ import { resendForDinner } from "@/lib/resendOrderConfirmation";
 import { YearFilter } from "@/components/admin/YearFilter";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 
-const DINNER_PRICE = 50;
+const DINNER_PRICE = 45;
 
 interface Dinner {
   id: string;
