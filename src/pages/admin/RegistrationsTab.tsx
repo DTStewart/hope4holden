@@ -255,6 +255,12 @@ export default function RegistrationsTab() {
     },
     { accessorKey: "captain_phone", header: "Phone" },
     {
+      id: "team_size",
+      accessorKey: "team_size",
+      header: "Team Size",
+      cell: ({ row }) => <TeamSizeCell reg={row.original} />,
+    },
+    {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => (
