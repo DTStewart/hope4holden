@@ -74,7 +74,11 @@ export default function ExtraGolfer() {
   }, [invite]);
 
   const updateGolferName = (idx: number, name: string) => {
-    setGolfers((prev) => prev.map((g, i) => (i === idx ? { name } : g)));
+    setGolfers((prev) => prev.map((g, i) => (i === idx ? { ...g, name } : g)));
+  };
+
+  const updateGolferEmail = (idx: number, email: string) => {
+    setGolfers((prev) => prev.map((g, i) => (i === idx ? { ...g, email } : g)));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
