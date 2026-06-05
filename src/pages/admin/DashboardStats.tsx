@@ -22,17 +22,19 @@ export default function DashboardStats() {
     queryFn: async () => {
       await ensureAdminSession();
 
-      const [regsRes, sponsorsRes, donationsRes, dinnersRes] = await Promise.all([
+      const [regsRes, sponsorsRes, donationsRes, dinnersRes, headcountRes] = await Promise.all([
         adminSupabase.from("registrations").select("id, paid").eq("paid", true),
         adminSupabase.from("sponsors").select("id, amount, paid").eq("paid", true),
         adminSupabase.from("donations").select("id, amount, paid").eq("paid", true),
         adminSupabase.from("dinners").select("id, amount, quantity, paid").eq("paid", true),
+        adminSupabase.rpc("get_player_headcount"),
       ]);
 
       if (regsRes.error) throw regsRes.error;
       if (sponsorsRes.error) throw sponsorsRes.error;
       if (donationsRes.error) throw donationsRes.error;
       if (dinnersRes.error) throw dinnersRes.error;
+      if (headcountRes.error) throw headcountRes.error;
 
       const registrations = regsRes.data?.length ?? 0;
       const sponsorsAmount = (sponsorsRes.data ?? []).reduce((sum, s: any) => sum + (Number(s.amount) || 0), 0);
@@ -41,17 +43,21 @@ export default function DashboardStats() {
 
       const dinnerTickets = (dinnersRes.data ?? []).reduce((sum, d: any) => sum + (Number(d.quantity) || 1), 0);
 
+      const hc: any = Array.isArray(headcountRes.data) ? headcountRes.data[0] : headcountRes.data;
       return {
         totalRaised: registrations * TEAM_PRICE + sponsorsAmount + donationsAmount + dinnersAmount,
         registrations,
         sponsors: sponsorsRes.data?.length ?? 0,
         donations: donationsRes.data?.length ?? 0,
         dinnerTickets,
+        totalPlayers: Number(hc?.total_players ?? 0),
+        totalDinnerTicketsYear: Number(hc?.total_dinner_tickets ?? 0),
       };
     },
     // Refresh on tab focus so numbers feel live without a manual reload
     refetchOnWindowFocus: true,
   });
+
 
   if (isLoading || !data) {
     return (
