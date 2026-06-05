@@ -52,6 +52,28 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* 50/50 Raffle banner */}
+      <section className="bg-primary">
+        <div className="container py-14 md:py-20">
+          <div className="max-w-3xl mx-auto text-center space-y-5">
+            <h2 className="font-heading font-extrabold text-2xl md:text-4xl text-white leading-tight">
+              50/50 Raffle, Win Big and Support Holden
+            </h2>
+            <p className="text-white/90 text-base md:text-lg leading-relaxed">
+              Half the pot goes to one lucky winner, half supports the fight against A-T.
+            </p>
+            <a
+              href="https://hope4holden5050.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded bg-white text-[#1A1A1A] font-heading font-bold uppercase tracking-wider px-8 py-3 text-sm hover:bg-white/90 transition-colors"
+            >
+              Buy 50/50 Tickets
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* Recent supporters ticker */}
       <DonationTicker />
 
