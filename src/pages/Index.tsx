@@ -81,31 +81,38 @@ const HomePage = () => {
       {/* 50/50 Raffle banner */}
       <section className="bg-primary">
         <div className="container py-14 md:py-20">
-          <div className="max-w-3xl mx-auto text-center space-y-5">
-            <h2 className="font-heading font-extrabold text-2xl md:text-4xl text-white leading-tight">
-              50/50 Raffle, Win Big and Support Holden
-            </h2>
-            {rafflePot !== null && (
-              <div className="inline-block bg-white/20 backdrop-blur-sm rounded-xl px-8 py-5 md:px-12 md:py-7 border-2 border-white/30 shadow-[0_0_40px_rgba(255,255,255,0.15)]">
-                <div className="text-white/90 text-sm md:text-base font-heading uppercase tracking-widest mb-2">
-                  Current Jackpot
+          <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+            {/* Left: headline, jackpot, description */}
+            <div className="flex-1 text-center md:text-left space-y-5">
+              <h2 className="font-heading font-extrabold text-2xl md:text-4xl text-white leading-tight">
+                50/50 Raffle, Win Big and Support Holden
+              </h2>
+              {rafflePot !== null && (
+                <div className="inline-block bg-white/20 backdrop-blur-sm rounded-xl px-8 py-5 md:px-10 md:py-6 border-2 border-white/30 shadow-[0_0_40px_rgba(255,255,255,0.15)]">
+                  <div className="text-white/90 text-sm md:text-base font-heading uppercase tracking-widest mb-2">
+                    Current Jackpot
+                  </div>
+                  <div className="text-white font-heading font-extrabold text-4xl md:text-5xl tabular-nums drop-shadow-lg">
+                    ${rafflePot.toLocaleString("en-US")}
+                  </div>
                 </div>
-                <div className="text-white font-heading font-extrabold text-4xl md:text-6xl lg:text-7xl tabular-nums drop-shadow-lg">
-                  ${rafflePot.toLocaleString("en-US")}
-                </div>
-              </div>
-            )}
-            <p className="text-white/90 text-base md:text-lg leading-relaxed">
-              Half the pot goes to one lucky winner, half supports the fight against A-T.
-            </p>
-            <a
-              href="https://hope4holden5050.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-lg bg-white text-[#1A1A1A] font-heading font-bold uppercase tracking-wider px-10 py-4 md:px-14 md:py-5 text-base md:text-lg hover:bg-white/90 hover:scale-105 transition-all shadow-lg"
-            >
-              Buy 50/50 Tickets
-            </a>
+              )}
+              <p className="text-white/90 text-base md:text-lg leading-relaxed">
+                Half the pot goes to one lucky winner, half supports the fight against A-T.
+              </p>
+            </div>
+
+            {/* Right: CTA button */}
+            <div className="shrink-0">
+              <a
+                href="https://hope4holden5050.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-lg bg-white text-[#1A1A1A] font-heading font-bold uppercase tracking-wider px-10 py-4 md:px-14 md:py-5 text-base md:text-lg hover:bg-white/90 hover:scale-105 transition-all shadow-lg"
+              >
+                Buy 50/50 Tickets
+              </a>
+            </div>
           </div>
         </div>
       </section>
