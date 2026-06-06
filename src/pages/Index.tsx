@@ -78,28 +78,70 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* 50/50 Raffle banner */}
-      <section className="bg-primary">
-        <div className="container py-14 md:py-20">
-          <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
-            {/* Left: headline, jackpot, description */}
-            <div className="flex-1 text-center md:text-left space-y-5">
-              <h2 className="font-heading font-extrabold text-2xl md:text-4xl text-white leading-tight">
-                50/50 Raffle, Win Big and Support Holden
-              </h2>
+      {/* 50/50 Raffle banner — styled after H4H graphic */}
+      <section
+        className="relative overflow-hidden"
+        style={{
+          background:
+            "linear-gradient(120deg, #1d4e7a 0%, #1f6f8b 45%, #1f9a8a 100%)",
+        }}
+      >
+        {/* H4H repeating texture */}
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-10 pointer-events-none select-none font-display tracking-tighter text-white whitespace-nowrap leading-none"
+          style={{ fontSize: "9rem" }}
+        >
+          <div className="absolute -top-6 -left-10">H4H&nbsp;HOPE4HOLDEN&nbsp;H4H&nbsp;HOPE4HOLDEN</div>
+          <div className="absolute -bottom-6 -left-10 rotate-180">H4H&nbsp;HOPE4HOLDEN&nbsp;H4H&nbsp;HOPE4HOLDEN</div>
+        </div>
+
+        <div className="container relative py-14 md:py-20">
+          <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
+            {/* Left: graphic-style headline + jackpot */}
+            <div className="flex-1 text-center md:text-left">
+              {/* HOPE4HOLDEN with rule lines */}
+              <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
+                <span className="h-px w-8 bg-white" />
+                <span className="font-display tracking-[0.15em] text-white text-sm md:text-base">
+                  HOPE4HOLDEN
+                </span>
+                <span className="h-px w-8 bg-white" />
+              </div>
+
+              {/* 50 | 50 split */}
+              <div className="flex items-end justify-center md:justify-start leading-none font-display drop-shadow-[0_4px_0_rgba(0,0,0,0.35)]">
+                <span className="text-primary text-7xl md:text-8xl lg:text-9xl">50</span>
+                <span className="text-white/90 text-7xl md:text-8xl lg:text-9xl mx-1">|</span>
+                <span className="text-[#0d0d0d] text-7xl md:text-8xl lg:text-9xl">50</span>
+              </div>
+
+              {/* Raffle script */}
+              <div className="-mt-4 md:-mt-6 mb-4">
+                <span className="font-script italic text-white text-4xl md:text-5xl [text-shadow:_2px_2px_0_#0d0d0d]">
+                  Raffle
+                </span>
+              </div>
+
+              {/* Black brush bar */}
+              <div className="inline-block bg-[#0d0d0d] px-6 py-2 rounded-sm -skew-x-3 mb-3 shadow-md">
+                <span className="inline-block skew-x-3 font-display tracking-[0.15em] text-white text-sm md:text-base">
+                  CURRENT JACKPOT OVER
+                </span>
+              </div>
+
+              {/* Green brush stroke jackpot */}
               {rafflePot !== null && (
-                <div className="inline-block bg-white/20 backdrop-blur-sm rounded-xl px-8 py-5 md:px-10 md:py-6 border-2 border-white/30 shadow-[0_0_40px_rgba(255,255,255,0.15)]">
-                  <div className="text-white/90 text-sm md:text-base font-heading uppercase tracking-widest mb-2">
-                    Current Jackpot
-                  </div>
-                  <div className="text-white font-heading font-extrabold text-4xl md:text-5xl tabular-nums drop-shadow-lg">
+                <div className="relative inline-block px-8 py-3 md:px-10 md:py-4">
+                  <span
+                    aria-hidden
+                    className="absolute inset-0 bg-primary -skew-x-6 rounded-[40%_60%_45%_55%/55%_45%_60%_40%] shadow-[0_8px_30px_rgba(0,0,0,0.25)]"
+                  />
+                  <span className="relative font-display tabular-nums text-white text-5xl md:text-6xl lg:text-7xl drop-shadow-[0_3px_0_rgba(0,0,0,0.3)]">
                     ${rafflePot.toLocaleString("en-US")}
-                  </div>
+                  </span>
                 </div>
               )}
-              <p className="text-white/90 text-base md:text-lg leading-relaxed">
-                Half the pot goes to one lucky winner, half supports the fight against A-T.
-              </p>
             </div>
 
             {/* Right: CTA button */}
@@ -108,7 +150,7 @@ const HomePage = () => {
                 href="https://hope4holden5050.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-xl bg-white text-[#1A1A1A] font-heading font-bold uppercase tracking-wider px-8 py-5 md:px-10 md:py-6 text-base md:text-lg hover:bg-white/90 hover:scale-105 transition-all shadow-lg border-2 border-white/30"
+                className="inline-flex items-center justify-center rounded-xl bg-white text-[#0d0d0d] font-display tracking-[0.1em] uppercase px-10 py-6 md:px-12 md:py-7 text-xl md:text-2xl hover:bg-white/90 hover:scale-105 transition-all shadow-xl border-2 border-white/40"
               >
                 Buy 50/50 Tickets
               </a>
