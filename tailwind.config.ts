@@ -14,8 +14,10 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ["Montserrat", "sans-serif"],
+        heading: ["Anton", "Montserrat", "sans-serif"],
         body: ["Open Sans", "sans-serif"],
+        display: ["Anton", "sans-serif"],
+        script: ["Dancing Script", "cursive"],
       },
       colors: {
         border: "hsl(var(--border))",
