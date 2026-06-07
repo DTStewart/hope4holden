@@ -96,10 +96,10 @@ const HomePage = () => {
           <div className="absolute -bottom-2 -left-10 rotate-180">H4H&nbsp;HOPE4HOLDEN&nbsp;H4H&nbsp;HOPE4HOLDEN&nbsp;H4H&nbsp;HOPE4HOLDEN</div>
         </div>
 
-        <div className="container relative z-10 py-14 md:py-20">
-          <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
+        <div className="container relative z-10 py-8 md:py-10">
+          <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
             {/* Left: graphic-style headline + jackpot */}
-            <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
+            <div className="flex-1 flex flex-col items-center text-center">
               {/* HOPE4HOLDEN with rule lines */}
               <div className="flex items-center gap-3 mb-3">
                 <span className="h-px w-8 bg-white" />
@@ -123,21 +123,21 @@ const HomePage = () => {
                 </span>
               </div>
 
-              {/* Black brush bar + green jackpot pill, stacked */}
-              <div className="flex flex-col items-center md:items-start gap-3">
-                <div className="bg-[#0d0d0d] px-6 py-2 rounded-sm -skew-x-3 shadow-md">
-                  <span className="inline-block skew-x-3 font-display tracking-[0.15em] text-white text-sm md:text-base">
+              {/* Black brush bar + green jackpot pill, stacked & centered */}
+              <div className="flex flex-col items-center gap-4">
+                <div className="bg-[#0d0d0d] px-8 py-3 rounded-sm -skew-x-3 shadow-md">
+                  <span className="inline-block skew-x-3 font-display tracking-[0.15em] text-white text-base md:text-lg">
                     CURRENT JACKPOT OVER
                   </span>
                 </div>
 
                 {rafflePot !== null && (
-                  <div className="relative inline-block px-8 py-3 md:px-10 md:py-4">
+                  <div className="relative inline-block px-12 py-5 md:px-16 md:py-6">
                     <span
                       aria-hidden
                       className="absolute inset-0 bg-primary -skew-x-6 rounded-[40%_60%_45%_55%/55%_45%_60%_40%] shadow-[0_8px_30px_rgba(0,0,0,0.25)]"
                     />
-                    <span className="relative font-display tabular-nums text-white text-5xl md:text-6xl lg:text-7xl drop-shadow-[0_3px_0_rgba(0,0,0,0.3)]">
+                    <span className="relative font-display tabular-nums text-white text-6xl md:text-7xl lg:text-8xl drop-shadow-[0_3px_0_rgba(0,0,0,0.3)]">
                       ${rafflePot.toLocaleString("en-US")}
                     </span>
                   </div>
