@@ -124,7 +124,7 @@ const HomePage = () => {
               </div>
 
               {/* Black brush bar + green jackpot pill, stacked */}
-              <div className="flex flex-col items-center md:items-start gap-3">
+              <div className="flex flex-col items-center md:items-center gap-3">
                 <div className="bg-[#0d0d0d] px-6 py-2 rounded-sm -skew-x-3 shadow-md">
                   <span className="inline-block skew-x-3 font-display tracking-[0.15em] text-white text-sm md:text-base">
                     CURRENT JACKPOT OVER
