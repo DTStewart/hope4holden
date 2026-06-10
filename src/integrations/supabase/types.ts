@@ -1125,12 +1125,15 @@ export type Database = {
           captain_postal_code: string | null
           captain_province: string | null
           created_at: string
+          entered_manually: boolean
           golfer_count: number | null
           golfing_with: string | null
           id: string
           is_extra_golfers: boolean
           paid: boolean
           parent_token: string | null
+          payment_method: string
+          payment_reference: string | null
           score_token: string
           status: string
           stripe_session_id: string | null
@@ -1141,6 +1144,8 @@ export type Database = {
           team_slug: string
           tournament_year: number
           updated_at: string
+          void_reason: string | null
+          voided_at: string | null
         }
         Insert: {
           business_name?: string | null
@@ -1152,12 +1157,15 @@ export type Database = {
           captain_postal_code?: string | null
           captain_province?: string | null
           created_at?: string
+          entered_manually?: boolean
           golfer_count?: number | null
           golfing_with?: string | null
           id?: string
           is_extra_golfers?: boolean
           paid?: boolean
           parent_token?: string | null
+          payment_method?: string
+          payment_reference?: string | null
           score_token?: string
           status?: string
           stripe_session_id?: string | null
@@ -1168,6 +1176,8 @@ export type Database = {
           team_slug: string
           tournament_year?: number
           updated_at?: string
+          void_reason?: string | null
+          voided_at?: string | null
         }
         Update: {
           business_name?: string | null
@@ -1179,12 +1189,15 @@ export type Database = {
           captain_postal_code?: string | null
           captain_province?: string | null
           created_at?: string
+          entered_manually?: boolean
           golfer_count?: number | null
           golfing_with?: string | null
           id?: string
           is_extra_golfers?: boolean
           paid?: boolean
           parent_token?: string | null
+          payment_method?: string
+          payment_reference?: string | null
           score_token?: string
           status?: string
           stripe_session_id?: string | null
@@ -1195,6 +1208,8 @@ export type Database = {
           team_slug?: string
           tournament_year?: number
           updated_at?: string
+          void_reason?: string | null
+          voided_at?: string | null
         }
         Relationships: []
       }
