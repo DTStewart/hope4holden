@@ -99,7 +99,7 @@ const HomePage = () => {
         <div className="container relative z-10 py-14 md:py-20">
           <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
             {/* Left: graphic-style headline + jackpot */}
-            <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
+            <div className="flex-1 flex flex-col items-center md:items-center text-center md:text-center">
               {/* HOPE4HOLDEN with rule lines */}
               <div className="flex items-center gap-3 mb-3">
                 <span className="h-px w-8 bg-white" />
@@ -124,7 +124,7 @@ const HomePage = () => {
               </div>
 
               {/* Black brush bar + green jackpot pill, stacked */}
-              <div className="flex flex-col items-center md:items-start gap-3">
+              <div className="flex flex-col items-center md:items-center gap-3">
                 <div className="bg-[#0d0d0d] px-6 py-2 rounded-sm -skew-x-3 shadow-md">
                   <span className="inline-block skew-x-3 font-display tracking-[0.15em] text-white text-sm md:text-base">
                     CURRENT JACKPOT OVER
