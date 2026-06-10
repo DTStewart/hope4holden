@@ -97,9 +97,9 @@ const HomePage = () => {
         </div>
 
         <div className="container relative z-10 py-14 md:py-20">
-          <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
-            {/* Left: graphic-style headline + jackpot */}
-            <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
+          <div className="flex flex-col items-center gap-10 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:items-center lg:gap-16">
+            {/* Left: graphic-style headline */}
+            <div className="flex flex-col items-center lg:items-start text-center lg:text-left lg:justify-self-start">
               {/* HOPE4HOLDEN with rule lines */}
               <div className="flex items-center gap-3 mb-3">
                 <span className="h-px w-8 bg-white" />
@@ -117,37 +117,36 @@ const HomePage = () => {
               </div>
 
               {/* Raffle script */}
-              <div className="mt-2 mb-6">
+              <div className="mt-2">
                 <span className="font-script italic text-white text-4xl md:text-5xl [text-shadow:_2px_2px_0_#0d0d0d]">
                   Raffle
                 </span>
               </div>
-
-              {/* Black brush bar + green jackpot pill, stacked */}
-              <div className="flex flex-col items-center gap-3 md:self-center">
-                <div className="bg-[#0d0d0d] px-6 py-2 rounded-sm -skew-x-3 shadow-md">
-                  <span className="inline-block skew-x-3 font-display tracking-[0.15em] text-white text-sm md:text-base">
-                    CURRENT JACKPOT OVER
-                  </span>
-                </div>
-
-                {rafflePot !== null && (
-                  <div className="relative inline-block px-8 py-3 md:px-10 md:py-4">
-                    <span
-                      aria-hidden
-                      className="absolute inset-0 bg-primary -skew-x-6 rounded-[40%_60%_45%_55%/55%_45%_60%_40%] shadow-[0_8px_30px_rgba(0,0,0,0.25)]"
-                    />
-                    <span className="relative font-display tabular-nums text-white text-5xl md:text-6xl lg:text-7xl drop-shadow-[0_3px_0_rgba(0,0,0,0.3)]">
-                      ${rafflePot.toLocaleString("en-US")}
-                    </span>
-                  </div>
-                )}
-              </div>
             </div>
 
+            {/* Center: Black brush bar + green jackpot pill, stacked */}
+            <div className="flex flex-col items-center gap-3">
+              <div className="bg-[#0d0d0d] px-6 py-2 rounded-sm -skew-x-3 shadow-md">
+                <span className="inline-block skew-x-3 font-display tracking-[0.15em] text-white text-sm md:text-base">
+                  CURRENT JACKPOT OVER
+                </span>
+              </div>
+
+              {rafflePot !== null && (
+                <div className="relative inline-block px-8 py-3 md:px-10 md:py-4">
+                  <span
+                    aria-hidden
+                    className="absolute inset-0 bg-primary -skew-x-6 rounded-[40%_60%_45%_55%/55%_45%_60%_40%] shadow-[0_8px_30px_rgba(0,0,0,0.25)]"
+                  />
+                  <span className="relative font-display tabular-nums text-white text-5xl md:text-6xl lg:text-7xl drop-shadow-[0_3px_0_rgba(0,0,0,0.3)]">
+                    ${rafflePot.toLocaleString("en-US")}
+                  </span>
+                </div>
+              )}
+            </div>
 
             {/* Right: CTA button */}
-            <div className="shrink-0">
+            <div className="shrink-0 lg:justify-self-end">
               <a
                 href="https://hope4holden5050.com"
                 target="_blank"
