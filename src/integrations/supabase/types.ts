@@ -1116,6 +1116,7 @@ export type Database = {
       }
       registrations: {
         Row: {
+          amount_paid: number | null
           business_name: string | null
           captain_address: string | null
           captain_city: string | null
@@ -1148,6 +1149,7 @@ export type Database = {
           voided_at: string | null
         }
         Insert: {
+          amount_paid?: number | null
           business_name?: string | null
           captain_address?: string | null
           captain_city?: string | null
@@ -1180,6 +1182,7 @@ export type Database = {
           voided_at?: string | null
         }
         Update: {
+          amount_paid?: number | null
           business_name?: string | null
           captain_address?: string | null
           captain_city?: string | null
