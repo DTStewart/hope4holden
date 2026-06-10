@@ -99,7 +99,7 @@ const HomePage = () => {
         <div className="container relative z-10 py-14 md:py-20">
           <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16">
             {/* Left: graphic-style headline + jackpot */}
-            <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
+            <div className="flex-1 flex flex-col items-center md:items-center text-center md:text-center">
               {/* HOPE4HOLDEN with rule lines */}
               <div className="flex items-center gap-3 mb-3">
                 <span className="h-px w-8 bg-white" />
