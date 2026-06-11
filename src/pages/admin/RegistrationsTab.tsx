@@ -126,6 +126,57 @@ export default function RegistrationsTab() {
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
 
+  // Registration link generator state
+  const [regLinkDialogOpen, setRegLinkDialogOpen] = useState(false);
+  const [regCaptainName, setRegCaptainName] = useState("");
+  const [regCaptainEmail, setRegCaptainEmail] = useState("");
+  const [regCaptainPhone, setRegCaptainPhone] = useState("");
+  const [regTeamName, setRegTeamName] = useState("");
+  const [regTeamSize, setRegTeamSize] = useState<4 | 5 | 6>(4);
+  const [regGeneratedUrl, setRegGeneratedUrl] = useState<string | null>(null);
+  const [regGenerating, setRegGenerating] = useState(false);
+  const [regError, setRegError] = useState<string | null>(null);
+
+  const resetRegLinkDialog = () => {
+    setRegCaptainName("");
+    setRegCaptainEmail("");
+    setRegCaptainPhone("");
+    setRegTeamName("");
+    setRegTeamSize(4);
+    setRegGeneratedUrl(null);
+    setRegError(null);
+  };
+
+  const handleGenerateRegistrationLink = async () => {
+    setRegError(null);
+    if (!regCaptainName.trim() || !regCaptainEmail.trim() || !regTeamName.trim()) {
+      setRegError("Captain name, captain email, and team name are required.");
+      return;
+    }
+    setRegGenerating(true);
+    try {
+      await ensureAdminSession();
+      const { data, error } = await adminSupabase.functions.invoke("create-registration-link", {
+        body: {
+          captainName: regCaptainName.trim(),
+          captainEmail: regCaptainEmail.trim(),
+          captainPhone: regCaptainPhone.trim() || null,
+          teamName: regTeamName.trim(),
+          teamSize: regTeamSize,
+        },
+      });
+      if (error) throw new Error((error as any)?.message || "Failed to generate link");
+      if (!data?.url) throw new Error(data?.error || "No URL returned");
+      setRegGeneratedUrl(data.url);
+      await navigator.clipboard.writeText(data.url).catch(() => {});
+      toast({ title: "Registration link generated and copied" });
+    } catch (err: any) {
+      setRegError(err?.message || "Could not generate link");
+    } finally {
+      setRegGenerating(false);
+    }
+  };
+
   const handleResend = async (reg: Registration) => {
     setResendingId(reg.id);
     try {
