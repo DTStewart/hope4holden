@@ -6,7 +6,10 @@
 
 CREATE TABLE public.registration_invites (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  team_size integer NOT NULL,
+  -- team_size is a fixed three-value enum that DRIVES pricing, so it is
+  -- constrained at the DB level too. This is a deliberate divergence from
+  -- sponsor_invites, whose amount is genuinely variable and so is unconstrained.
+  team_size integer NOT NULL CHECK (team_size IN (4, 5, 6)),
   amount integer NOT NULL,
   token uuid NOT NULL DEFAULT gen_random_uuid() UNIQUE,
   expires_at timestamp with time zone NOT NULL DEFAULT (now() + interval '14 days'),
