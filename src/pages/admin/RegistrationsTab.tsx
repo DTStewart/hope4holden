@@ -126,22 +126,15 @@ export default function RegistrationsTab() {
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
 
-  // Registration link generator state
+  // Registration link generator state. The admin only picks team size; the
+  // captain fills in team and contact details themselves at the invite page.
   const [regLinkDialogOpen, setRegLinkDialogOpen] = useState(false);
-  const [regCaptainName, setRegCaptainName] = useState("");
-  const [regCaptainEmail, setRegCaptainEmail] = useState("");
-  const [regCaptainPhone, setRegCaptainPhone] = useState("");
-  const [regTeamName, setRegTeamName] = useState("");
   const [regTeamSize, setRegTeamSize] = useState<4 | 5 | 6>(4);
   const [regGeneratedUrl, setRegGeneratedUrl] = useState<string | null>(null);
   const [regGenerating, setRegGenerating] = useState(false);
   const [regError, setRegError] = useState<string | null>(null);
 
   const resetRegLinkDialog = () => {
-    setRegCaptainName("");
-    setRegCaptainEmail("");
-    setRegCaptainPhone("");
-    setRegTeamName("");
     setRegTeamSize(4);
     setRegGeneratedUrl(null);
     setRegError(null);
@@ -149,19 +142,11 @@ export default function RegistrationsTab() {
 
   const handleGenerateRegistrationLink = async () => {
     setRegError(null);
-    if (!regCaptainName.trim() || !regCaptainEmail.trim() || !regTeamName.trim()) {
-      setRegError("Captain name, captain email, and team name are required.");
-      return;
-    }
     setRegGenerating(true);
     try {
       await ensureAdminSession();
       const { data, error } = await adminSupabase.functions.invoke("create-registration-link", {
         body: {
-          captainName: regCaptainName.trim(),
-          captainEmail: regCaptainEmail.trim(),
-          captainPhone: regCaptainPhone.trim() || null,
-          teamName: regTeamName.trim(),
           teamSize: regTeamSize,
         },
       });
@@ -388,49 +373,12 @@ export default function RegistrationsTab() {
                 <DialogHeader>
                   <DialogTitle className="font-heading">Generate Registration Link</DialogTitle>
                   <DialogDescription>
-                    Creates a Stripe checkout link a captain can use to pay for their own team.
+                    Pick the team size. This creates a payment link the captain opens to fill in their own team and contact details and pay.
                   </DialogDescription>
                 </DialogHeader>
 
                 {!regGeneratedUrl ? (
                   <div className="space-y-4 py-2 font-body">
-                    <div>
-                      <Label htmlFor="regCaptainName">Captain name *</Label>
-                      <Input
-                        id="regCaptainName"
-                        value={regCaptainName}
-                        onChange={(e) => setRegCaptainName(e.target.value)}
-                        placeholder="Jane Doe"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="regCaptainEmail">Captain email *</Label>
-                      <Input
-                        id="regCaptainEmail"
-                        type="email"
-                        value={regCaptainEmail}
-                        onChange={(e) => setRegCaptainEmail(e.target.value)}
-                        placeholder="captain@example.com"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="regCaptainPhone">Captain phone (optional)</Label>
-                      <Input
-                        id="regCaptainPhone"
-                        value={regCaptainPhone}
-                        onChange={(e) => setRegCaptainPhone(e.target.value)}
-                        placeholder="(555) 555-5555"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="regTeamName">Team name *</Label>
-                      <Input
-                        id="regTeamName"
-                        value={regTeamName}
-                        onChange={(e) => setRegTeamName(e.target.value)}
-                        placeholder="The Birdies"
-                      />
-                    </div>
                     <div>
                       <Label htmlFor="regTeamSize">Team size *</Label>
                       <select
@@ -450,7 +398,7 @@ export default function RegistrationsTab() {
                   </div>
                 ) : (
                   <div className="space-y-3 py-2">
-                    <Label>Stripe checkout link (already copied to your clipboard)</Label>
+                    <Label>Registration invite link (already copied to your clipboard)</Label>
                     <div className="flex gap-2">
                       <Input value={regGeneratedUrl} readOnly onFocus={(e) => e.target.select()} />
                       <Button
@@ -466,7 +414,7 @@ export default function RegistrationsTab() {
                       </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Send this to {regCaptainName || "the captain"} by text or email.
+                      Send this to the captain by text or email.
                     </p>
                   </div>
                 )}
