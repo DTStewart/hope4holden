@@ -1114,6 +1114,39 @@ export type Database = {
           },
         ]
       }
+      registration_invites: {
+        Row: {
+          amount: number
+          created_at: string
+          expires_at: string
+          id: string
+          team_size: number
+          token: string
+          updated_at: string
+          used: boolean
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          team_size: number
+          token?: string
+          updated_at?: string
+          used?: boolean
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          team_size?: number
+          token?: string
+          updated_at?: string
+          used?: boolean
+        }
+        Relationships: []
+      }
       registrations: {
         Row: {
           amount_paid: number | null
@@ -1747,6 +1780,25 @@ export type Database = {
           token: string
           used: boolean
         }[]
+      }
+      lookup_registration_invite: {
+        Args: { invite_token: string }
+        Returns: {
+          amount: number
+          created_at: string
+          expires_at: string
+          id: string
+          team_size: number
+          token: string
+          updated_at: string
+          used: boolean
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "registration_invites"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       lookup_sponsor_invite: {
         Args: { invite_token: string }
