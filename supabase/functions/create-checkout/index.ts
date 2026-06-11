@@ -66,9 +66,53 @@ Deno.serve(async (req) => {
       let serverAmount: number;
 
       switch (item.type) {
-        case "registration":
-          serverAmount = REGISTRATION_PRICE;
+        case "registration": {
+          const inviteToken = item.formData?.inviteToken;
+          if (inviteToken) {
+            // Invite-based registration: team_size and amount are admin-set on
+            // the invite row and are the ONLY authoritative values. Any
+            // client-supplied amount or teamSize is ignored; we read the invite
+            // server-side and trust only its stored values. The invite is burned
+            // (used = true) by stripe-webhook on confirmed payment, not here.
+            // Mirrors the sponsorship invite path below.
+            const { data: invite } = await supabase
+              .from("registration_invites")
+              .select("amount, team_size, used, expires_at")
+              .eq("token", inviteToken)
+              .maybeSingle();
+
+            if (!invite) {
+              return new Response(
+                JSON.stringify({ error: "Registration invite not found." }),
+                { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
+            if (invite.used) {
+              return new Response(
+                JSON.stringify({ error: "This registration invite has already been used." }),
+                { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
+            if (new Date(invite.expires_at).getTime() < Date.now()) {
+              return new Response(
+                JSON.stringify({ error: "This registration invite has expired." }),
+                { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
+
+            // amount is stored in dollars, same units as the flat price.
+            serverAmount = invite.amount;
+            // Stamp the admin-set team_size and source onto the item so the
+            // webhook sets team_size and amount_paid from the trusted invite,
+            // never from anything the payer typed.
+            item.formData = { ...item.formData, teamSize: invite.team_size };
+            item.registration_source = "admin_link";
+          } else {
+            // Public (non-invite) registration path: unchanged flat team price.
+            serverAmount = REGISTRATION_PRICE;
+          }
           break;
+        }
 
         case "sponsorship": {
           const tierId = item.formData?.tierId;
