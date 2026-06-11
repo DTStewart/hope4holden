@@ -67,7 +67,7 @@ const HomePage = () => {
               Two days of golf, dinner, and community. All for a cure.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button asChild size="lg" className="text-base font-heading font-bold uppercase tracking-wider px-8 rounded bg-primary text-white hover:bg-[#4A7C09]">
+              <Button asChild size="lg" className="text-base font-heading font-bold uppercase tracking-[0.18em] px-8 rounded bg-primary text-white hover:bg-[#4A7C09] justify-center">
                 <Link to="/register">Take Part</Link>
               </Button>
               <Button asChild variant="ghost" size="lg" className="text-base font-heading font-semibold uppercase tracking-wider px-8 text-white/70 hover:text-white hover:bg-white/5">
