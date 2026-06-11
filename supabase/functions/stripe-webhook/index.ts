@@ -188,6 +188,16 @@ Deno.serve(async (req) => {
             });
             await supabase.rpc("decrement_spots");
 
+            // Burn the invite on confirmed payment, mirroring the sponsorship
+            // branch. Only admin-link orders carry an inviteToken; public orders
+            // do not, so this is a no-op for them.
+            if (formData.inviteToken) {
+              await supabase
+                .from("registration_invites")
+                .update({ used: true })
+                .eq("token", formData.inviteToken);
+            }
+
             lineItems.push({
               type: "registration",
               description: `Team Registration — ${formData.teamName || "Unknown Team"}`,
