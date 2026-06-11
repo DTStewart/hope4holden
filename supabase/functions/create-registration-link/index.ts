@@ -1,4 +1,3 @@
-import Stripe from "npm:stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
@@ -9,10 +8,10 @@ const corsHeaders = {
 
 // Server-authoritative pricing for admin-generated registration links.
 // Mirrors the public $600 team price plus $150 per extra golfer above 4.
-// Hard max 6 — any teamSize not in this map is rejected.
+// Hard max 6: any teamSize not in this map is rejected.
 const TEAM_PRICE: Record<number, number> = { 4: 600, 5: 750, 6: 900 };
 
-// Local JWT payload decode (no extra deps) — same approach as admin-bulk-email.
+// Local JWT payload decode (no extra deps), same approach as admin-bulk-email.
 function parseJwtClaims(token: string): Record<string, unknown> | null {
   const parts = token.split(".");
   if (parts.length < 2) return null;
@@ -36,15 +35,12 @@ Deno.serve(async (req) => {
   const refId = crypto.randomUUID().slice(0, 8);
 
   try {
-    const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY not configured");
-
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // ---- Auth: admin only (mirrors admin-bulk-email exactly) ----
+    // ---- Auth: admin only (unchanged, mirrors admin-bulk-email) ----
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -72,9 +68,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ---- Inputs ----
-    const { captainName, captainEmail, captainPhone, teamName, teamSize, returnUrl } =
-      await req.json();
+    // ---- Input: only teamSize. Captain/team details are NOT collected here;
+    // the payer fills those in at /register-invite/{token}, sponsor-style. ----
+    const { teamSize } = await req.json();
 
     // Validate teamSize server-side: must be 4, 5, or 6 (hard max 6).
     const size = Number(teamSize);
@@ -84,91 +80,21 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    if (!captainEmail || typeof captainEmail !== "string") {
-      return new Response(
-        JSON.stringify({ error: "captainEmail is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
-    // Server-authoritative amount (dollars) — never trust the client.
+    // Server-authoritative amount (dollars), never from the client.
     const amount = TEAM_PRICE[size];
 
-    // ---- Build the order item in the EXACT shape the webhook reads ----
-    // formData keys match stripe-webhook's registration branch. registration_source
-    // is stamped on the ITEM (the webhook reads item.registration_source).
-    const teamLabel = teamName || "Unknown Team";
-    const item = {
-      type: "registration",
-      description: `Team Registration — ${teamLabel}`,
-      amount,
-      registration_source: "admin_link",
-      formData: {
-        teamName: teamLabel,
-        captainName: captainName || "",
-        captainEmail,
-        captainPhone: captainPhone || "",
-        teamSize: size,
-      },
-    };
-    const validatedItems = [item];
-    const totalAmount = amount;
-
-    // ---- pending_orders insert: EXACT columns create-checkout uses ----
-    const { data: orderData, error: orderError } = await supabase
-      .from("pending_orders")
-      .insert({
-        items: validatedItems,
-        total_amount: totalAmount,
-        status: "pending",
-      })
-      .select("id")
+    // ---- Create the invite row. team_size and amount are admin-set and
+    // payer-proof: create-checkout re-reads them server-side by token. ----
+    const { data: invite, error: inviteError } = await supabase
+      .from("registration_invites")
+      .insert({ team_size: size, amount })
+      .select("token")
       .single();
-    if (orderError) throw new Error(`Failed to create pending order: ${orderError.message}`);
+    if (inviteError) throw new Error(`Failed to create registration invite: ${inviteError.message}`);
 
-    // ---- Stripe checkout session (mirrors create-checkout) ----
-    const stripe = new Stripe(STRIPE_SECRET_KEY, {
-      apiVersion: "2025-08-27.basil",
-    });
-
-    const lineItems = validatedItems.map((it: any) => ({
-      price_data: {
-        currency: "cad",
-        product_data: {
-          name: it.description,
-          metadata: { type: it.type },
-        },
-        unit_amount: Math.round(it.amount * 100),
-      },
-      quantity: 1,
-    }));
-
-    // No cart page for an admin-generated link — default to the bare homepage.
-    const base = (returnUrl && typeof returnUrl === "string" ? returnUrl : "https://hope4holden.com/");
-
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: lineItems,
-      mode: "payment",
-      success_url: `${base}?success=true&order_id=${orderData.id}`,
-      cancel_url: `${base}?canceled=true`,
-      metadata: {
-        pending_order_id: orderData.id,
-        // Mirrored for future CRM use; Part B reads the source off the item, not here.
-        registration_source: "admin_link",
-      },
-    });
-
-    // Link the session id back so the success page can find the row.
-    const { error: sessionLinkError } = await supabase
-      .from("pending_orders")
-      .update({ stripe_session_id: session.id })
-      .eq("id", orderData.id);
-    if (sessionLinkError) {
-      console.error(`[${refId}] Failed to link pending_order to stripe session:`, sessionLinkError.message);
-    }
-
-    return new Response(JSON.stringify({ url: session.url }), {
+    const url = `https://hope4holden.com/register-invite/${invite.token}`;
+    return new Response(JSON.stringify({ url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
