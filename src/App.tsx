@@ -25,6 +25,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import Unsubscribe from "./pages/Unsubscribe";
 import SponsorUpload from "./pages/SponsorUpload";
 import SponsorInvite from "./pages/SponsorInvite";
+import RegisterInvite from "./pages/RegisterInvite";
 import Auction from "./pages/Auction";
 import AuctionMyWins from "./pages/AuctionMyWins";
 import AuctionPay from "./pages/AuctionPay";
@@ -101,6 +102,9 @@ const App = () => (
               <Route path="/sponsor-upload/:token" element={<SponsorUpload />} />
               <Route path="/sponsor-invite/:token" element={<Layout />}>
                 <Route index element={<SponsorInvite />} />
+              </Route>
+              <Route path="/register-invite/:token" element={<Layout />}>
+                <Route index element={<RegisterInvite />} />
               </Route>
               <Route path="/extra-golfer/:token" element={<ExtraGolfer />} />
               <Route path="*" element={<NotFound />} />
