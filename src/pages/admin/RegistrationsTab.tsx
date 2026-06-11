@@ -370,6 +370,127 @@ export default function RegistrationsTab() {
           <div className="flex gap-2 flex-wrap items-center">
             <YearFilter table="registrations" value={yearFilter} onChange={setYearFilter} />
             <Dialog
+              open={regLinkDialogOpen}
+              onOpenChange={(open) => {
+                setRegLinkDialogOpen(open);
+                if (!open) resetRegLinkDialog();
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button
+                  size="sm"
+                  className="bg-[#7ab40d] hover:bg-[#7ab40d]/90 text-white font-heading"
+                >
+                  <LinkIcon className="h-4 w-4 mr-1" /> Generate Registration Link
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle className="font-heading">Generate Registration Link</DialogTitle>
+                  <DialogDescription>
+                    Creates a Stripe checkout link a captain can use to pay for their own team.
+                  </DialogDescription>
+                </DialogHeader>
+
+                {!regGeneratedUrl ? (
+                  <div className="space-y-4 py-2 font-body">
+                    <div>
+                      <Label htmlFor="regCaptainName">Captain name *</Label>
+                      <Input
+                        id="regCaptainName"
+                        value={regCaptainName}
+                        onChange={(e) => setRegCaptainName(e.target.value)}
+                        placeholder="Jane Doe"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="regCaptainEmail">Captain email *</Label>
+                      <Input
+                        id="regCaptainEmail"
+                        type="email"
+                        value={regCaptainEmail}
+                        onChange={(e) => setRegCaptainEmail(e.target.value)}
+                        placeholder="captain@example.com"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="regCaptainPhone">Captain phone (optional)</Label>
+                      <Input
+                        id="regCaptainPhone"
+                        value={regCaptainPhone}
+                        onChange={(e) => setRegCaptainPhone(e.target.value)}
+                        placeholder="(555) 555-5555"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="regTeamName">Team name *</Label>
+                      <Input
+                        id="regTeamName"
+                        value={regTeamName}
+                        onChange={(e) => setRegTeamName(e.target.value)}
+                        placeholder="The Birdies"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="regTeamSize">Team size *</Label>
+                      <select
+                        id="regTeamSize"
+                        value={regTeamSize}
+                        onChange={(e) => setRegTeamSize(Number(e.target.value) as 4 | 5 | 6)}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      >
+                        <option value={4}>4 golfers</option>
+                        <option value={5}>5 golfers</option>
+                        <option value={6}>6 golfers</option>
+                      </select>
+                    </div>
+                    {regError && (
+                      <p className="text-sm text-destructive">{regError}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3 py-2">
+                    <Label>Stripe checkout link (already copied to your clipboard)</Label>
+                    <div className="flex gap-2">
+                      <Input value={regGeneratedUrl} readOnly onFocus={(e) => e.target.select()} />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          navigator.clipboard.writeText(regGeneratedUrl);
+                          toast({ title: "Copied!" });
+                        }}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Send this to {regCaptainName || "the captain"} by text or email.
+                    </p>
+                  </div>
+                )}
+
+                <DialogFooter>
+                  {!regGeneratedUrl ? (
+                    <>
+                      <Button variant="outline" onClick={() => setRegLinkDialogOpen(false)}>Cancel</Button>
+                      <Button
+                        onClick={handleGenerateRegistrationLink}
+                        disabled={regGenerating}
+                        className="bg-[#7ab40d] hover:bg-[#7ab40d]/90 text-white"
+                      >
+                        {regGenerating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LinkIcon className="h-4 w-4 mr-2" />}
+                        Generate Link
+                      </Button>
+                    </>
+                  ) : (
+                    <Button onClick={() => setRegLinkDialogOpen(false)}>Done</Button>
+                  )}
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            <Dialog
               open={linkDialogOpen}
               onOpenChange={(open) => {
                 setLinkDialogOpen(open);
