@@ -21,19 +21,19 @@ const Header = () => {
   const location = useLocation();
 
   return (
-    <header className="sticky top-0 z-50 bg-[#1A1A1A] text-white">
-      <div className="container flex h-16 items-center justify-between">
+    <header className="sticky top-0 z-50 bg-[#1A1A1A]/95 backdrop-blur-sm text-white">
+      <div className="container flex h-20 items-center justify-between">
         <Link to="/" className="flex items-center">
           <img src={h4hLogo} alt="Hope 4 Holden" className="h-10 w-auto invert" />
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden lg:flex items-center gap-0">
+        <nav className="hidden lg:flex items-center gap-2 xl:gap-4">
           {navLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              className={`px-3 py-2 text-[13px] font-heading font-semibold uppercase tracking-wider transition-colors ${
+              className={`px-3 py-2 text-[13px] font-heading font-semibold uppercase tracking-[0.18em] transition-colors ${
                 location.pathname === link.to
                   ? "text-primary"
                   : "text-white/70 hover:text-white"
