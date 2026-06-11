@@ -23,26 +23,28 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 bg-[#1A1A1A]/95 backdrop-blur-sm text-white">
       <div className="container flex h-20 items-center justify-between">
-        <Link to="/" className="flex items-center">
-          <img src={h4hLogo} alt="Hope 4 Holden" className="h-10 w-auto invert" />
-        </Link>
+        <div className="flex items-center gap-6 xl:gap-10">
+          <Link to="/" className="flex items-center">
+            <img src={h4hLogo} alt="Hope 4 Holden" className="h-10 w-auto invert" />
+          </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden lg:flex items-center gap-2 xl:gap-4">
-          {navLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className={`px-3 py-2 text-[13px] font-heading font-semibold uppercase tracking-[0.18em] transition-colors ${
-                location.pathname === link.to
-                  ? "text-primary"
-                  : "text-white/70 hover:text-white"
-              }`}
-            >
-              {link.icon ? <Home className="h-4 w-4" /> : link.label}
-            </Link>
-          ))}
-        </nav>
+          {/* Desktop nav */}
+          <nav className="hidden lg:flex items-center gap-2 xl:gap-4">
+            {navLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={`px-3 py-2 text-[13px] font-heading font-semibold uppercase tracking-[0.18em] transition-colors ${
+                  location.pathname === link.to
+                    ? "text-primary"
+                    : "text-white/70 hover:text-white"
+                }`}
+              >
+                {link.icon ? <Home className="h-4 w-4" /> : link.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
 
         <div className="flex items-center gap-2">
           <button
