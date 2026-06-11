@@ -179,6 +179,12 @@ Deno.serve(async (req) => {
               status: "confirmed",
               stripe_session_id: session.id,
               paid: true,
+              // Additive: admin-link orders carry a real team size (4-6); public
+              // orders have no teamSize and fall back to 4 (also fixes headcount).
+              team_size: Number(formData.teamSize) || 4,
+              // Additive: trust the server-computed amount only for admin links;
+              // public orders stay null and keep counting as the flat $600.
+              amount_paid: item.registration_source === "admin_link" ? item.amount : null,
             });
             await supabase.rpc("decrement_spots");
 
