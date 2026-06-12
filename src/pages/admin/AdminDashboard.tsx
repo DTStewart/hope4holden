@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image, ShoppingCart, ClipboardList, UtensilsCrossed, Send, Megaphone, Gavel, Trophy, Tv, Camera, CalendarDays, PartyPopper } from "lucide-react";
+import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image, ShoppingCart, ClipboardList, UtensilsCrossed, Send, Megaphone, Gavel, Trophy, Tv, Camera, CalendarDays, PartyPopper, Shield } from "lucide-react";
 import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminSessionRefresh } from "@/hooks/useAdminSessionRefresh";
