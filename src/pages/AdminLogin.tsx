@@ -11,12 +11,19 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, Mail } from "lucide-react";
 
+// Magic-link emails must land on the production admin origin, not the
+// lovable.app preview origin, otherwise the session is written to the wrong
+// localStorage and /admin can never see it.
+const MAGIC_LINK_REDIRECT = "https://hope4holden.com/admin";
+
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
+  const [magicLoading, setMagicLoading] = useState(false);
+  const [magicSent, setMagicSent] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false);
   const [isRecoveryMode, setIsRecoveryMode] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -26,6 +33,28 @@ export default function AdminLogin() {
   const { signIn, user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleMagicLink = async () => {
+    if (!email.includes("@")) {
+      toast({ title: "Enter your admin email above first", variant: "destructive" });
+      return;
+    }
+    setMagicLoading(true);
+    const { error } = await adminSupabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: { emailRedirectTo: MAGIC_LINK_REDIRECT, shouldCreateUser: false },
+    });
+    setMagicLoading(false);
+    if (error) {
+      toast({ title: "Couldn't send link", description: error.message, variant: "destructive" });
+      return;
+    }
+    setMagicSent(true);
+    toast({
+      title: "Check your email",
+      description: `A sign-in link was sent to ${email.trim()}. Open it on this device.`,
+    });
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -233,6 +262,20 @@ export default function AdminLogin() {
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Signing in..." : "Sign In"}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              onClick={handleMagicLink}
+              disabled={magicLoading || magicSent}
+            >
+              <Mail className="h-4 w-4 mr-2" />
+              {magicSent
+                ? "Link sent — check your email"
+                : magicLoading
+                  ? "Sending link..."
+                  : "Email me a sign-in link"}
             </Button>
             <Button type="button" variant="link" className="w-full" onClick={() => setIsResetMode(true)}>
               Forgot password?
