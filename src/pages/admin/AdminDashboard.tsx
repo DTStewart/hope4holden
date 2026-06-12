@@ -215,6 +215,7 @@ export default function AdminDashboard() {
           <TabsContent value="ugc"><UGCTab /></TabsContent>
           <TabsContent value="post-event"><PostEventTab /></TabsContent>
           <TabsContent value="next-year"><NextYearListTab /></TabsContent>
+          <TabsContent value="roles"><RolesTab /></TabsContent>
         </Tabs>
       </div>
     </div>
