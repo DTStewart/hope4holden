@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image, ShoppingCart, ClipboardList, UtensilsCrossed, Send, Megaphone, Gavel, Trophy, Tv, Camera, CalendarDays, PartyPopper } from "lucide-react";
+import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image, ShoppingCart, ClipboardList, UtensilsCrossed, Send, Megaphone, Gavel, Trophy, Tv, Camera, CalendarDays, PartyPopper, Shield } from "lucide-react";
 import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminSessionRefresh } from "@/hooks/useAdminSessionRefresh";
@@ -27,6 +27,7 @@ import LiveDashboardTab from "./LiveDashboardTab";
 import UGCTab from "./UGCTab";
 import PostEventTab from "./PostEventTab";
 import NextYearListTab from "./NextYearListTab";
+import RolesTab from "./RolesTab";
 import DashboardStats from "./DashboardStats";
 
 export default function AdminDashboard() {
@@ -190,6 +191,10 @@ export default function AdminDashboard() {
               <CalendarDays className="h-4 w-4 mr-1 hidden md:inline" />
               2027
             </TabsTrigger>
+            <TabsTrigger value="roles" className="text-xs md:text-sm">
+              <Shield className="h-4 w-4 mr-1 hidden md:inline" />
+              Roles
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="registrations"><RegistrationsTab /></TabsContent>
@@ -210,6 +215,7 @@ export default function AdminDashboard() {
           <TabsContent value="ugc"><UGCTab /></TabsContent>
           <TabsContent value="post-event"><PostEventTab /></TabsContent>
           <TabsContent value="next-year"><NextYearListTab /></TabsContent>
+          <TabsContent value="roles"><RolesTab /></TabsContent>
         </Tabs>
       </div>
     </div>
