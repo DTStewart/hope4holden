@@ -263,6 +263,20 @@ export default function AdminLogin() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              onClick={handleMagicLink}
+              disabled={magicLoading || magicSent}
+            >
+              <Mail className="h-4 w-4 mr-2" />
+              {magicSent
+                ? "Link sent — check your email"
+                : magicLoading
+                  ? "Sending link..."
+                  : "Email me a sign-in link"}
+            </Button>
             <Button type="button" variant="link" className="w-full" onClick={() => setIsResetMode(true)}>
               Forgot password?
             </Button>
