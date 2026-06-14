@@ -33,6 +33,7 @@ type Team = {
 };
 
 const DEFAULT_GOLFER_COUNT = 4;
+const SHOW_TEAM_FUNDRAISING = false;
 
 export default function TeamManage() {
   const { token } = useParams<{ token: string }>();
@@ -248,40 +249,44 @@ export default function TeamManage() {
       <section className="section-light">
         <div className="container py-10 md:py-14 max-w-2xl space-y-6">
 
-          {/* Public team page link */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Users className="h-5 w-5" />
-                Your public team page
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-foreground/70">
-                Share this link on social or in email. Every dollar donated via the link counts toward your team's
-                fundraising total.
-              </p>
-              <div className="flex items-center gap-2 bg-muted/40 rounded px-3 py-2 text-sm">
-                <code className="text-foreground/80 flex-1 truncate">
-                  {window.location.origin}/team/{team.team_slug}
-                </code>
-                <Button size="sm" variant="outline" onClick={copyPublicLink}>
-                  <Copy className="h-3.5 w-3.5 mr-1" /> Copy
-                </Button>
-              </div>
-              <div className="flex items-center justify-between pt-2 text-sm">
-                <span className="text-foreground/60">Team fundraising total</span>
-                <span className="font-heading font-extrabold text-xl text-primary">
-                  ${team.team_fundraising_total.toLocaleString()}
-                </span>
-              </div>
-              <Button asChild variant="outline" size="sm" className="w-full">
-                <Link to={`/team/${team.team_slug}`} target="_blank">
-                  <ExternalLink className="h-3.5 w-3.5 mr-1" /> Preview your team page
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+          {SHOW_TEAM_FUNDRAISING && (
+            <>
+              {/* Public team page link */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Users className="h-5 w-5" />
+                    Your public team page
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-foreground/70">
+                    Share this link on social or in email. Every dollar donated via the link counts toward your team's
+                    fundraising total.
+                  </p>
+                  <div className="flex items-center gap-2 bg-muted/40 rounded px-3 py-2 text-sm">
+                    <code className="text-foreground/80 flex-1 truncate">
+                      {window.location.origin}/team/{team.team_slug}
+                    </code>
+                    <Button size="sm" variant="outline" onClick={copyPublicLink}>
+                      <Copy className="h-3.5 w-3.5 mr-1" /> Copy
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 text-sm">
+                    <span className="text-foreground/60">Team fundraising total</span>
+                    <span className="font-heading font-extrabold text-xl text-primary">
+                      ${team.team_fundraising_total.toLocaleString()}
+                    </span>
+                  </div>
+                  <Button asChild variant="outline" size="sm" className="w-full">
+                    <Link to={`/team/${team.team_slug}`} target="_blank">
+                      <ExternalLink className="h-3.5 w-3.5 mr-1" /> Preview your team page
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </>
+          )}
 
           {/* Team photo */}
           <Card>
