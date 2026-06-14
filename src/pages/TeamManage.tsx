@@ -168,7 +168,7 @@ export default function TeamManage() {
   const save = async () => {
     if (!token || !team) return;
     const v = validate();
-    if (!v.ok) {
+    if (v.ok === false) {
       setRowErrors(v.errors);
       toast({ title: "Missing info", description: v.msg, variant: "destructive" });
       return;
