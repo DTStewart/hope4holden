@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-// TODO: post-tournament, switch to anonSupabase. This page is public and has no
-// admin session — it shouldn't share localStorage with the admin client. Kept
-// on adminSupabase here only to make the refactor behavior-preserving.
-import { adminSupabase } from "@/integrations/supabase/adminClient";
+import { anonSupabase } from "@/integrations/supabase/anonClient";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,7 +39,7 @@ export default function ExtraGolfer() {
         setLoading(false);
         return;
       }
-      const { data, error: rpcError } = await adminSupabase.rpc("lookup_extra_golfer_invite", {
+      const { data, error: rpcError } = await anonSupabase.rpc("lookup_extra_golfer_invite", {
         _token: token,
       });
       if (rpcError) {
@@ -96,7 +93,7 @@ export default function ExtraGolfer() {
 
     setSubmitting(true);
     try {
-      const { data, error: fnError } = await adminSupabase.functions.invoke("create-checkout", {
+      const { data, error: fnError } = await anonSupabase.functions.invoke("create-checkout", {
         body: {
           items: [
             {
