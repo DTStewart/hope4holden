@@ -420,7 +420,7 @@ export default function TeamManage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <Label htmlFor={`name-${idx}`} className="text-xs">
-                          Name <span className="text-destructive">*</span>
+                          Name {isCaptain && <span className="text-destructive">*</span>}
                         </Label>
                         <Input
                           id={`name-${idx}`}
@@ -429,11 +429,15 @@ export default function TeamManage() {
                           placeholder="Full name"
                           autoComplete="name"
                           inputMode="text"
+                          aria-invalid={!!rowErrors[idx]?.name}
                         />
+                        {rowErrors[idx]?.name && (
+                          <p className="text-xs text-destructive mt-1">{rowErrors[idx]?.name}</p>
+                        )}
                       </div>
                       <div>
                         <Label htmlFor={`email-${idx}`} className="text-xs">
-                          Email <span className="text-destructive">*</span>
+                          Email {isCaptain && <span className="text-destructive">*</span>}
                         </Label>
                         <Input
                           id={`email-${idx}`}
@@ -443,7 +447,11 @@ export default function TeamManage() {
                           placeholder="email@example.com"
                           autoComplete="email"
                           inputMode="email"
+                          aria-invalid={!!rowErrors[idx]?.email}
                         />
+                        {rowErrors[idx]?.email && (
+                          <p className="text-xs text-destructive mt-1">{rowErrors[idx]?.email}</p>
+                        )}
                       </div>
                       <div>
                         <Label htmlFor={`phone-${idx}`} className="text-xs">Phone</Label>
