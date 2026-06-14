@@ -40,6 +40,7 @@ export default function TeamManage() {
   const [status, setStatus] = useState<"loading" | "ready" | "invalid" | "error">("loading");
   const [team, setTeam] = useState<Team | null>(null);
   const [rows, setRows] = useState<GolferRow[]>([]);
+  const [rowErrors, setRowErrors] = useState<Array<{ name?: string; email?: string }>>([]);
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -110,25 +111,69 @@ export default function TeamManage() {
 
   const updateRow = (idx: number, patch: Partial<GolferRow>) => {
     setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
+    setRowErrors((prev) => {
+      if (!prev[idx]) return prev;
+      const next = [...prev];
+      const e = { ...next[idx] };
+      if ("name" in patch) delete e.name;
+      if ("email" in patch) delete e.email;
+      next[idx] = e;
+      return next;
+    });
   };
 
-  const validate = (): { ok: true } | { ok: false; msg: string } => {
+  const validate = ():
+    | { ok: true; keepIdx: number[] }
+    | { ok: false; msg: string; errors: Array<{ name?: string; email?: string }> } => {
+    const errors: Array<{ name?: string; email?: string }> = rows.map(() => ({}));
+    const keepIdx: number[] = [];
+    let firstMsg = "";
+
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
-      const label = i === 0 ? "Captain" : `Golfer ${i + 1}`;
-      if (!r.name?.trim()) return { ok: false, msg: `${label}: name is required.` };
-      if (!r.email?.trim()) return { ok: false, msg: `${label}: email is required.` };
+      const name = r.name?.trim() || "";
+      const email = r.email?.trim() || "";
+
+      if (i === 0) {
+        if (!name) {
+          errors[i].name = "Add a name for this golfer.";
+          if (!firstMsg) firstMsg = "Captain name is required.";
+        }
+        if (!email) {
+          errors[i].email = `Add an email for ${name || "the captain"}.`;
+          if (!firstMsg) firstMsg = "Captain email is required.";
+        }
+        keepIdx.push(i);
+        continue;
+      }
+
+      if (!name && !email) continue; // fully empty row — ignore
+
+      if (!name) {
+        errors[i].name = "Add a name for this golfer.";
+        if (!firstMsg) firstMsg = `Golfer ${i + 1}: name is required.`;
+      }
+      if (!email) {
+        errors[i].email = `Add an email for ${name || "this golfer"}.`;
+        if (!firstMsg) firstMsg = `Golfer ${i + 1}: email is required.`;
+      }
+      if (name && email) keepIdx.push(i);
     }
-    return { ok: true };
+
+    const hasErr = errors.some((e) => e.name || e.email);
+    if (hasErr) return { ok: false, msg: firstMsg || "Please fix the highlighted fields.", errors };
+    return { ok: true, keepIdx };
   };
 
   const save = async () => {
     if (!token || !team) return;
     const v = validate();
-    if (!v.ok) {
-      toast({ title: "Missing info", description: (v as { ok: false; msg: string }).msg, variant: "destructive" });
+    if (v.ok === false) {
+      setRowErrors(v.errors);
+      toast({ title: "Missing info", description: v.msg, variant: "destructive" });
       return;
     }
+    setRowErrors(rows.map(() => ({})));
     setSaving(true);
     try {
       let photoUrl: string | null = team.team_photo_url;
@@ -155,12 +200,15 @@ export default function TeamManage() {
         photoUrl = body.url;
       }
 
-      const cleanRows = rows.map((r) => ({
-        name: r.name.trim(),
-        email: r.email.trim(),
-        phone: r.phone?.trim() || undefined,
-        dietary: r.dietary?.trim() || undefined,
-      }));
+      const cleanRows = v.keepIdx.map((i) => {
+        const r = rows[i];
+        return {
+          name: r.name.trim(),
+          email: r.email.trim(),
+          phone: r.phone?.trim() || undefined,
+          dietary: r.dietary?.trim() || undefined,
+        };
+      });
 
       const captain = cleanRows[0];
 
@@ -339,8 +387,8 @@ export default function TeamManage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-foreground/70">
-                Name and email are required for every golfer. Phone and dietary restrictions are optional —
-                dietary info helps us plan dinner.
+                Captain name and email are required. Additional golfer rows are optional — leave them
+                blank if a seat is unfilled, or fill in both name and email to add a teammate.
               </p>
 
               {rows.map((r, idx) => {
@@ -372,7 +420,7 @@ export default function TeamManage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <Label htmlFor={`name-${idx}`} className="text-xs">
-                          Name <span className="text-destructive">*</span>
+                          Name {isCaptain && <span className="text-destructive">*</span>}
                         </Label>
                         <Input
                           id={`name-${idx}`}
@@ -381,11 +429,15 @@ export default function TeamManage() {
                           placeholder="Full name"
                           autoComplete="name"
                           inputMode="text"
+                          aria-invalid={!!rowErrors[idx]?.name}
                         />
+                        {rowErrors[idx]?.name && (
+                          <p className="text-xs text-destructive mt-1">{rowErrors[idx]?.name}</p>
+                        )}
                       </div>
                       <div>
                         <Label htmlFor={`email-${idx}`} className="text-xs">
-                          Email <span className="text-destructive">*</span>
+                          Email {isCaptain && <span className="text-destructive">*</span>}
                         </Label>
                         <Input
                           id={`email-${idx}`}
@@ -395,7 +447,11 @@ export default function TeamManage() {
                           placeholder="email@example.com"
                           autoComplete="email"
                           inputMode="email"
+                          aria-invalid={!!rowErrors[idx]?.email}
                         />
+                        {rowErrors[idx]?.email && (
+                          <p className="text-xs text-destructive mt-1">{rowErrors[idx]?.email}</p>
+                        )}
                       </div>
                       <div>
                         <Label htmlFor={`phone-${idx}`} className="text-xs">Phone</Label>
