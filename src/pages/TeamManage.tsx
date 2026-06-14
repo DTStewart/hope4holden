@@ -33,6 +33,7 @@ type Team = {
 };
 
 const DEFAULT_GOLFER_COUNT = 4;
+const SHOW_TEAM_FUNDRAISING = false;
 
 export default function TeamManage() {
   const { token } = useParams<{ token: string }>();
