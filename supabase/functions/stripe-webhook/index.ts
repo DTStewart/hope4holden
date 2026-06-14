@@ -256,12 +256,30 @@ Deno.serve(async (req) => {
                 .eq("token", formData.inviteToken);
             }
 
-            // NOTE: We no longer auto-send the sponsor-logo-upload email.
-            // Sponsors choose to upload immediately on the success page,
-            // copy the upload link, or email it to themselves for later.
-            // The /sponsor-upload/:token page remains functional for
-            // shared links, and admins can resend from the dashboard.
-            void uploadToken; // upload token persisted on sponsor row above
+            // Auto-send the sponsor logo-upload email. This runs in the shared
+            // sponsorship branch, so it fires for both public and invite
+            // purchases, guaranteeing every paid sponsor gets a logo request.
+            // Mirrors the on-demand send from the success page
+            // (SponsorMaterialsSection) and the admin resend (SponsorsTab):
+            // same template and templateData. Those paths stay available as
+            // backups. Wrapped so an email failure never fails the webhook.
+            const sponsorUploadUrl = `https://hope4holden.com/sponsor-upload/${uploadToken}`;
+            if (formData.contactEmail) {
+              try {
+                await sendTransactionalEmail(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+                  templateName: "sponsor-logo-upload",
+                  recipientEmail: formData.contactEmail,
+                  idempotencyKey: `sponsor-logo-upload-${sponsorRow?.id ?? session.id}`,
+                  templateData: {
+                    businessName: formData.businessName || "",
+                    tierName: formData.tier || "",
+                    uploadUrl: sponsorUploadUrl,
+                  },
+                });
+              } catch (err) {
+                console.error("Failed to send sponsor logo-upload email:", err);
+              }
+            }
 
             lineItems.push({
               type: "sponsorship",

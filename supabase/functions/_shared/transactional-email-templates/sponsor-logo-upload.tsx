@@ -31,6 +31,9 @@ const SponsorLogoUploadEmail = ({ businessName, tierName, uploadUrl }: Props) =>
         <Text style={text}>
           {businessName ? `Hi ${businessName}, p` : 'P'}lease use the link below to upload your logo and any brand assets you'd like displayed on our website and tournament materials.
         </Text>
+        <Text style={text}>
+          If you've already uploaded your logo, thank you. You can disregard this email.
+        </Text>
         <Text style={tips}>
           <strong>Upload tips:</strong><br />
           • PNG or SVG with transparent background recommended<br />
