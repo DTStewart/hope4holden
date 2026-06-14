@@ -387,8 +387,8 @@ export default function TeamManage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-foreground/70">
-                Name and email are required for every golfer. Phone and dietary restrictions are optional —
-                dietary info helps us plan dinner.
+                Captain name and email are required. Additional golfer rows are optional — leave them
+                blank if a seat is unfilled, or fill in both name and email to add a teammate.
               </p>
 
               {rows.map((r, idx) => {
