@@ -340,6 +340,9 @@ Deno.serve(async (req) => {
       idempotency_key: idempotencyKey,
       unsubscribe_token: unsubscribeToken,
       queued_at: new Date().toISOString(),
+      // Route captain replies for roster requests to the monitored inbox.
+      // Other templates omit reply_to and keep replying to the from-address.
+      ...(templateName === "roster-request" ? { reply_to: "hello@hope4holden.com" } : {}),
     },
   });
 
