@@ -40,6 +40,7 @@ export default function TeamManage() {
   const [status, setStatus] = useState<"loading" | "ready" | "invalid" | "error">("loading");
   const [team, setTeam] = useState<Team | null>(null);
   const [rows, setRows] = useState<GolferRow[]>([]);
+  const [rowErrors, setRowErrors] = useState<Array<{ name?: string; email?: string }>>([]);
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
