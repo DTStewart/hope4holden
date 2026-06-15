@@ -24,12 +24,13 @@ const RECIPIENT_GROUPS = [
   { value: "dinners", label: "Dinner ticket holders (paid)" },
   { value: "subscribers", label: "Newsletter subscribers" },
   { value: "roster_2026", label: "Roster request: 2026 paid captains (team-manage link)" },
+  { value: "roster_2026_retry13", label: "Roster request: retry failed 13 (team-manage link)" },
   { value: "roster_2026_test", label: "Roster request: TEST rows only (zzz-test teams)" },
 ];
 
 // Roster-request groups send each captain their own team-manage button via the
 // dedicated template. Every other group uses the default bulk-announcement.
-const ROSTER_GROUPS = new Set(["roster_2026", "roster_2026_test"]);
+const ROSTER_GROUPS = new Set(["roster_2026", "roster_2026_retry13", "roster_2026_test"]);
 const templateForGroup = (group: string) =>
   ROSTER_GROUPS.has(group) ? "roster-request" : undefined;
 
