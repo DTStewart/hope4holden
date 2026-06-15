@@ -195,9 +195,14 @@ Deno.serve(async (req) => {
       .neq('captain_email', 'sneath-pending@hope4holden.com')
 
     // Production: exclude the test rows. Test: target ONLY the test rows.
-    query = isRosterTest
-      ? query.like('team_slug', 'zzz-test-%')
-      : query.not('team_slug', 'like', 'zzz-test-%')
+    // Retry13: restrict to a fixed list of score_tokens.
+    if (isRosterRetry) {
+      query = query.in('score_token', RETRY_13_TOKENS)
+    } else if (isRosterTest) {
+      query = query.like('team_slug', 'zzz-test-%')
+    } else {
+      query = query.not('team_slug', 'like', 'zzz-test-%')
+    }
 
     const { data } = await query
     for (const r of data ?? []) {
