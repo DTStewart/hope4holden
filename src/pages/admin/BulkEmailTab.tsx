@@ -16,6 +16,8 @@ import { Loader2, Send, Users } from "lucide-react";
 
 const RECIPIENT_GROUPS = [
   { value: "all_attendees", label: "All paid attendees (teams + sponsors + dinner tickets)" },
+  { value: "all_golfers", label: "All individual golfers (team rosters)" },
+  { value: "everyone", label: "Everyone (golfers + sponsors + dinner + donors)" },
   { value: "registrations", label: "Team captains (paid registrations)" },
   { value: "sponsors", label: "Sponsors (paid)" },
   { value: "donations", label: "Donors (paid donations)" },
