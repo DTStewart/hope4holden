@@ -136,11 +136,35 @@ Deno.serve(async (req) => {
   const isRosterTest = recipientGroup === 'roster_2026_test'
   const isRoster = isRosterProd || isRosterTest
 
-  const includeRegs = !isRoster && (recipientGroup === 'registrations' || recipientGroup === 'all_attendees')
-  const includeSponsors = !isRoster && (recipientGroup === 'sponsors' || recipientGroup === 'all_attendees')
-  const includeDinners = !isRoster && (recipientGroup === 'dinners' || recipientGroup === 'all_attendees')
-  const includeDonations = !isRoster && recipientGroup === 'donations'
+  const isEveryone = recipientGroup === 'everyone'
+  const isAllGolfers = recipientGroup === 'all_golfers'
+  const includeRegs = !isRoster && (recipientGroup === 'registrations' || recipientGroup === 'all_attendees' || isEveryone)
+  const includeSponsors = !isRoster && (recipientGroup === 'sponsors' || recipientGroup === 'all_attendees' || isEveryone)
+  const includeDinners = !isRoster && (recipientGroup === 'dinners' || recipientGroup === 'all_attendees' || isEveryone)
+  const includeDonations = !isRoster && (recipientGroup === 'donations' || isEveryone)
   const includeSubscribers = !isRoster && recipientGroup === 'subscribers'
+  const includeRosterGolfers = !isRoster && (isAllGolfers || isEveryone)
+
+  if (includeRosterGolfers) {
+    const { data: yearData } = await supabase.rpc('get_current_tournament_year')
+    const currentYear = typeof yearData === 'number' ? yearData : 2026
+    const { data } = await supabase
+      .from('registrations')
+      .select('captain_email, captain_name, team_members')
+      .eq('paid', true)
+      .eq('status', 'confirmed')
+      .eq('tournament_year', currentYear)
+    for (const r of data ?? []) {
+      const row = r as Record<string, any>
+      add(row.captain_email, row.captain_name)
+      const members = Array.isArray(row.team_members) ? row.team_members : []
+      for (const m of members) {
+        if (m && typeof m === 'object') {
+          add((m as any).email, (m as any).name)
+        }
+      }
+    }
+  }
 
   // Built only for roster modes; deduplicated by score_token below.
   const rosterByToken = new Map<string, Recipient>()
