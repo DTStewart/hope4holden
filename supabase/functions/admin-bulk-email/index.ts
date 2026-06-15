@@ -134,7 +134,24 @@ Deno.serve(async (req) => {
   //   roster_2026_test -> ONLY the zzz-test- rows, for a safe end-to-end test
   const isRosterProd = recipientGroup === 'roster_2026'
   const isRosterTest = recipientGroup === 'roster_2026_test'
-  const isRoster = isRosterProd || isRosterTest
+  const isRosterRetry = recipientGroup === 'roster_2026_retry13'
+  const isRoster = isRosterProd || isRosterTest || isRosterRetry
+
+  const RETRY_13_TOKENS = [
+    'bee83a57-236a-44e1-b5a1-925f1575b6fe',
+    '27eb4bbe-c6f8-4f22-895b-53fcce3203ef',
+    'cf7287fc-0243-4e49-92a1-569a331e3d7e',
+    '30d9c9c5-5d67-426d-80b5-980c2d78561d',
+    '536daa84-18b4-403d-8cb1-40708b73c549',
+    '882ca5d6-db00-464a-b273-b7bb3c5f6ee0',
+    '8965b8b2-b8bb-480b-9107-eaa3053d805f',
+    'c2746b5f-8eff-45b9-899e-509578938f9c',
+    'bcd9310d-575c-41c0-84fa-d236cad83152',
+    '9be35b5f-cb45-4aae-bf37-a5ffc38c23b6',
+    '6cf2ff93-b5f7-4301-b03f-5277c9445fbf',
+    '798d4c5c-4b30-4c5d-a8f7-3a5eb1c360b9',
+    '57c8cf58-5ebb-41ae-9510-b5fcbc75f5b3',
+  ]
 
   const isEveryone = recipientGroup === 'everyone'
   const isAllGolfers = recipientGroup === 'all_golfers'
@@ -178,9 +195,14 @@ Deno.serve(async (req) => {
       .neq('captain_email', 'sneath-pending@hope4holden.com')
 
     // Production: exclude the test rows. Test: target ONLY the test rows.
-    query = isRosterTest
-      ? query.like('team_slug', 'zzz-test-%')
-      : query.not('team_slug', 'like', 'zzz-test-%')
+    // Retry13: restrict to a fixed list of score_tokens.
+    if (isRosterRetry) {
+      query = query.in('score_token', RETRY_13_TOKENS)
+    } else if (isRosterTest) {
+      query = query.like('team_slug', 'zzz-test-%')
+    } else {
+      query = query.not('team_slug', 'like', 'zzz-test-%')
+    }
 
     const { data } = await query
     for (const r of data ?? []) {
