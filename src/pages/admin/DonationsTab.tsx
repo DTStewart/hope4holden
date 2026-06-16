@@ -247,6 +247,10 @@ export default function DonationsTab() {
         />
       </CardContent>
       <WalkUpDonationDialog open={walkUpOpen} onOpenChange={setWalkUpOpen} />
+      <EditDonationDisplayDialog
+        donation={editingDisplay}
+        onOpenChange={(open) => { if (!open) setEditingDisplay(null); }}
+      />
     </Card>
   );
 }
