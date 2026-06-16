@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { anonSupabase } from "@/integrations/supabase/anonClient";
 import DonationTicker from "@/components/DonationTicker";
+import { useSalesChannels } from "@/hooks/useSalesChannels";
+import { ChannelDisabledNotice } from "@/components/ChannelDisabledNotice";
 
 type RegistrationStatus = "coming_soon" | "open" | "sold_out";
 
@@ -67,6 +69,7 @@ const overviewCards = [
 const ParticipatePage = () => {
   const { addItem, setDrawerOpen } = useCart();
   const navigate = useNavigate();
+  const { channels } = useSalesChannels();
 
   const [spotsAvailable, setSpotsAvailable] = useState<number | null>(null);
   const [regStatus, setRegStatus] = useState<RegistrationStatus>("coming_soon");
@@ -212,6 +215,7 @@ const ParticipatePage = () => {
         <div className="container py-10 md:py-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {/* Register */}
+            {channels.registration.enabled ? (
             <div id="register" className="order-2 bg-white p-6 border border-[#1A1A1A]/10 rounded scroll-mt-24">
               <div className="flex items-center gap-2 mb-1">
                 <Users className="h-5 w-5 text-primary" />
@@ -307,8 +311,14 @@ const ParticipatePage = () => {
                 </div>
               )}
             </div>
+            ) : (
+              <div id="register" className="order-2 scroll-mt-24">
+                <ChannelDisabledNotice title="Register Your Team" message={channels.registration.disabled_message} />
+              </div>
+            )}
 
             {/* Dinner */}
+            {channels.dinner.enabled ? (
             <div id="dinner" className="order-1 bg-white p-6 border border-[#1A1A1A]/10 rounded scroll-mt-24">
               <div className="flex items-center gap-2 mb-1">
                 <UtensilsCrossed className="h-5 w-5 text-primary" />
@@ -358,11 +368,17 @@ const ParticipatePage = () => {
                 </Button>
               </div>
             </div>
+            ) : (
+              <div id="dinner" className="order-1 scroll-mt-24">
+                <ChannelDisabledNotice title="Dinner Only" message={channels.dinner.disabled_message} />
+              </div>
+            )}
           </div>
         </div>
       </section>
 
       {/* ─── Sponsorship ─── */}
+      {channels.sponsorship.enabled ? (
       <section id="sponsor" className="bg-[#F8F6F3] scroll-mt-24">
         <div className="container py-10 md:py-12 animate-fade-in">
           <div className="flex items-center gap-2 mb-1">
@@ -481,8 +497,16 @@ const ParticipatePage = () => {
           )}
         </div>
       </section>
+      ) : (
+        <section id="sponsor" className="bg-[#F8F6F3] scroll-mt-24">
+          <div className="container py-10 md:py-12">
+            <ChannelDisabledNotice title="Become a Sponsor" message={channels.sponsorship.disabled_message} />
+          </div>
+        </section>
+      )}
 
       {/* ─── Donation ─── */}
+      {channels.donation.enabled ? (
       <section id="donate" className="section-light scroll-mt-24">
         <div className="container py-10 md:py-12 max-w-2xl animate-fade-in">
           <div className="flex items-center gap-2 mb-1">
@@ -559,6 +583,13 @@ const ParticipatePage = () => {
           </div>
         </div>
       </section>
+      ) : (
+        <section id="donate" className="section-light scroll-mt-24">
+          <div className="container py-10 md:py-12 max-w-2xl">
+            <ChannelDisabledNotice title="Make a Donation" message={channels.donation.disabled_message} />
+          </div>
+        </section>
+      )}
     </div>
   );
 };

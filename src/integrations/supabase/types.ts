@@ -1249,6 +1249,33 @@ export type Database = {
         }
         Relationships: []
       }
+      sales_channels: {
+        Row: {
+          channel: string
+          disabled_message: string | null
+          enabled: boolean
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          channel: string
+          disabled_message?: string | null
+          enabled?: boolean
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          channel?: string
+          disabled_message?: string | null
+          enabled?: boolean
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       scorecard_submissions: {
         Row: {
           admin_note: string | null
@@ -1758,6 +1785,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_channel_enabled: { Args: { channel_name: string }; Returns: boolean }
       lookup_auction_invoice_by_token: {
         Args: { _token: string }
         Returns: {

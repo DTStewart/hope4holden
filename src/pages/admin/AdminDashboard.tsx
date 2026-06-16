@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image, ShoppingCart, ClipboardList, UtensilsCrossed, Send, Megaphone, Gavel, Trophy, Tv, Camera, CalendarDays, PartyPopper, Shield } from "lucide-react";
+import { LogOut, Users, Handshake, Heart, Mail, Settings, UserPlus, Image, ShoppingCart, ClipboardList, UtensilsCrossed, Send, Megaphone, Gavel, Trophy, Tv, Camera, CalendarDays, PartyPopper, Shield, ToggleLeft } from "lucide-react";
 import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminSessionRefresh } from "@/hooks/useAdminSessionRefresh";
@@ -28,6 +28,7 @@ import UGCTab from "./UGCTab";
 import PostEventTab from "./PostEventTab";
 import NextYearListTab from "./NextYearListTab";
 import RolesTab from "./RolesTab";
+import SalesChannelsTab from "./SalesChannelsTab";
 import DashboardStats from "./DashboardStats";
 
 export default function AdminDashboard() {
@@ -195,6 +196,10 @@ export default function AdminDashboard() {
               <Shield className="h-4 w-4 mr-1 hidden md:inline" />
               Roles
             </TabsTrigger>
+            <TabsTrigger value="sales-channels" className="text-xs md:text-sm">
+              <ToggleLeft className="h-4 w-4 mr-1 hidden md:inline" />
+              Sales Channels
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="registrations"><RegistrationsTab /></TabsContent>
@@ -216,6 +221,7 @@ export default function AdminDashboard() {
           <TabsContent value="post-event"><PostEventTab /></TabsContent>
           <TabsContent value="next-year"><NextYearListTab /></TabsContent>
           <TabsContent value="roles"><RolesTab /></TabsContent>
+          <TabsContent value="sales-channels"><SalesChannelsTab /></TabsContent>
         </Tabs>
       </div>
     </div>
