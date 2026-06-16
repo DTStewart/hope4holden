@@ -245,6 +245,69 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Channel kill-switch gate. Map each item to its sales channel and reject the
+    // whole checkout BEFORE creating any pending order or Stripe session if any
+    // touched channel is disabled. Deliberately NOT enforced in stripe-webhook:
+    // a session that already exists must be allowed to complete, otherwise the
+    // customer is charged and then errored.
+    const channelForType = (type: string): string | null => {
+      switch (type) {
+        case "registration":
+        case "extra_golfers":
+          return "registration";
+        case "sponsorship":
+          return "sponsorship";
+        case "donation":
+          return "donation";
+        case "dinner":
+          return "dinner";
+        case "auction":
+          return "auction";
+        default:
+          return null;
+      }
+    };
+
+    const touchedChannels = [
+      ...new Set(
+        validatedItems
+          .map((i: any) => channelForType(i.type))
+          .filter((c): c is string => c !== null)
+      ),
+    ];
+
+    if (touchedChannels.length > 0) {
+      const { data: channelRows, error: channelError } = await supabase
+        .from("sales_channels")
+        .select("channel, enabled, disabled_message")
+        .in("channel", touchedChannels);
+
+      // Fail-open on read: only reject a channel we can positively confirm is
+      // disabled. A query error or a missing row leaves the channel enabled so a
+      // schema hiccup never hard-breaks checkout for the whole public site.
+      if (channelError) {
+        console.error(`[${refId}] sales_channels read failed, allowing checkout:`, channelError.message);
+      } else {
+        const disabled = (channelRows || []).find((c: any) => c.enabled === false);
+        if (disabled) {
+          const friendly: Record<string, string> = {
+            registration: "Team registration",
+            dinner: "Dinner tickets",
+            donation: "Donations",
+            sponsorship: "Sponsorships",
+            auction: "The auction",
+          };
+          const message =
+            (disabled.disabled_message && String(disabled.disabled_message).trim()) ||
+            `${friendly[disabled.channel] ?? "This option"} is currently unavailable.`;
+          return new Response(JSON.stringify({ error: message }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+    }
+
     const totalAmount = validatedItems.reduce(
       (sum: number, item: any) => sum + item.amount,
       0
