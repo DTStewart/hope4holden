@@ -208,7 +208,7 @@ export default function RegistrationsTab() {
     setGeneratedUrl(null);
   };
 
-  const { data: registrations, isLoading } = useQuery({
+  const { data: registrations, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin-registrations", yearFilter],
     enabled: yearFilter != null,
     queryFn: async () => {
@@ -218,6 +218,16 @@ export default function RegistrationsTab() {
         .select("*")
         .eq("tournament_year", yearFilter as number)
         .order("created_at", { ascending: false });
+      // Temporary event-day diagnostics: distinguish an auth/RLS failure (error
+      // present) from a stale-token RLS-empty result (no error, zero rows).
+      if (error) {
+        console.warn("[admin-read] registrations query error", {
+          status: (error as any).status ?? (error as any).code,
+          message: error.message,
+        });
+      } else if (Array.isArray(data) && data.length === 0) {
+        console.warn("[admin-read] registrations returned 0 rows with no error (possible RLS-empty / stale token)");
+      }
       if (error) throw error;
       return data as Registration[];
     },
@@ -550,6 +560,20 @@ export default function RegistrationsTab() {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {isError && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm">
+            <span className="text-destructive">
+              Could not load registrations. Your session may have refreshed.
+            </span>
+            <Button
+              size="sm"
+              onClick={() => refetch()}
+              className="bg-[#7ab40d] hover:bg-[#7ab40d]/90 text-white font-heading"
+            >
+              Retry
+            </Button>
+          </div>
+        )}
         <AdminDataTable<Registration>
           data={registrations ?? []}
           columns={columns}
