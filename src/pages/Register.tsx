@@ -583,6 +583,13 @@ const ParticipatePage = () => {
           </div>
         </div>
       </section>
+      ) : (
+        <section id="donate" className="section-light scroll-mt-24">
+          <div className="container py-10 md:py-12 max-w-2xl">
+            <ChannelDisabledNotice title="Make a Donation" message={channels.donation.disabled_message} />
+          </div>
+        </section>
+      )}
     </div>
   );
 };
