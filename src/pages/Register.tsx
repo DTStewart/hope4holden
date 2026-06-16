@@ -215,6 +215,7 @@ const ParticipatePage = () => {
         <div className="container py-10 md:py-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {/* Register */}
+            {channels.registration.enabled ? (
             <div id="register" className="order-2 bg-white p-6 border border-[#1A1A1A]/10 rounded scroll-mt-24">
               <div className="flex items-center gap-2 mb-1">
                 <Users className="h-5 w-5 text-primary" />
