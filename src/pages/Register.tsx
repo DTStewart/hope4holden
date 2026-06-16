@@ -378,6 +378,7 @@ const ParticipatePage = () => {
       </section>
 
       {/* ─── Sponsorship ─── */}
+      {channels.sponsorship.enabled ? (
       <section id="sponsor" className="bg-[#F8F6F3] scroll-mt-24">
         <div className="container py-10 md:py-12 animate-fade-in">
           <div className="flex items-center gap-2 mb-1">
