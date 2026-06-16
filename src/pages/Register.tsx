@@ -368,6 +368,11 @@ const ParticipatePage = () => {
                 </Button>
               </div>
             </div>
+            ) : (
+              <div id="dinner" className="order-1 scroll-mt-24">
+                <ChannelDisabledNotice title="Dinner Only" message={channels.dinner.disabled_message} />
+              </div>
+            )}
           </div>
         </div>
       </section>
