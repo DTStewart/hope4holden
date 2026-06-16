@@ -194,6 +194,35 @@ export default function WalkUpDonationDialog({ open, onOpenChange }: Props) {
               Send a thank-you email now {email.trim() ? "" : "(enter an email above)"}
             </Label>
           </div>
+
+          <div className="space-y-2 border-t pt-3">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="wu-display-consent"
+                checked={publicDisplayConsent}
+                onCheckedChange={(v) => {
+                  const checked = v === true;
+                  setPublicDisplayConsent(checked);
+                  if (checked && !publicDisplayName.trim()) setPublicDisplayName(name.trim());
+                }}
+              />
+              <Label htmlFor="wu-display-consent" className="text-sm font-normal cursor-pointer">
+                Display this donor publicly on the supporters ticker
+              </Label>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="wu-display-name" className="text-xs text-muted-foreground">
+                Public display name
+              </Label>
+              <Input
+                id="wu-display-name"
+                value={publicDisplayName}
+                onChange={(e) => setPublicDisplayName(e.target.value)}
+                placeholder={name.trim() || "Donor name"}
+                disabled={!publicDisplayConsent}
+              />
+            </div>
+          </div>
         </div>
 
         <DialogFooter>
