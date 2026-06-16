@@ -34,11 +34,14 @@ export default function WalkUpDonationDialog({ open, onOpenChange }: Props) {
   const [postalCode, setPostalCode] = useState("");
   const [note, setNote] = useState("");
   const [sendThankYou, setSendThankYou] = useState(true);
+  const [publicDisplayConsent, setPublicDisplayConsent] = useState(false);
+  const [publicDisplayName, setPublicDisplayName] = useState("");
 
   const reset = () => {
     setName(""); setEmail(""); setAmount(""); setMethod("cheque");
     setAddress(""); setCity(""); setProvince(""); setPostalCode("");
     setNote(""); setSendThankYou(true);
+    setPublicDisplayConsent(false); setPublicDisplayName("");
   };
 
   const save = useMutation({
@@ -61,6 +64,8 @@ export default function WalkUpDonationDialog({ open, onOpenChange }: Props) {
           donor_postal_code: postalCode.trim() || null,
           method,
           admin_note: note.trim() || null,
+          public_display_consent: publicDisplayConsent,
+          public_display_name: publicDisplayConsent ? (publicDisplayName.trim() || name.trim()) : null,
         })
         .select("id")
         .single();
@@ -188,6 +193,35 @@ export default function WalkUpDonationDialog({ open, onOpenChange }: Props) {
             <Label htmlFor="wu-send" className="text-sm font-normal cursor-pointer">
               Send a thank-you email now {email.trim() ? "" : "(enter an email above)"}
             </Label>
+          </div>
+
+          <div className="space-y-2 border-t pt-3">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="wu-display-consent"
+                checked={publicDisplayConsent}
+                onCheckedChange={(v) => {
+                  const checked = v === true;
+                  setPublicDisplayConsent(checked);
+                  if (checked && !publicDisplayName.trim()) setPublicDisplayName(name.trim());
+                }}
+              />
+              <Label htmlFor="wu-display-consent" className="text-sm font-normal cursor-pointer">
+                Display this donor publicly on the supporters ticker
+              </Label>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="wu-display-name" className="text-xs text-muted-foreground">
+                Public display name
+              </Label>
+              <Input
+                id="wu-display-name"
+                value={publicDisplayName}
+                onChange={(e) => setPublicDisplayName(e.target.value)}
+                placeholder={name.trim() || "Donor name"}
+                disabled={!publicDisplayConsent}
+              />
+            </div>
           </div>
         </div>
 

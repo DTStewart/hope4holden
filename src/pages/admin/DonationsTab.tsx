@@ -6,7 +6,7 @@ import { ensureAdminSession } from "@/lib/ensureSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Mail, Loader2, Plus } from "lucide-react";
+import { Trash2, Mail, Loader2, Plus, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -16,6 +16,7 @@ import {
 import { EditableEmail } from "@/components/admin/EditableEmail";
 import { resendForDonation } from "@/lib/resendOrderConfirmation";
 import WalkUpDonationDialog from "./WalkUpDonationDialog";
+import EditDonationDisplayDialog from "./EditDonationDisplayDialog";
 import { YearFilter } from "@/components/admin/YearFilter";
 import { AdminDataTable } from "@/components/admin/AdminDataTable";
 
@@ -40,6 +41,8 @@ interface Donation {
   wants_recurring: boolean;
   paid: boolean;
   created_at: string;
+  public_display_consent: boolean | null;
+  public_display_name: string | null;
 }
 
 export default function DonationsTab() {
@@ -47,6 +50,7 @@ export default function DonationsTab() {
   const { toast } = useToast();
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [walkUpOpen, setWalkUpOpen] = useState(false);
+  const [editingDisplay, setEditingDisplay] = useState<Donation | null>(null);
   const [yearFilter, setYearFilter] = useState<number | null>(null);
 
   const handleResend = async (d: Donation) => {
@@ -173,6 +177,14 @@ export default function DonationsTab() {
             <Button
               size="sm"
               variant="outline"
+              title="Edit public display"
+              onClick={() => setEditingDisplay(d)}
+            >
+              <Eye className="h-3 w-3" />
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
               title="Resend order confirmation"
               disabled={resendingId === d.id}
               onClick={() => handleResend(d)}
@@ -235,6 +247,10 @@ export default function DonationsTab() {
         />
       </CardContent>
       <WalkUpDonationDialog open={walkUpOpen} onOpenChange={setWalkUpOpen} />
+      <EditDonationDisplayDialog
+        donation={editingDisplay}
+        onOpenChange={(open) => { if (!open) setEditingDisplay(null); }}
+      />
     </Card>
   );
 }
