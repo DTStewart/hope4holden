@@ -497,8 +497,16 @@ const ParticipatePage = () => {
           )}
         </div>
       </section>
+      ) : (
+        <section id="sponsor" className="bg-[#F8F6F3] scroll-mt-24">
+          <div className="container py-10 md:py-12">
+            <ChannelDisabledNotice title="Become a Sponsor" message={channels.sponsorship.disabled_message} />
+          </div>
+        </section>
+      )}
 
       {/* ─── Donation ─── */}
+      {channels.donation.enabled ? (
       <section id="donate" className="section-light scroll-mt-24">
         <div className="container py-10 md:py-12 max-w-2xl animate-fade-in">
           <div className="flex items-center gap-2 mb-1">
