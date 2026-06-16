@@ -69,6 +69,7 @@ const overviewCards = [
 const ParticipatePage = () => {
   const { addItem, setDrawerOpen } = useCart();
   const navigate = useNavigate();
+  const { channels } = useSalesChannels();
 
   const [spotsAvailable, setSpotsAvailable] = useState<number | null>(null);
   const [regStatus, setRegStatus] = useState<RegistrationStatus>("coming_soon");
