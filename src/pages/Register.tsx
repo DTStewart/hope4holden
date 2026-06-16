@@ -311,8 +311,14 @@ const ParticipatePage = () => {
                 </div>
               )}
             </div>
+            ) : (
+              <div id="register" className="order-2 scroll-mt-24">
+                <ChannelDisabledNotice title="Register Your Team" message={channels.registration.disabled_message} />
+              </div>
+            )}
 
             {/* Dinner */}
+            {channels.dinner.enabled ? (
             <div id="dinner" className="order-1 bg-white p-6 border border-[#1A1A1A]/10 rounded scroll-mt-24">
               <div className="flex items-center gap-2 mb-1">
                 <UtensilsCrossed className="h-5 w-5 text-primary" />
