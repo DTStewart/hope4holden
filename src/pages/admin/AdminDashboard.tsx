@@ -28,6 +28,7 @@ import UGCTab from "./UGCTab";
 import PostEventTab from "./PostEventTab";
 import NextYearListTab from "./NextYearListTab";
 import RolesTab from "./RolesTab";
+import SalesChannelsTab from "./SalesChannelsTab";
 import DashboardStats from "./DashboardStats";
 
 export default function AdminDashboard() {
