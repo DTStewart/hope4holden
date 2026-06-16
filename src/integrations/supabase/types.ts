@@ -405,6 +405,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "contact_activities_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_contact_activities_donated_item"
             columns: ["donated_item_id"]
             isOneToOne: false
@@ -1655,7 +1662,15 @@ export type Database = {
           tier_id: string | null
           tier_name: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sponsors_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "sponsorship_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
