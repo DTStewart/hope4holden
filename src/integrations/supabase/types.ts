@@ -957,7 +957,9 @@ export type Database = {
           email: string
           id: string
           name: string | null
+          phone: string | null
           source: string
+          team_name: string | null
         }
         Insert: {
           attended_prior_year?: boolean
@@ -965,7 +967,9 @@ export type Database = {
           email: string
           id?: string
           name?: string | null
+          phone?: string | null
           source?: string
+          team_name?: string | null
         }
         Update: {
           attended_prior_year?: boolean
@@ -973,7 +977,9 @@ export type Database = {
           email?: string
           id?: string
           name?: string | null
+          phone?: string | null
           source?: string
+          team_name?: string | null
         }
         Relationships: []
       }
@@ -1658,7 +1664,9 @@ export type Database = {
           _attended_prior_year?: boolean
           _email: string
           _name?: string
+          _phone?: string
           _source?: string
+          _team_name?: string
         }
         Returns: Json
       }
