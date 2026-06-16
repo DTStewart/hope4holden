@@ -159,6 +159,34 @@ const ParticipatePage = () => {
     toast({ title: "You've been added to the waitlist!" });
   };
 
+  const handleNextYearSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { data, error } = await anonSupabase.rpc("add_next_year_interest", {
+      _email: waitlistForm.email,
+      _name: waitlistForm.name,
+      _phone: waitlistForm.phone || undefined,
+      _team_name: waitlistForm.teamName || undefined,
+      _source: "register_page_2026",
+      _attended_prior_year: false,
+    });
+    if (error) {
+      toast({ title: "Error", description: "Could not submit. Please try again.", variant: "destructive" });
+      return;
+    }
+    const result = data as { ok?: boolean; error?: string } | null;
+    if (result && result.ok === false) {
+      if (result.error === "duplicate" || result.error === "already_exists") {
+        setWaitlistSubmitted(true);
+        toast({ title: "You're already on the list" });
+        return;
+      }
+      toast({ title: "Error", description: result.error || "Could not submit.", variant: "destructive" });
+      return;
+    }
+    setWaitlistSubmitted(true);
+    toast({ title: "You're on the list for next year!" });
+  };
+
   const isSoldOut = (tier: Tier) => tier.max_slots === 0;
   const isInKind = (tier: Tier) => tier.price === 0 && !isSoldOut(tier);
   const getPriceLabel = (tier: Tier) => {
@@ -210,6 +238,92 @@ const ParticipatePage = () => {
         </div>
       </section>
 
+      {/* ─── Donation (moved to top) ─── */}
+      {channels.donation.enabled ? (
+      <section id="donate" className="section-light scroll-mt-24">
+        <div className="container py-10 md:py-12 max-w-2xl animate-fade-in">
+          <div className="flex items-center gap-2 mb-1">
+            <Heart className="h-5 w-5 text-primary" />
+            <h2 className="font-heading font-bold text-lg md:text-xl text-[#1A1A1A]">Make a Donation</h2>
+          </div>
+          <p className="text-[#1A1A1A]/50 text-sm mb-4">Every dollar helps fund research for a cure for Ataxia Telangiectasia.</p>
+
+          <div className="bg-white p-6 border border-[#1A1A1A]/10 rounded space-y-4">
+            <div className="flex items-center gap-3">
+              <img src={atcpLogo} alt="A-T Children's Project logo" className="h-7 w-auto" />
+              <p className="text-xs text-[#1A1A1A]/50">Tax receipts issued by the ATCP.</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[#1A1A1A] font-medium text-sm">Select Amount</Label>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                {suggestedAmounts.map((amt) => (
+                  <button
+                    key={amt}
+                    type="button"
+                    onClick={() => { setSelectedAmount(amt); setIsCustom(false); }}
+                    className={`py-2 rounded text-sm font-heading font-bold transition-colors ${
+                      !isCustom && selectedAmount === amt
+                        ? "bg-primary text-white"
+                        : "bg-[#1A1A1A]/5 text-[#1A1A1A] hover:bg-[#1A1A1A]/10"
+                    }`}
+                  >
+                    ${amt}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setIsCustom(true)}
+                  className={`py-2 rounded text-sm font-heading font-bold transition-colors ${
+                    isCustom ? "bg-primary text-white" : "bg-[#1A1A1A]/5 text-[#1A1A1A] hover:bg-[#1A1A1A]/10"
+                  }`}
+                >
+                  Other
+                </button>
+              </div>
+              {isCustom && (
+                <Input type="number" min="1" step="1" value={customAmount} onChange={(e) => setCustomAmount(e.target.value)} placeholder="Enter amount" className="rounded border-[#1A1A1A]/15 w-40 text-sm" />
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox id="recurring" checked={wantsRecurring} onCheckedChange={(checked) => setWantsRecurring(!!checked)} />
+                <Label htmlFor="recurring" className="text-xs cursor-pointer text-[#1A1A1A]/70">
+                  I'd like to set up a recurring donation
+                </Label>
+              </div>
+              {wantsRecurring && (
+                <p className="text-xs text-[#1A1A1A]/50 bg-[#1A1A1A]/[0.03] border border-[#1A1A1A]/10 rounded px-3 py-2">
+                  After you complete your purchase, we'll provide a link to the{" "}
+                  <a href="https://atcp.org/ways-to-give/support-a-tcp-canada/" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                    ATCP website
+                  </a>{" "}
+                  where you can set up a recurring donation directly with them.
+                </p>
+              )}
+              <div className="flex justify-end">
+                <Button onClick={handleAddDonation} className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-sm" size="default">
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Add to Cart — ${donationAmount || 0}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 -mx-4 sm:mx-0">
+            <DonationTicker />
+          </div>
+        </div>
+      </section>
+      ) : (
+        <section id="donate" className="section-light scroll-mt-24">
+          <div className="container py-10 md:py-12 max-w-2xl">
+            <ChannelDisabledNotice title="Make a Donation" message={channels.donation.disabled_message} />
+          </div>
+        </section>
+      )}
+
       {/* ─── Register + Dinner side by side ─── */}
       <section className="section-light">
         <div className="container py-10 md:py-12">
@@ -230,16 +344,6 @@ const ParticipatePage = () => {
                       Golf Registration is Sold Out
                     </p>
                   </div>
-                  <a
-                    href="#dinner"
-                    className="block bg-[#7ab40d] hover:bg-[#4A7C09] transition-colors rounded p-4 text-center group"
-                  >
-                    <p className="font-heading font-extrabold text-white text-[18px] flex items-center justify-center gap-3">
-                      <span>But you can still join us for dinner!</span>
-                      <ArrowRight className="hidden md:inline-block h-5 w-5 transition-transform group-hover:translate-x-1" />
-                      <ArrowDown className="inline-block md:hidden h-5 w-5 transition-transform group-hover:translate-y-1" />
-                    </p>
-                  </a>
                 </div>
               )}
 
@@ -290,22 +394,25 @@ const ParticipatePage = () => {
                   {waitlistSubmitted ? (
                     <div className="flex items-center gap-2 text-primary text-sm">
                       <CheckCircle className="h-4 w-4" />
-                      <span className="font-medium">You're on the waitlist!</span>
+                      <span className="font-medium">You're on the list for next year. We'll be in touch.</span>
                     </div>
                   ) : (
-                    <form onSubmit={handleWaitlistSubmit} className="space-y-2">
-                      <p className="text-sm text-[#1A1A1A]/70">
-                        Want to golf? Join the waitlist and we'll contact you if a spot opens up.
+                    <form onSubmit={handleNextYearSubmit} className="space-y-2">
+                      <p className="text-sm text-[#1A1A1A]/80 font-medium">
+                        Get added to our list for next year! Our sponsors hear from us first when registration opens.
                       </p>
                       <div className="grid grid-cols-2 gap-2">
                         <Input name="name" placeholder="Full Name" value={waitlistForm.name} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15 text-sm" />
                         <Input name="email" type="email" placeholder="Email" value={waitlistForm.email} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15 text-sm" />
-                        <Input name="phone" type="tel" placeholder="Phone" value={waitlistForm.phone} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15 text-sm" />
-                        <Input name="teamName" placeholder="Team Name" value={waitlistForm.teamName} onChange={handleWaitlistChange} required className="rounded border-[#1A1A1A]/15 text-sm" />
+                        <Input name="phone" type="tel" placeholder="Phone" value={waitlistForm.phone} onChange={handleWaitlistChange} className="rounded border-[#1A1A1A]/15 text-sm" />
+                        <Input name="teamName" placeholder="Team Name" value={waitlistForm.teamName} onChange={handleWaitlistChange} className="rounded border-[#1A1A1A]/15 text-sm" />
                       </div>
                       <Button type="submit" size="sm" className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-xs">
-                        Join Waitlist
+                        Add Me to the List
                       </Button>
+                      <p className="text-[11px] text-[#1A1A1A]/55 leading-snug">
+                        By joining, you agree to hear from Hope 4 Holden about next year's tournament. You can unsubscribe anytime.
+                      </p>
                     </form>
                   )}
                 </div>
@@ -505,91 +612,6 @@ const ParticipatePage = () => {
         </section>
       )}
 
-      {/* ─── Donation ─── */}
-      {channels.donation.enabled ? (
-      <section id="donate" className="section-light scroll-mt-24">
-        <div className="container py-10 md:py-12 max-w-2xl animate-fade-in">
-          <div className="flex items-center gap-2 mb-1">
-            <Heart className="h-5 w-5 text-primary" />
-            <h2 className="font-heading font-bold text-lg md:text-xl text-[#1A1A1A]">Make a Donation</h2>
-          </div>
-          <p className="text-[#1A1A1A]/50 text-sm mb-4">Every dollar helps fund research for a cure for Ataxia Telangiectasia.</p>
-
-          <div className="bg-white p-6 border border-[#1A1A1A]/10 rounded space-y-4">
-            <div className="flex items-center gap-3">
-              <img src={atcpLogo} alt="A-T Children's Project logo" className="h-7 w-auto" />
-              <p className="text-xs text-[#1A1A1A]/50">Tax receipts issued by the ATCP.</p>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-[#1A1A1A] font-medium text-sm">Select Amount</Label>
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                {suggestedAmounts.map((amt) => (
-                  <button
-                    key={amt}
-                    type="button"
-                    onClick={() => { setSelectedAmount(amt); setIsCustom(false); }}
-                    className={`py-2 rounded text-sm font-heading font-bold transition-colors ${
-                      !isCustom && selectedAmount === amt
-                        ? "bg-primary text-white"
-                        : "bg-[#1A1A1A]/5 text-[#1A1A1A] hover:bg-[#1A1A1A]/10"
-                    }`}
-                  >
-                    ${amt}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => setIsCustom(true)}
-                  className={`py-2 rounded text-sm font-heading font-bold transition-colors ${
-                    isCustom ? "bg-primary text-white" : "bg-[#1A1A1A]/5 text-[#1A1A1A] hover:bg-[#1A1A1A]/10"
-                  }`}
-                >
-                  Other
-                </button>
-              </div>
-              {isCustom && (
-                <Input type="number" min="1" step="1" value={customAmount} onChange={(e) => setCustomAmount(e.target.value)} placeholder="Enter amount" className="rounded border-[#1A1A1A]/15 w-40 text-sm" />
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox id="recurring" checked={wantsRecurring} onCheckedChange={(checked) => setWantsRecurring(!!checked)} />
-                <Label htmlFor="recurring" className="text-xs cursor-pointer text-[#1A1A1A]/70">
-                  I'd like to set up a recurring donation
-                </Label>
-              </div>
-              {wantsRecurring && (
-                <p className="text-xs text-[#1A1A1A]/50 bg-[#1A1A1A]/[0.03] border border-[#1A1A1A]/10 rounded px-3 py-2">
-                  After you complete your purchase, we'll provide a link to the{" "}
-                  <a href="https://atcp.org/ways-to-give/support-a-tcp-canada/" target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                    ATCP website
-                  </a>{" "}
-                  where you can set up a recurring donation directly with them.
-                </p>
-              )}
-              <div className="flex justify-end">
-                <Button onClick={handleAddDonation} className="rounded bg-primary text-white hover:bg-[#4A7C09] font-heading font-bold uppercase tracking-wider text-sm" size="default">
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Add to Cart — ${donationAmount || 0}
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 -mx-4 sm:mx-0">
-            <DonationTicker />
-          </div>
-        </div>
-      </section>
-      ) : (
-        <section id="donate" className="section-light scroll-mt-24">
-          <div className="container py-10 md:py-12 max-w-2xl">
-            <ChannelDisabledNotice title="Make a Donation" message={channels.donation.disabled_message} />
-          </div>
-        </section>
-      )}
     </div>
   );
 };
