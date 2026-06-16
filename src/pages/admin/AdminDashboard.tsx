@@ -196,6 +196,10 @@ export default function AdminDashboard() {
               <Shield className="h-4 w-4 mr-1 hidden md:inline" />
               Roles
             </TabsTrigger>
+            <TabsTrigger value="sales-channels" className="text-xs md:text-sm">
+              <ToggleLeft className="h-4 w-4 mr-1 hidden md:inline" />
+              Sales Channels
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="registrations"><RegistrationsTab /></TabsContent>
