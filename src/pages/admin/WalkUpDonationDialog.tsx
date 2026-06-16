@@ -34,11 +34,14 @@ export default function WalkUpDonationDialog({ open, onOpenChange }: Props) {
   const [postalCode, setPostalCode] = useState("");
   const [note, setNote] = useState("");
   const [sendThankYou, setSendThankYou] = useState(true);
+  const [publicDisplayConsent, setPublicDisplayConsent] = useState(false);
+  const [publicDisplayName, setPublicDisplayName] = useState("");
 
   const reset = () => {
     setName(""); setEmail(""); setAmount(""); setMethod("cheque");
     setAddress(""); setCity(""); setProvince(""); setPostalCode("");
     setNote(""); setSendThankYou(true);
+    setPublicDisplayConsent(false); setPublicDisplayName("");
   };
 
   const save = useMutation({
@@ -61,6 +64,8 @@ export default function WalkUpDonationDialog({ open, onOpenChange }: Props) {
           donor_postal_code: postalCode.trim() || null,
           method,
           admin_note: note.trim() || null,
+          public_display_consent: publicDisplayConsent,
+          public_display_name: publicDisplayConsent ? (publicDisplayName.trim() || name.trim()) : null,
         })
         .select("id")
         .single();
