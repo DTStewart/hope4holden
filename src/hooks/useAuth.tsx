@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from "react";
+import { useState, useEffect, createContext, useContext, ReactNode, useCallback, useMemo } from "react";
 import { adminSupabase } from "@/integrations/supabase/adminClient";
 import type { User, Session } from "@supabase/supabase-js";
 
@@ -163,21 +163,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, [resolveSession]);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await adminSupabase.auth.signInWithPassword({ email, password });
     return { error: error as Error | null };
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await adminSupabase.auth.signOut();
     setUser(null);
     setSession(null);
     setIsAdmin(false);
     window.location.href = "/admin/login";
-  };
+  }, []);
+
+  const value = useMemo(
+    () => ({ user, session, isAdmin, loading, signIn, signOut }),
+    [user, session, isAdmin, loading, signIn, signOut]
+  );
 
   return (
-    <AuthContext.Provider value={{ user, session, isAdmin, loading, signIn, signOut }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
