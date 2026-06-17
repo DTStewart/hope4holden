@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Bidders can read their own row" ON public.auction_bidders;
