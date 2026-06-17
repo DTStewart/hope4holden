@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
 import { adminSupabase } from "@/integrations/supabase/adminClient";
@@ -25,13 +25,10 @@ function TiersCard() {
   const { data: tiers, isLoading } = useQuery({
     queryKey: ["admin-tiers"],
     queryFn: async () => {
-      const { data: sessData } = await adminSupabase.auth.getSession();
-      console.log("[admin-read sponsors] tiers (TiersCard) before", { expires_at: sessData?.session?.expires_at ?? null });
       const { data, error } = await adminSupabase
         .from("sponsorship_tiers")
         .select("*")
         .order("sort_order", { ascending: true });
-      console.log("[admin-read sponsors] tiers (TiersCard) after", { count: data?.length ?? 0, errorIsNull: error == null });
       if (error) throw error;
       return data;
     },
@@ -41,10 +38,7 @@ function TiersCard() {
   const { data: sponsors } = useQuery({
     queryKey: ["admin-sponsors-tier-counts"],
     queryFn: async () => {
-      const { data: sessData } = await adminSupabase.auth.getSession();
-      console.log("[admin-read sponsors] sponsor tier-counts before", { expires_at: sessData?.session?.expires_at ?? null });
       const { data, error } = await adminSupabase.from("sponsors").select("tier_id, approved");
-      console.log("[admin-read sponsors] sponsor tier-counts after", { count: data?.length ?? 0, errorIsNull: error == null });
       if (error) throw error;
       return data;
     },
@@ -162,14 +156,11 @@ function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o:
   const { data: tiers } = useQuery({
     queryKey: ["admin-tiers-all"],
     queryFn: async () => {
-      const { data: sessData } = await adminSupabase.auth.getSession();
-      console.log("[admin-read sponsors] tiers (InviteDialog) before", { expires_at: sessData?.session?.expires_at ?? null });
       const { data, error } = await adminSupabase
         .from("sponsorship_tiers")
         .select("*")
         .eq("active", true)
         .order("sort_order", { ascending: true });
-      console.log("[admin-read sponsors] tiers (InviteDialog) after", { count: data?.length ?? 0, errorIsNull: error == null });
       if (error) throw error;
       return data;
     },
@@ -303,14 +294,11 @@ function OfflineSponsorDialog({ open, onOpenChange }: { open: boolean; onOpenCha
   const { data: tiers } = useQuery({
     queryKey: ["admin-tiers-all"],
     queryFn: async () => {
-      const { data: sessData } = await adminSupabase.auth.getSession();
-      console.log("[admin-read sponsors] tiers (OfflineSponsorDialog) before", { expires_at: sessData?.session?.expires_at ?? null });
       const { data, error } = await adminSupabase
         .from("sponsorship_tiers")
         .select("*")
         .eq("active", true)
         .order("sort_order", { ascending: true });
-      console.log("[admin-read sponsors] tiers (OfflineSponsorDialog) after", { count: data?.length ?? 0, errorIsNull: error == null });
       if (error) throw error;
       return data;
     },
@@ -565,25 +553,15 @@ export default function SponsorsTab() {
     }
   };
 
-  useEffect(() => {
-    console.log("[SponsorsTab] Mounted");
-    return () => console.log("[SponsorsTab] Unmounted");
-  }, []);
-
   const { data: sponsors, isLoading } = useQuery({
     queryKey: ["admin-sponsors", yearFilter],
     enabled: yearFilter != null,
     queryFn: async () => {
-      console.log("[SponsorsTab] Fetching sponsors for year", yearFilter);
-      const { data: sessData } = await adminSupabase.auth.getSession();
-      console.log("[admin-read sponsors] sponsors read before", { year: yearFilter, expires_at: sessData?.session?.expires_at ?? null });
       const { data, error } = await adminSupabase
         .from("sponsors")
         .select("id, business_name, contact_name, contact_email, contact_phone, facebook_handle, instagram_handle, tier_id, tier_name, amount, paid, approved, brand_assets, logo_url, logo_upload_token, stripe_session_id, created_at, updated_at")
         .eq("tournament_year", yearFilter as number)
         .order("created_at", { ascending: false });
-      console.log("[admin-read sponsors] sponsors read after", { count: data?.length ?? 0, errorIsNull: error == null });
-      console.log("[SponsorsTab] sponsors query result:", { count: data?.length, error, firstRow: data?.[0] });
       if (error) throw error;
       return data;
     },

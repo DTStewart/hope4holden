@@ -59,7 +59,6 @@ export default function AdminAuthCallback() {
       // Session persisted. Navigate to /admin with replace so the #access_token
       // fragment is stripped THROUGH React Router (location stays in sync) and
       // the now-authenticated admin lands on the dashboard.
-      console.log("[auth-callback] setSession success");
       setStatus("redirecting");
       navigate("/admin", { replace: true });
     };
@@ -68,17 +67,15 @@ export default function AdminAuthCallback() {
     // though the competing call already established the session. Never show a
     // failure until getSession confirms there is genuinely no session.
     const failUnlessSession = async (description: string, err: unknown) => {
-      console.warn("[auth-callback] setSession rejected — probing for an existing session", err);
       try {
         const { data } = await adminSupabase.auth.getSession();
         if (data.session) {
-          console.log("[auth-callback] session exists despite rejection — treating as success");
           succeed();
           return;
         }
         console.error("[auth-callback] no session after rejection — genuine failure", err);
-      } catch (probeErr) {
-        console.error("[auth-callback] getSession probe failed", probeErr);
+      } catch {
+        // ignore probe error — fall through to fail()
       }
       fail(description);
     };
@@ -99,37 +96,21 @@ export default function AdminAuthCallback() {
       const oauthError = params.get("error");
       const oauthErrorDescription = params.get("error_description");
 
-      console.log("[auth-callback] mount", {
-        hash: window.location.hash,
-        hasAccessToken: Boolean(accessToken),
-        hasRefreshToken: Boolean(refreshToken),
-        oauthError,
-      });
-
       // Broker returned an OAuth error in the fragment instead of tokens.
       if (oauthError) {
         const message = oauthErrorDescription || oauthError;
-        console.error("[auth-callback] branch: oauth error in hash", {
-          oauthError,
-          oauthErrorDescription,
-        });
         fail(message);
         return;
       }
 
       // No tokens in the fragment → nothing to finalize. Back to login, never loop.
       if (!accessToken || !refreshToken) {
-        console.error("[auth-callback] branch: no tokens in hash", {
-          hasAccessToken: Boolean(accessToken),
-          hasRefreshToken: Boolean(refreshToken),
-        });
         fail("No sign-in token was returned. Please try again.");
         return;
       }
 
       try {
         // Write the session to the h4h-admin-auth store that useAuth reads.
-        console.log("[auth-callback] branch: setSession from hash tokens");
         const { error } = await adminSupabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,

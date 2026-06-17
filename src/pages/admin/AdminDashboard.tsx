@@ -32,7 +32,6 @@ import SalesChannelsTab from "./SalesChannelsTab";
 import DashboardStats from "./DashboardStats";
 
 export default function AdminDashboard() {
-  console.count('[probe] AdminDashboard render'); // TEMP diagnostic — remove later
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();

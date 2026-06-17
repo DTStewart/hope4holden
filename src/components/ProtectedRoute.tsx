@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  console.count('[probe] ProtectedRoute render'); // TEMP diagnostic — remove later
   const { user, isAdmin, loading } = useAuth();
 
   // Bounded auth resolution. useAuth was deliberately narrowed so it never
