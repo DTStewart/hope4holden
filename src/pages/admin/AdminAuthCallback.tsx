@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { adminLovableAuth } from "@/lib/adminLovableAuth";
+import { adminSupabase } from "@/integrations/supabase/adminClient";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -40,52 +40,70 @@ export default function AdminAuthCallback() {
     };
 
     (async () => {
-      const hasToken = window.location.hash.includes("access_token");
+      // The Lovable OAuth broker returns tokens in the URL fragment
+      // (#access_token=...&refresh_token=...). The cloud-auth SDK never consumes
+      // this return-trip fragment — it only ever STARTS a new OAuth attempt — so
+      // we finalize the session here by parsing the fragment ourselves and
+      // handing the tokens straight to the admin Supabase client.
+      const rawHash = window.location.hash.startsWith("#")
+        ? window.location.hash.slice(1)
+        : window.location.hash;
+      const params = new URLSearchParams(rawHash);
+
+      const accessToken = params.get("access_token");
+      const refreshToken = params.get("refresh_token");
+      const oauthError = params.get("error");
+      const oauthErrorDescription = params.get("error_description");
+
       console.log("[auth-callback] mount", {
         hash: window.location.hash,
-        hasAccessToken: hasToken,
+        hasAccessToken: Boolean(accessToken),
+        hasRefreshToken: Boolean(refreshToken),
+        oauthError,
       });
 
-      // No token in the URL → nothing to finalize. Back to login, never loop.
-      if (!hasToken) {
-        console.error("[auth-callback] finalize failed: no access_token in hash");
+      // Broker returned an OAuth error in the fragment instead of tokens.
+      if (oauthError) {
+        const message = oauthErrorDescription || oauthError;
+        console.error("[auth-callback] branch: oauth error in hash", {
+          oauthError,
+          oauthErrorDescription,
+        });
+        fail(message);
+        return;
+      }
+
+      // No tokens in the fragment → nothing to finalize. Back to login, never loop.
+      if (!accessToken || !refreshToken) {
+        console.error("[auth-callback] branch: no tokens in hash", {
+          hasAccessToken: Boolean(accessToken),
+          hasRefreshToken: Boolean(refreshToken),
+        });
         fail("No sign-in token was returned. Please try again.");
         return;
       }
 
       try {
-        // Same wrapper the sign-in button uses. On the return trip (fragment
-        // present) its non-redirect branch calls adminSupabase.auth.setSession,
-        // writing the session to the h4h-admin-auth store that useAuth reads.
-        console.log("[auth-callback] finalize path: adminLovableAuth.signInWithOAuth (re-call)");
-        const result = await adminLovableAuth.signInWithOAuth("google", {
-          redirect_uri: window.location.origin + "/admin/auth/callback",
-        });
-        console.log("[auth-callback] signInWithOAuth result", {
-          hasTokens: Boolean(result.tokens),
-          redirected: result.redirected,
-          error: result.error,
+        // Write the session to the h4h-admin-auth store that useAuth reads.
+        console.log("[auth-callback] branch: setSession from hash tokens");
+        const { error } = await adminSupabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
         });
         if (cancelled) return;
-        if (result.error) {
-          console.error("[auth-callback] finalize failed: result.error", result.error);
-          fail(String(result.error));
-          return;
-        }
-        if (result.redirected) {
-          // Not expected on the return trip; bail rather than risk a redirect loop.
-          console.error("[auth-callback] finalize failed: SDK started a new redirect (result.redirected=true)");
-          fail("Sign-in could not be completed. Please try again.");
+        if (error) {
+          console.error("[auth-callback] setSession failed", error);
+          fail(error.message);
           return;
         }
         // Session persisted. Navigate to /admin with replace so the #access_token
         // fragment is stripped THROUGH React Router (location stays in sync) and
         // the now-authenticated admin lands on the dashboard.
-        console.log("[auth-callback] finalize success");
+        console.log("[auth-callback] setSession success");
         setStatus("redirecting");
         navigate("/admin", { replace: true });
       } catch (e) {
-        console.error("[auth-callback] finalize failed", e);
+        console.error("[auth-callback] setSession failed", e);
         fail(e instanceof Error ? e.message : String(e));
       }
     })();
