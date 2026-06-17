@@ -42,7 +42,9 @@ import Terms from "./pages/Terms";
 import ExtraGolfer from "./pages/ExtraGolfer";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { refetchOnWindowFocus: false, staleTime: 30000 } },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

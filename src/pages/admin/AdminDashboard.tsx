@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -36,6 +36,7 @@ export default function AdminDashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("registrations");
 
   // Refresh the admin session whenever this tab regains focus, so the first
   // query after refocus runs with a live token instead of blank rows.
@@ -119,7 +120,7 @@ export default function AdminDashboard() {
           onRefetch={() => refetchProbe()}
         />
         <DashboardStats />
-        <Tabs defaultValue="registrations" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} activationMode="manual" className="space-y-6">
           <TabsList className="flex flex-wrap h-auto gap-1 w-full justify-start">
             <TabsTrigger value="registrations" className="text-xs md:text-sm">
               <Users className="h-4 w-4 mr-1 hidden md:inline" />
