@@ -40,8 +40,15 @@ export default function AdminAuthCallback() {
     };
 
     (async () => {
+      const hasToken = window.location.hash.includes("access_token");
+      console.log("[auth-callback] mount", {
+        hash: window.location.hash,
+        hasAccessToken: hasToken,
+      });
+
       // No token in the URL → nothing to finalize. Back to login, never loop.
-      if (!window.location.hash.includes("access_token")) {
+      if (!hasToken) {
+        console.error("[auth-callback] finalize failed: no access_token in hash");
         fail("No sign-in token was returned. Please try again.");
         return;
       }
@@ -50,25 +57,35 @@ export default function AdminAuthCallback() {
         // Same wrapper the sign-in button uses. On the return trip (fragment
         // present) its non-redirect branch calls adminSupabase.auth.setSession,
         // writing the session to the h4h-admin-auth store that useAuth reads.
+        console.log("[auth-callback] finalize path: adminLovableAuth.signInWithOAuth (re-call)");
         const result = await adminLovableAuth.signInWithOAuth("google", {
           redirect_uri: window.location.origin + "/admin/auth/callback",
         });
+        console.log("[auth-callback] signInWithOAuth result", {
+          hasTokens: Boolean(result.tokens),
+          redirected: result.redirected,
+          error: result.error,
+        });
         if (cancelled) return;
         if (result.error) {
+          console.error("[auth-callback] finalize failed: result.error", result.error);
           fail(String(result.error));
           return;
         }
         if (result.redirected) {
           // Not expected on the return trip; bail rather than risk a redirect loop.
+          console.error("[auth-callback] finalize failed: SDK started a new redirect (result.redirected=true)");
           fail("Sign-in could not be completed. Please try again.");
           return;
         }
         // Session persisted. Navigate to /admin with replace so the #access_token
         // fragment is stripped THROUGH React Router (location stays in sync) and
         // the now-authenticated admin lands on the dashboard.
+        console.log("[auth-callback] finalize success");
         setStatus("redirecting");
         navigate("/admin", { replace: true });
       } catch (e) {
+        console.error("[auth-callback] finalize failed", e);
         fail(e instanceof Error ? e.message : String(e));
       }
     })();
