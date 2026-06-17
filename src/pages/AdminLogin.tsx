@@ -212,7 +212,7 @@ export default function AdminLogin() {
             type="button"
             onClick={async () => {
               const result = await adminLovableAuth.signInWithOAuth("google", {
-                redirect_uri: window.location.origin + "/admin",
+                redirect_uri: window.location.origin + "/admin/auth/callback",
               });
               if (result.error) {
                 toast({

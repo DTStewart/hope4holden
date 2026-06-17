@@ -35,6 +35,7 @@ import DayOf from "./pages/DayOf";
 import LiveDashboard from "./pages/LiveDashboard";
 import SaveTheDate from "./pages/SaveTheDate";
 import AdminMobile from "./pages/admin/AdminMobile";
+import AdminAuthCallback from "./pages/admin/AdminAuthCallback";
 import TeamManage from "./pages/TeamManage";
 import TeamPublic from "./pages/TeamPublic";
 import Privacy from "./pages/Privacy";
@@ -82,6 +83,11 @@ const App = () => (
                 <Route path="/terms" element={<Terms />} />
               </Route>
               <Route path="/admin/login" element={<AdminLogin />} />
+              {/* Public OAuth return target — finalizes the session, then redirects.
+                  Intentionally NOT under ProtectedRoute (so it isn't bounced before
+                  the session is set) and NOT /admin/login (which PasswordRecoveryRedirect
+                  would treat as a recovery path when the hash has an access_token). */}
+              <Route path="/admin/auth/callback" element={<AdminAuthCallback />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route
                 path="/admin"
