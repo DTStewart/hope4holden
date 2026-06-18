@@ -53,6 +53,7 @@ export default function Auction() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [currentBids, setCurrentBids] = useState<Record<string, { amount: number; bidderId: string }>>({});
 
   const { session, profile, needsSetup, refresh: refreshBidder } = useBidderSession();
@@ -70,42 +71,75 @@ export default function Auction() {
     }
   }, [needsSetup]);
 
-  // Initial fetch of settings + items + seed current bids
+  // Initial fetch of settings + items + seed current bids.
+  //
+  // Hardened so a stalled or throwing auth-enabled client can never leave the
+  // page spinning forever. The bidder Supabase client attaches an access token
+  // by calling getSession() under a Navigator Lock; if that path stalls, the
+  // reads never settle. We therefore: (a) clear loading in finally so it always
+  // runs, (b) surface a visible error state instead of swallowing failures, and
+  // (c) race the reads against an 8s timeout that matches ProtectedRoute's
+  // /admin escape, so we stop waiting and render rather than hang.
   useEffect(() => {
     let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     (async () => {
-      const [settingsRes, itemsRes, bidsRes] = await Promise.all([
-        bidderSupabase
-          .from("auction_settings")
-          .select("is_live, bidding_opens_at, bidding_closes_at, default_bid_increment")
-          .eq("id", 1)
-          .single(),
-        bidderSupabase
-          .from("auction_items")
-          .select("id, title, description, donated_by, images, starting_bid, bid_increment, market_value, pickup_option, status, sort_order, ends_at")
-          .in("status", ["open", "closed"])
-          .order("sort_order", { ascending: true }),
-        bidderSupabase
-          .from("auction_bids")
-          .select("item_id, amount, bidder_id")
-          .order("amount", { ascending: false }),
-      ]);
+      try {
+        const reads = Promise.all([
+          bidderSupabase
+            .from("auction_settings")
+            .select("is_live, bidding_opens_at, bidding_closes_at, default_bid_increment")
+            .eq("id", 1)
+            .single(),
+          bidderSupabase
+            .from("auction_items")
+            .select("id, title, description, donated_by, images, starting_bid, bid_increment, market_value, pickup_option, status, sort_order, ends_at")
+            .in("status", ["open", "closed"])
+            .order("sort_order", { ascending: true }),
+          bidderSupabase
+            .from("auction_bids")
+            .select("item_id, amount, bidder_id")
+            .order("amount", { ascending: false }),
+        ]);
 
-      if (cancelled) return;
-      if (settingsRes.data) setSettings(settingsRes.data as Settings);
-      if (itemsRes.data) setItems(itemsRes.data as unknown as Item[]);
-      if (bidsRes.data) {
-        const map: Record<string, { amount: number; bidderId: string }> = {};
-        for (const b of bidsRes.data as BidRow[]) {
-          if (!map[b.item_id] || b.amount > map[b.item_id].amount) {
-            map[b.item_id] = { amount: b.amount, bidderId: b.bidder_id };
+        const timeout = new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(
+            () => reject(new Error("Auction data load timed out")),
+            8000
+          );
+        });
+
+        const [settingsRes, itemsRes, bidsRes] = await Promise.race([reads, timeout]);
+
+        if (cancelled) return;
+        if (settingsRes.data) setSettings(settingsRes.data as Settings);
+        if (itemsRes.data) setItems(itemsRes.data as unknown as Item[]);
+        if (bidsRes.data) {
+          const map: Record<string, { amount: number; bidderId: string }> = {};
+          for (const b of bidsRes.data as BidRow[]) {
+            if (!map[b.item_id] || b.amount > map[b.item_id].amount) {
+              map[b.item_id] = { amount: b.amount, bidderId: b.bidder_id };
+            }
           }
+          setCurrentBids(map);
         }
-        setCurrentBids(map);
+      } catch (err) {
+        // Timed out or the auth-enabled client threw/rejected. Show an error
+        // rather than an endless spinner.
+        if (!cancelled) {
+          console.error("[auction] initial load failed", err);
+          setLoadError(true);
+        }
+      } finally {
+        // Always stop spinning, whatever happened above.
+        if (timeoutId) clearTimeout(timeoutId);
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, []);
 
   // Keep latest profile / items available to the realtime handler without
@@ -185,6 +219,25 @@ export default function Auction() {
       <div className="section-light">
         <div className="container py-20 md:py-28 text-center">
           <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
+        </div>
+      </div>
+    );
+  }
+
+  // Reads failed or timed out. Show an explicit error with a retry instead of
+  // an endless spinner, and never mistake a load failure for "not live yet".
+  if (loadError) {
+    return (
+      <div className="section-light">
+        <div className="container py-20 md:py-28 max-w-md mx-auto text-center space-y-4">
+          <Gavel className="h-10 w-10 text-primary mx-auto" />
+          <h1 className="font-heading font-extrabold text-2xl text-foreground">
+            Couldn't load the auction
+          </h1>
+          <p className="text-foreground/70">
+            We couldn't reach the auction just now. Please check your connection and try again.
+          </p>
+          <Button onClick={() => window.location.reload()}>Try again</Button>
         </div>
       </div>
     );
