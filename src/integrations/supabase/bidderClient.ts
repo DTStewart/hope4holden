@@ -7,7 +7,7 @@ import type { Database } from "./types";
  * GoTrue lock contention.
  *
  * Anonymous bidder traffic uses this client too; Supabase Auth just reports
- * no session for them. Sign-in is OAuth-based (Google, Microsoft, Apple).
+ * no session for them. Sign-in is OAuth (Google, Microsoft, Apple) or email magic-link / OTP code.
  */
 export const bidderSupabase = createClient<Database>(
   import.meta.env.VITE_SUPABASE_URL,

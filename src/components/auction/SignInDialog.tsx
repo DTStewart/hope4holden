@@ -25,6 +25,8 @@ export function SignInDialog({ open, onOpenChange }: Props) {
   const [email, setEmail] = useState("");
   const [sendingMagicLink, setSendingMagicLink] = useState(false);
   const [magicSent, setMagicSent] = useState(false);
+  const [code, setCode] = useState("");
+  const [verifyingCode, setVerifyingCode] = useState(false);
   const [signingInWith, setSigningInWith] = useState<"google" | "microsoft" | "apple" | null>(null);
 
   const redirectTo = `${window.location.origin}/auction`;
@@ -72,6 +74,39 @@ export function SignInDialog({ open, onOpenChange }: Props) {
     }
   };
 
+  const verifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = code.trim();
+    // Guard before any network call. A stray space or short paste would
+    // otherwise come back as a confusing "token expired or invalid" error.
+    if (!/^\d{6}$/.test(trimmed)) {
+      toast({ title: "Enter the 6-digit code from your email" });
+      return;
+    }
+    setVerifyingCode(true);
+    try {
+      // type "email" is correct for the 6-digit code that signInWithOtp emails
+      // in supabase-js v2 (not "magiclink", which is for the link's token_hash).
+      // verifyOtp is a direct token exchange, so it needs no device-local PKCE
+      // verifier and works on any device or browser.
+      const { error } = await bidderSupabase.auth.verifyOtp({
+        email,
+        token: trimmed,
+        type: "email",
+      });
+      if (error) throw error;
+      // Session is now set on bidderSupabase. useBidderSession's
+      // onAuthStateChange picks up SIGNED_IN for both new and returning bidders.
+      // Close explicitly: Auction's auto-close only fires on needsSetup, so a
+      // returning bidder (needsSetup false) would otherwise be stuck here.
+      onOpenChange(false);
+    } catch (err: any) {
+      toast({ title: "Couldn't verify code", description: err?.message, variant: "destructive" });
+    } finally {
+      setVerifyingCode(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
@@ -83,12 +118,34 @@ export function SignInDialog({ open, onOpenChange }: Props) {
         </DialogHeader>
 
         {magicSent ? (
-          <div className="text-center py-6 space-y-3">
-            <CheckCircle className="h-12 w-12 text-primary mx-auto" />
-            <p className="font-heading font-bold">Check your email</p>
-            <p className="text-sm text-muted-foreground">
-              We sent a sign-in link to <strong>{email}</strong>. Click it from any device to continue.
-            </p>
+          <div className="py-4 space-y-4">
+            <div className="text-center space-y-2">
+              <CheckCircle className="h-12 w-12 text-primary mx-auto" />
+              <p className="font-heading font-bold">Check your email</p>
+              <p className="text-sm text-muted-foreground">
+                We sent a sign-in link and a 6-digit code to <strong>{email}</strong>.
+                On this device you can click the link, or enter the code below to
+                sign in from any device.
+              </p>
+            </div>
+
+            <form onSubmit={verifyCode} className="space-y-2">
+              <Label htmlFor="signin-code" className="text-sm">Enter the 6-digit code</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="signin-code"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  placeholder="123456"
+                />
+                <Button type="submit" disabled={verifyingCode || code.length === 0}>
+                  {verifyingCode ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify code"}
+                </Button>
+              </div>
+            </form>
           </div>
         ) : (
           <div className="space-y-4">
@@ -160,7 +217,7 @@ export function SignInDialog({ open, onOpenChange }: Props) {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Click the link in the email — it signs you in on any device.
+                We'll email you a link and a 6-digit code.
               </p>
             </form>
 
