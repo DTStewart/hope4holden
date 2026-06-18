@@ -60,14 +60,34 @@ export function useBidderSession() {
 
   useEffect(() => {
     refresh();
-    const { data: listener } = bidderSupabase.auth.onAuthStateChange(async (_event, session) => {
-      const profile = await fetchProfile(session);
-      setState({
-        session,
-        profile,
-        loading: false,
-        needsSetup: !!session && !profile,
-      });
+    const { data: listener } = bidderSupabase.auth.onAuthStateChange((_event, session) => {
+      // Defer client work out of this callback. GoTrue dispatches auth events
+      // while holding the Navigator Lock (lock:h4h-bidder-auth); fetchProfile
+      // calls rpc -> getSession on the same client, which re-enters that lock
+      // and deadlocks it if run synchronously here, orphaning the lock so every
+      // later getSession() stalls. setTimeout lets the lock release first.
+      setTimeout(async () => {
+        try {
+          const profile = await fetchProfile(session);
+          setState({
+            session,
+            profile,
+            loading: false,
+            needsSetup: !!session && !profile,
+          });
+        } catch (err) {
+          // fetchProfile already swallows its own errors, but guard here too so
+          // loading:true is never reachable if anything throws. Sane fallback:
+          // keep the session, drop the profile, stop loading.
+          console.warn("[useBidderSession] session change handling failed:", err);
+          setState({
+            session,
+            profile: null,
+            loading: false,
+            needsSetup: false,
+          });
+        }
+      }, 0);
     });
     return () => {
       listener?.subscription.unsubscribe();

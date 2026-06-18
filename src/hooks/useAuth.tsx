@@ -126,25 +126,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = adminSupabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
         if (_event === "PASSWORD_RECOVERY" && window.location.pathname !== "/reset-password") {
           window.location.replace("/reset-password");
           return;
         }
 
-        try {
-          await resolveSession(session);
-        } catch (err) {
-          if (isAuthError(err)) {
-            setSession(null);
-            setUser(null);
-            setIsAdmin(false);
-          } else {
-            console.warn("[useAuth] transient error resolving session:", err);
+        // Defer all client work out of this callback. GoTrue dispatches auth
+        // events while holding the Navigator Lock (lock:h4h-admin-auth);
+        // resolveSession calls getSession/refreshSession/rpc on the same client,
+        // and running them synchronously here re-enters that lock and deadlocks
+        // it, orphaning the lock so every later getSession() stalls. setTimeout
+        // lets the callback return and the lock release before this runs.
+        setTimeout(async () => {
+          try {
+            await resolveSession(session);
+          } catch (err) {
+            if (isAuthError(err)) {
+              setSession(null);
+              setUser(null);
+              setIsAdmin(false);
+            } else {
+              console.warn("[useAuth] transient error resolving session:", err);
+            }
+          } finally {
+            setLoading(false);
           }
-        } finally {
-          setLoading(false);
-        }
+        }, 0);
       }
     );
 
