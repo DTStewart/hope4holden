@@ -36,7 +36,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "hope4holden"
+const SITE_NAME = "Hope 4 Holden"
 const SENDER_DOMAIN = "notify.hope4holden.com"
 const ROOT_DOMAIN = "hope4holden.com"
 const FROM_DOMAIN = "notify.hope4holden.com" // Domain shown in From address (may be root or sender subdomain)
@@ -58,6 +58,7 @@ const SAMPLE_DATA: Record<string, object> = {
   magiclink: {
     siteName: SITE_NAME,
     confirmationUrl: SAMPLE_PROJECT_URL,
+    token: '123456',
   },
   recovery: {
     siteName: SITE_NAME,
@@ -76,6 +77,7 @@ const SAMPLE_DATA: Record<string, object> = {
     confirmationUrl: SAMPLE_PROJECT_URL,
   },
   reauthentication: {
+    siteName: SITE_NAME,
     token: '123456',
   },
 }

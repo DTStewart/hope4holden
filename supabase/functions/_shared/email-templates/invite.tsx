@@ -9,6 +9,7 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Link,
   Preview,
   Text,
@@ -30,21 +31,25 @@ export const InviteEmail = ({
     <Preview>You've been invited to join {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>You've been invited</Heading>
+        <Img
+          src="https://rhksslzpdzpyrixkfmhb.supabase.co/storage/v1/object/public/email-assets/h4h-logo.png"
+          alt="Hope 4 Holden logo"
+          width="200"
+          style={logo}
+        />
+        <Heading style={h1}>You're invited</Heading>
         <Text style={text}>
           You've been invited to join{' '}
           <Link href={siteUrl} style={link}>
             <strong>{siteName}</strong>
           </Link>
-          . Click the button below to accept the invitation and create your
-          account.
+          . Click the button below to accept the invitation and create your account.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Accept Invitation
+          Accept invitation
         </Button>
         <Text style={footer}>
-          If you weren't expecting this invitation, you can safely ignore this
-          email.
+          If you weren't expecting this invitation, you can safely ignore this email.
         </Text>
       </Container>
     </Body>
@@ -53,26 +58,33 @@ export const InviteEmail = ({
 
 export default InviteEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
+const main = {
+  backgroundColor: '#ffffff',
+  fontFamily: "'Open Sans', Arial, sans-serif",
+}
 const container = { padding: '20px 25px' }
+const logo = { margin: '0 0 24px', maxWidth: '200px' }
 const h1 = {
-  fontSize: '22px',
+  fontFamily: "'Montserrat', Arial, sans-serif",
+  fontSize: '24px',
   fontWeight: 'bold' as const,
-  color: '#000000',
+  color: '#1a1a1a',
   margin: '0 0 20px',
 }
 const text = {
   fontSize: '14px',
-  color: '#55575d',
+  color: '#737373',
   lineHeight: '1.5',
   margin: '0 0 25px',
 }
-const link = { color: 'inherit', textDecoration: 'underline' }
+const link = { color: '#7ab40d', textDecoration: 'underline' }
 const button = {
-  backgroundColor: '#000000',
+  backgroundColor: '#7ab40d',
   color: '#ffffff',
+  fontFamily: "'Montserrat', Arial, sans-serif",
   fontSize: '14px',
-  borderRadius: '8px',
+  fontWeight: 'bold' as const,
+  borderRadius: '4px',
   padding: '12px 20px',
   textDecoration: 'none',
 }
