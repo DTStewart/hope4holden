@@ -37,9 +37,52 @@ export function PlaceBidDialog({
 }: Props) {
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // Authoritative current high bid, fetched when the dialog opens, so the bidder
+  // always sees the true current bid / minimum even when realtime hasn't
+  // delivered a recent bid to the page. undefined = not fetched yet (or fetch
+  // failed) → fall back to the seeded `currentBid` prop; null = fetched and the
+  // item genuinely has zero bids; number = the current high bid.
+  const [liveBid, setLiveBid] = useState<number | null | undefined>(undefined);
+  const [bidLoading, setBidLoading] = useState(false);
 
   const increment = item?.bid_increment ?? defaultIncrement ?? 5;
-  const minNext = item ? (currentBid != null ? currentBid + increment : item.starting_bid) : 0;
+  const effectiveBid = liveBid !== undefined ? liveBid : currentBid;
+  const minNext = item ? (effectiveBid != null ? effectiveBid + increment : item.starting_bid) : 0;
+
+  // On open, fetch the item's current high bid directly so we never show a
+  // stale "No bids yet". Overrides the possibly-stale currentBids prop; on
+  // failure we fall back to that prop rather than blocking the dialog.
+  useEffect(() => {
+    if (!open || !item) {
+      setLiveBid(undefined);
+      setBidLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setBidLoading(true);
+    (async () => {
+      try {
+        const { data, error } = await bidderSupabase
+          .from("auction_bids")
+          .select("amount")
+          .eq("item_id", item.id)
+          .order("amount", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (cancelled) return;
+        if (error) throw error;
+        setLiveBid(data?.amount ?? null);
+      } catch (err) {
+        if (!cancelled) {
+          console.warn("[place-bid] current-bid fetch failed, using seeded value:", err);
+          setLiveBid(undefined);
+        }
+      } finally {
+        if (!cancelled) setBidLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [open, item]);
 
   useEffect(() => {
     if (open && item) setAmount(String(minNext));
@@ -116,7 +159,13 @@ export function PlaceBidDialog({
             <div className="bg-muted/40 rounded p-3">
               <div className="text-xs text-muted-foreground uppercase tracking-wider">Current bid</div>
               <div className="font-heading font-bold text-lg">
-                {currentBid != null ? `$${currentBid.toLocaleString()}` : "No bids yet"}
+                {bidLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : effectiveBid != null ? (
+                  `$${effectiveBid.toLocaleString()}`
+                ) : (
+                  "No bids yet"
+                )}
               </div>
             </div>
             <div className="bg-muted/40 rounded p-3">
