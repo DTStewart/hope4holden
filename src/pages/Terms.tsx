@@ -7,7 +7,7 @@ const TermsPage = () => {
           <h1 className="font-heading font-extrabold text-4xl md:text-5xl text-white leading-[0.95]">
             Terms of Service
           </h1>
-          <p className="text-white/60 mt-3 text-sm">Last updated: April 21, 2027</p>
+          <p className="text-white/60 mt-3 text-sm">Last updated: April 21, 2026</p>
         </div>
       </section>
 

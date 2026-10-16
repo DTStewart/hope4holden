@@ -163,7 +163,7 @@ export default function DayOf() {
           </div>
 
           <p className="text-xs text-foreground/50 text-center pt-6">
-            Details subject to change. We'll email updates if anything shifts. Last updated April 22, 2027.
+            Details subject to change. We'll email updates if anything shifts. Last updated October 16, 2026.
           </p>
         </div>
       </section>

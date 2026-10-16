@@ -101,7 +101,7 @@ const OrderConfirmationEmail = ({
           <Section style={infoBox}>
             <Text style={infoTitle}>🏌️ Tournament Day Information</Text>
             <Text style={infoText}>
-              <strong>Date:</strong> Thursday, June 17, 2027
+              <strong>Date:</strong> Friday, June 18, 2027
             </Text>
             <Text style={infoText}>
               <strong>Shotgun Start:</strong> 11:00 AM
