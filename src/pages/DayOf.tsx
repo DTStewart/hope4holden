@@ -5,7 +5,7 @@ import {
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 
-// Static content for the 2026 tournament. Update here any time logistics change.
+// Static content for the 2027 tournament. Update here any time logistics change.
 // All tournament pages link to this from confirmation emails + the footer.
 
 export default function DayOf() {
@@ -13,7 +13,7 @@ export default function DayOf() {
     <div>
       <section className="section-dark relative overflow-hidden">
         <div className="container py-16 md:py-20 animate-fade-in relative z-10">
-          <p className="section-label">June 18–19, 2026</p>
+          <p className="section-label">June 17–18, 2027</p>
           <h1 className="font-heading font-extrabold text-4xl md:text-5xl text-white leading-tight mt-1">
             Day-of Info
           </h1>
@@ -33,11 +33,11 @@ export default function DayOf() {
             </h2>
             <Card>
               <CardContent className="py-5 divide-y divide-foreground/10">
-                <Row icon={Utensils} label="Thursday, June 18 · Dinner + Silent Auction">
+                <Row icon={Utensils} label="Thursday, June 17 · Dinner + Silent Auction">
                   Doors open at 6:00 PM · Dinner at 6:30 PM · Silent auction closes at 9:00 PM ·
                   Awards + announcements right after.
                 </Row>
-                <Row icon={Trophy} label="Friday, June 19 · Tournament">
+                <Row icon={Trophy} label="Friday, June 18 · Tournament">
                   Check-in opens at 8:00 AM · Shotgun start at 9:00 AM · Lunch at the turn ·
                   Prize ceremony follows the final round.
                 </Row>
@@ -163,7 +163,7 @@ export default function DayOf() {
           </div>
 
           <p className="text-xs text-foreground/50 text-center pt-6">
-            Details subject to change. We'll email updates if anything shifts. Last updated April 22, 2026.
+            Details subject to change. We'll email updates if anything shifts. Last updated October 16, 2026.
           </p>
         </div>
       </section>

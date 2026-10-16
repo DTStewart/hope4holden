@@ -14,7 +14,7 @@ const TournamentPage = () => {
           className="absolute inset-0 w-full h-full object-cover object-[center_75%] opacity-30"
         />
         <div className="container py-20 md:py-28 animate-fade-in relative z-10">
-          <p className="section-label">June 18–19, 2026</p>
+          <p className="section-label">June 17–18, 2027</p>
           <h1 className="font-heading font-extrabold text-4xl md:text-6xl lg:text-7xl text-white leading-[0.95] max-w-2xl">
             Tournament Info
           </h1>
@@ -38,7 +38,7 @@ const TournamentPage = () => {
               <div className="flex items-center gap-3 mb-6">
                 <Calendar className="h-5 w-5 text-primary" />
                 <div>
-                  <h3 className="font-heading font-bold text-lg text-[#1A1A1A]">Thursday, June 18</h3>
+                  <h3 className="font-heading font-bold text-lg text-[#1A1A1A]">Thursday, June 17</h3>
                   <p className="text-sm text-[#1A1A1A]/50">Victoria Inn, Brandon</p>
                 </div>
               </div>
@@ -63,7 +63,7 @@ const TournamentPage = () => {
               <div className="flex items-center gap-3 mb-6">
                 <Calendar className="h-5 w-5 text-primary" />
                 <div>
-                  <h3 className="font-heading font-bold text-lg text-[#1A1A1A]">Friday, June 19</h3>
+                  <h3 className="font-heading font-bold text-lg text-[#1A1A1A]">Friday, June 18</h3>
                   <p className="text-sm text-[#1A1A1A]/50">Glen Lea Golf Course</p>
                 </div>
               </div>

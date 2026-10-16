@@ -125,7 +125,7 @@ export function BidderSetupDialog({ open, onOpenChange, signedInEmail, onReady }
                 onCheckedChange={(v) => setAttendingEvent(v === true)}
               />
               <Label htmlFor="setup-attending" className="text-sm font-normal leading-snug cursor-pointer">
-                I'll be at the tournament dinner on Thursday, June 18
+                I'll be at the tournament dinner on Thursday, June 17
                 <span className="block text-xs text-muted-foreground mt-0.5">
                   Helps us plan pickup. You can change this later.
                 </span>

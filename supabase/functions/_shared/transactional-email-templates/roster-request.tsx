@@ -32,7 +32,7 @@ const RosterRequestEmail = ({ subject, body, recipientName, teamName, manageUrl 
           <Heading style={h1}>{subject}</Heading>
           {recipientName ? <Text style={text}>Hi {recipientName},</Text> : null}
           <Text style={text}>
-            We need your roster for {teamName ? <strong>{teamName}</strong> : 'your team'} before the tournament on June 18 and 19.
+            We need your roster for {teamName ? <strong>{teamName}</strong> : 'your team'} before the tournament on June 17 and 18.
           </Text>
           {paragraphs.map((p, i) => (
             <Text key={i} style={text}>
@@ -74,7 +74,7 @@ export const template = {
   },
   displayName: 'Roster Request',
   previewData: {
-    subject: 'Add your golfers for the 2026 tournament',
+    subject: 'Add your golfers for the 2027 tournament',
     body:
       'The tournament is coming up and it is time to lock in your foursome.\n\nTap the button below to open your team page, where you can add each golfer\'s name and email. You are already listed as the first golfer, so you only need to fill in the rest.\n\nIf anything changes later, just come back to the same link and update it.',
     recipientName: 'Alex',

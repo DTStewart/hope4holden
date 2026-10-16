@@ -63,7 +63,7 @@ const HomePage = () => {
               Driving for a Cure
             </p>
             <p className="text-lg text-white/60 max-w-xl mb-10">
-              June 18–19, 2026 · Brandon, Manitoba<br />
+              June 17–18, 2027 · Brandon, Manitoba<br />
               Two days of golf, dinner, and community. All for a cure.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
