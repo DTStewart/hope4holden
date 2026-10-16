@@ -8,19 +8,19 @@ const SITE_NAME = "Hope 4 Holden"
 const ICS_BASE = "https://rhksslzpdzpyrixkfmhb.supabase.co/functions/v1/event-ics"
 
 // Google Calendar deep-link (UTC times in YYYYMMDDTHHmmssZ).
-// Thu June 18 2026 6:00 PM America/Toronto = 22:00 UTC
-// Fri June 19 2026 8:00 AM America/Toronto = 12:00 UTC
+// Thu June 17 2027 6:00 PM America/Toronto = 22:00 UTC
+// Fri June 18 2027 8:00 AM America/Toronto = 12:00 UTC
 const GCAL_DINNER = 'https://www.google.com/calendar/render?' + new URLSearchParams({
   action: 'TEMPLATE',
   text: 'Hope 4 Holden — Dinner + Silent Auction',
-  dates: '20260618T220000Z/20260619T020000Z',
+  dates: '20270617T220000Z/20270618T020000Z',
   details: 'Doors open 6:00 PM. Dinner 6:30 PM. Silent auction closes 9:00 PM. Details: https://hope4holden.com/day-of',
   location: 'TBD — details emailed closer to the event',
 }).toString()
 const GCAL_TOURNAMENT = 'https://www.google.com/calendar/render?' + new URLSearchParams({
   action: 'TEMPLATE',
   text: 'Hope 4 Holden — Golf Tournament',
-  dates: '20260619T120000Z/20260619T190000Z',
+  dates: '20270618T120000Z/20270618T190000Z',
   details: 'Check-in 8:00 AM, shotgun start 9:00 AM. Arrive 30 min early. Details: https://hope4holden.com/day-of',
   location: 'TBD — details emailed closer to the event',
 }).toString()
@@ -101,7 +101,7 @@ const OrderConfirmationEmail = ({
           <Section style={infoBox}>
             <Text style={infoTitle}>🏌️ Tournament Day Information</Text>
             <Text style={infoText}>
-              <strong>Date:</strong> Thursday, June 19, 2026
+              <strong>Date:</strong> Thursday, June 17, 2027
             </Text>
             <Text style={infoText}>
               <strong>Shotgun Start:</strong> 11:00 AM
@@ -110,7 +110,7 @@ const OrderConfirmationEmail = ({
               <strong>Location:</strong> Glen Lea Golf Course
             </Text>
             <Text style={infoText}>
-              <strong>Dinner:</strong> Thursday, June 18 at Victoria Inn Brandon
+              <strong>Dinner:</strong> Thursday, June 17 at Victoria Inn Brandon
             </Text>
             <Text style={infoTextNote}>
               We'll send you more details about tee times and course information as the date approaches.
@@ -133,7 +133,7 @@ const OrderConfirmationEmail = ({
           <Section style={infoBox}>
             <Text style={infoTitle}>🍽️ Dinner Details</Text>
             <Text style={infoText}>
-              <strong>Date:</strong> Thursday, June 18, 2026
+              <strong>Date:</strong> Thursday, June 17, 2027
             </Text>
             <Text style={infoText}>
               <strong>Location:</strong> Victoria Inn Brandon
@@ -149,7 +149,7 @@ const OrderConfirmationEmail = ({
           <Section style={infoBox}>
             <Text style={infoTitle}>🍽️ Dinner Information</Text>
             <Text style={infoText}>
-              <strong>Date:</strong> Thursday, June 18, 2026
+              <strong>Date:</strong> Thursday, June 17, 2027
             </Text>
             <Text style={infoText}>
               <strong>Location:</strong> Victoria Inn Brandon

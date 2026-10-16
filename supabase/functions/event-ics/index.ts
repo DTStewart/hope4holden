@@ -3,7 +3,7 @@
 //
 // Accepts an optional ?kind=dinner|tournament|both (default: both).
 //
-// All timestamps in America/Toronto; dates are the event (Thu June 18 + Fri June 19, 2026).
+// All timestamps in America/Toronto; dates are the event (Thu June 17 + Fri June 18, 2027).
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -55,22 +55,22 @@ function vevent(opts: {
 const SITE = 'https://hope4holden.com'
 
 const DINNER = vevent({
-  uid: 'dinner-2026@hope4holden.com',
+  uid: 'dinner-2027@hope4holden.com',
   summary: 'Hope 4 Holden — Dinner + Silent Auction',
   description: `Doors open 6:00 PM · Dinner 6:30 PM · Silent auction closes 9:00 PM. Event details: ${SITE}/day-of`,
   location: 'TBD — details emailed closer to the event',
-  start: '20260618T180000',
-  end: '20260618T220000',
+  start: '20270617T180000',
+  end: '20270617T220000',
   url: `${SITE}/day-of`,
 })
 
 const TOURNAMENT = vevent({
-  uid: 'tournament-2026@hope4holden.com',
+  uid: 'tournament-2027@hope4holden.com',
   summary: 'Hope 4 Holden — Golf Tournament',
   description: `Check-in 8:00 AM · Shotgun start 9:00 AM. Arrive 30 minutes early for bag drop and cart assignment. Event details: ${SITE}/day-of`,
   location: 'TBD — details emailed closer to the event',
-  start: '20260619T080000',
-  end: '20260619T150000',
+  start: '20270618T080000',
+  end: '20270618T150000',
   url: `${SITE}/day-of`,
 })
 
@@ -91,7 +91,7 @@ Deno.serve((req) => {
     filename = 'hope4holden-tournament.ics'
   } else {
     body = vcal([DINNER, TOURNAMENT].join('\r\n'))
-    filename = 'hope4holden-2026.ics'
+    filename = 'hope4holden-2027.ics'
   }
 
   return new Response(body, {

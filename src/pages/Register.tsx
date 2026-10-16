@@ -166,7 +166,7 @@ const ParticipatePage = () => {
       _name: waitlistForm.name,
       _phone: waitlistForm.phone || undefined,
       _team_name: waitlistForm.teamName || undefined,
-      _source: "register_page_2026",
+      _source: "register_page_2027",
       _attended_prior_year: false,
     });
     if (error) {

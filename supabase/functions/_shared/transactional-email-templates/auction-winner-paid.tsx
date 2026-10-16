@@ -90,7 +90,7 @@ export const template = {
     itemTitle: 'Signed Jets jersey',
     amount: 450,
     taxReceiptAmount: 150,
-    pickupText: 'Thursday dinner (June 18)',
+    pickupText: 'Thursday dinner (June 17)',
     pickupNotes: 'Pick up from Jill at the registration table.',
   },
 } satisfies TemplateEntry

@@ -7,7 +7,7 @@ const TermsPage = () => {
           <h1 className="font-heading font-extrabold text-4xl md:text-5xl text-white leading-[0.95]">
             Terms of Service
           </h1>
-          <p className="text-white/60 mt-3 text-sm">Last updated: April 21, 2026</p>
+          <p className="text-white/60 mt-3 text-sm">Last updated: April 21, 2027</p>
         </div>
       </section>
 
@@ -65,7 +65,7 @@ const TermsPage = () => {
               By uploading brand assets through the sponsor upload link, you grant Hope 4 Holden a non-exclusive,
               royalty-free license to display your business name, logos, and social handles on the tournament
               website, printed materials, and event signage for the purpose of recognizing your sponsorship.
-              This license ends after the 2026 tournament and related post-event communications.
+              This license ends after the 2027 tournament and related post-event communications.
             </p>
 
             <h2 className="font-heading font-extrabold text-2xl text-foreground pt-4">Participant conduct</h2>

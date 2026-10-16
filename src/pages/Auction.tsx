@@ -257,7 +257,7 @@ export default function Auction() {
               Silent Auction
             </h1>
             <p className="text-white/60 text-lg max-w-xl mx-auto">
-              Bidding opens June 1 and closes during the tournament dinner on Thursday, June 18, 2026.
+              Bidding opens June 1 and closes during the tournament dinner on Thursday, June 17, 2027.
             </p>
           </div>
         </section>
@@ -275,7 +275,7 @@ export default function Auction() {
                   <div>
                     <p className="font-heading font-bold text-foreground">Auction timing</p>
                     <p className="text-sm text-foreground/70">
-                      Bidding opens June 1, 2026. Closes during the tournament dinner on Thursday, June 18.
+                      Bidding opens June 1, 2027. Closes during the tournament dinner on Thursday, June 17.
                     </p>
                   </div>
                 </div>

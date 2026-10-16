@@ -356,8 +356,8 @@ async function notifyWinner(
 ) {
   try {
     const pickupLabels: Record<string, string> = {
-      thursday_dinner: 'Thursday dinner (June 18)',
-      friday_checkin: 'Friday tournament check-in (June 19)',
+      thursday_dinner: 'Thursday dinner (June 17)',
+      friday_checkin: 'Friday tournament check-in (June 18)',
       contact_winner: 'We\'ll contact you to arrange pickup',
       shippable: 'Shipping — we\'ll email you for the address',
     }

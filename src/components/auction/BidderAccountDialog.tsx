@@ -126,7 +126,7 @@ export function BidderAccountDialog({ open, onOpenChange, bidder, onChanged, onS
                 onCheckedChange={(v) => handleAttendingChange(v === true)}
               />
               <Label htmlFor="account-attending" className="text-sm font-normal leading-snug cursor-pointer">
-                I'll be at the tournament dinner on Thursday, June 18
+                I'll be at the tournament dinner on Thursday, June 17
                 {savingAttending && <Loader2 className="inline h-3 w-3 animate-spin ml-2" />}
               </Label>
             </div>

@@ -106,7 +106,7 @@ export const template = {
     itemTitle: 'Signed Jets jersey',
     amount: 450,
     payUrl: 'https://hope4holden.com/auction/pay/abc123',
-    pickupText: 'Thursday dinner (June 18)',
+    pickupText: 'Thursday dinner (June 17)',
     reason: 'needs_verification',
   },
 } satisfies TemplateEntry
